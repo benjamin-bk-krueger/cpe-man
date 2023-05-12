@@ -1,0 +1,9 @@
+site_name: CPE Manager
+site_url: https://cpe-man.info/static/doc/
+site_dir: ./static/doc
+use_directory_urls: false
+nav:
+    - Home: index.md
+theme: readthedocs
+markdown_extensions:
+  - tables
