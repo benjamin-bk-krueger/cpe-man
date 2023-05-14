@@ -58,11 +58,14 @@
                             {% else %}
                                 Not logged in.
                             {% endif %}
+                            <br>
+                            <a class="link-dark" href="{{ url_for('show_release')}}">Version: {{ version }}</a>
                         </h6>
                     </div>
                     <div class="col-lg-4 col-md-4 col-sm-12">
                         <h6 class="font-weight-bold">
                             <a class="link-dark" href="{{ prefix }}/static/doc/index.html">Open Help</a><br>
+                            <a class="link-dark" href="{{ url_for('show_contact')}}">Send a Message</a>
                         </h6>
                     </div>
                 </div>

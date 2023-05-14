@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    {#  Page header #}
+    <div class="container-fluid pb-2 mt-4 mb-2">
+        <h2>{% block title %} Release Notes {% endblock %}</h2>
+    </div>
+
+    {#  Page content #}
+    <div class="container-fluid pb-3 mt-2 mb-2">
+
+        {#  Show simple about #}
+        <div class="card">
+            <div class="card-body">
+                Based on <a class="link-primary" href="https://palletsprojects.com/p/flask/">Flask</a> web application framework and <a class="link-primary" href="https://getbootstrap.com">Bootstrap</a> frontend toolkit. Hosted on <a class="link-primary" href="https://www.strato.de/">Strato</a> servers.<br>
+                If you want to get in touch with me just visit my <a class="link-primary" href="https://github.com/Benjamin-BK-Krueger">GitHub page</a> or my <a class="link-primary" href="https://blk8.de">WordPress site</a>.<br>
+                You may also send me a <a href="{{ url_for('show_contact')}}">message</a> here.
+            </div>
+        </div>
+
+        {#  Show release information #}
+        <div class="card">
+            <div class="card-body">
+                <h4 class="mb-3">v0.1 (20230514)</h4>
+                Initial release. Hello World! 😀
+            </div>
+        </div>
+    </div>
+{% endblock %}

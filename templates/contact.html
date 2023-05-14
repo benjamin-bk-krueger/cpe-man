@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    {#  Page header #}
+    <div class="container-fluid pb-2 mt-4 mb-2">
+        <h2>{% block title %} Contact {% endblock %}</h2>
+    </div>
+
+    {#  Page content #}
+    <div class="container-fluid pb-3 mt-2 mb-2">
+
+        {# Display form and possible error message - send a message to the page admin, includes simple captcha #}
+        <form action="{{ url_for('show_contact') }}" method="POST">
+            {{ form.csrf_token }}
+            <div class="form-group mt-2 mb-2">
+                <label for="contact_name">{{ form.contact_name.label }}</label>
+                {{ form.contact_name(size=20, class="form-control") }}
+            </div>
+            {% for error in form.contact_name.errors %}
+                <div class="alert alert-warning"><strong>Warning!</strong> {{ error }}</div>
+            {% endfor %}
+            <div class="form-group mt-2 mb-2">
+                <label for="email">{{ form.email.label }}</label>
+                {{ form.email(size=20, class="form-control", onkeypress="return event.charCode != 32") }}
+            </div>
+            {% for error in form.email.errors %}
+                <div class="alert alert-warning"><strong>Warning!</strong> {{ error }}</div>
+            {% endfor %}
+            <div class="form-group mt-2 mb-2">
+                <label for="message">{{ form.message.label }}</label>
+                {{ form.message(size=40, class="form-control") }}
+            </div>
+            {% for error in form.message.errors %}
+                <div class="alert alert-warning"><strong>Warning!</strong> {{ error }}</div>
+            {% endfor %}
+            <div class="form-group mt-2 mb-2">
+                <label for="captcha">{{ form.captcha.label }} (What is {{ random1  }} + {{ random2 }} ?)</label>
+                {{ form.captcha(size=20, class="form-control", onkeypress="return event.charCode != 32") }}
+            </div>
+            {{ form.check_captcha }}
+            {% for error in form.captcha.errors %}
+                <div class="alert alert-warning"><strong>Warning!</strong> {{ error }}</div>
+            {% endfor %}
+            <button type="submit" class="btn btn-primary mt-4 mb-4">Send Message</button>
+        </form>
+    </div>
+{% endblock %}

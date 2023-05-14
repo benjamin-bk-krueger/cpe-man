@@ -1,7 +1,7 @@
 # import json  # for JSON file handling and parsing
 import os  # for direct file system and environment access
 import re  # for regular expressions
-# import random  # for captcha random numbers
+import random  # for captcha random numbers
 # import string  # for string operations
 import logging  # enable logging
 
@@ -20,9 +20,8 @@ from werkzeug.security import generate_password_hash, check_password_hash  # for
 from werkzeug.utils import secure_filename  # to prevent path traversal attacks
 from logging.handlers import SMTPHandler  # get crashes via mail
 
-# from forms import LoginForm, AccountForm, MailCreatorForm, PassCreatorForm, DelCreatorForm, \
-#    UploadForm, WorldForm, RoomForm, ItemForm, ObjectiveForm, ContactForm, PersonForm, \
-#    JunctionForm, QuestSolForm, FileForm, PasswordForm, PasswordResetForm  # Flask/Jinja template forms
+from forms import ContactForm  # Flask/Jinja template forms
+
 
 # the app configuration is done via environmental variables
 POSTGRES_URL = os.environ['POSTGRES_URL']  # DB connection data
@@ -247,6 +246,7 @@ class AuthChecker:
 def index():
     # Not needed if you set SITEMAP_INCLUDE_RULES_WITHOUT_PARAMS=True
     yield 'show_index', {}
+    yield 'show_release', {}
 
 
 # Send an e-mail
@@ -310,3 +310,52 @@ def show_index():
 @app.route(APP_PREFIX + '/web/error', methods=['GET'])
 def show_error():
     return render_template('error.html')
+
+
+# --------------------------------------------------------------
+# Flask HTML views to read and modify the database contents
+# --------------------------------------------------------------
+
+# Show information about all major releases
+@app.route(APP_PREFIX + '/web/release', methods=['GET'])
+def show_release():
+    return render_template('release.html')
+
+
+# Displays a form to send a message to the site admin - implements a simple captcha as well
+@app.route(APP_PREFIX + '/web/contact', methods=['GET', 'POST'])
+def show_contact():
+    form = ContactForm()
+    if request.method == 'POST':
+        if form.validate_on_submit():
+            contact_name = escape(request.form["contact_name"])
+            email = escape(request.form["email"])
+            message = escape(request.form["message"])
+
+            send_mail([MAIL_ADMIN], f"{contact_name} - {email}",
+                      f"{message}")
+
+            return redirect(url_for('show_index'))
+        else:
+            form.contact_name.default = escape(request.form["contact_name"])
+            form.email.default = escape(request.form["email"])
+            form.message.default = escape(request.form["message"])
+
+            random1 = random.randint(1, 10)
+            random2 = random.randint(1, 10)
+            check_captcha = random1 + random2
+
+            form.check_captcha.default = check_captcha
+            form.process()
+
+            return render_template('contact.html', form=form, random1=random1, random2=random2,
+                                   check_captcha=check_captcha)
+    else:
+        random1 = random.randint(1, 10)
+        random2 = random.randint(1, 10)
+        check_captcha = random1 + random2
+
+        form.check_captcha.default = check_captcha
+        form.process()
+
+        return render_template('contact.html', form=form, random1=random1, random2=random2, check_captcha=check_captcha)
