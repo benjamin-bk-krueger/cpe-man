@@ -1,0 +1,81 @@
+version: "3.7"
+
+services:
+  web:
+    image : benjaminkrueger/cpe-man
+    environment:
+      - POSTGRES_URL=cpeman_database:5432
+      - POSTGRES_USER=cpeman
+      - POSTGRES_PW=cpeman
+      - POSTGRES_DB=cpeman
+      - SECRET_KEY=secret-key-goes-here
+      - FLASK_ENV=development
+      - FLASK_DEBUG=1
+      - S3_ENDPOINT=http://minio:9000
+      - S3_FOLDER=http://localhost:9000/cpeman-public
+      - S3_QUOTA=100
+      - BUCKET_PUBLIC=cpeman-public
+      - BUCKET_PRIVATE=cpeman-private
+      - WWW_SERVER=http://localhost:5010
+      - MAIL_ENABLE=0
+      - MAIL_SERVER=localhost
+      - MAIL_SENDER=mail@localhost
+      - MAIL_ADMIN=admin@localhost
+      - APP_VERSION=0.1
+      - APP_PREFIX=
+    command: sh /home/cpeman/flask.sh
+    user: cpeman
+    ports:
+      - "127.0.0.1:5010:5010"
+    container_name: cpeman_web
+    volumes:
+      - ./.aws/:/home/cpeman/.aws/
+
+  database:
+    image: postgres
+    environment:
+      - POSTGRES_USER=cpeman
+      - POSTGRES_PASSWORD=cpeman
+    ports:
+      - "127.0.0.1:5432:5432"
+    container_name: cpeman_database
+    volumes:
+      - db:/var/lib/postgresql/data
+      - ./db/init.sql:/docker-entrypoint-initdb.d/create_tables.sql
+#      - ./db/cpeman.dump:/tmp/cpeman.dump
+
+  minio:
+    image: minio/minio
+    ports:
+      - "127.0.0.1:9000:9000"
+      - "127.0.0.1:9010:9010"
+    environment:
+      MINIO_ACCESS_KEY: minio_access_key
+      MINIO_SECRET_KEY: minio_secret_key
+    container_name: cpeman_s3
+    volumes:
+      - s3:/data
+    command: server --address ":9000" --console-address ":9010" /data
+
+  createbuckets:
+    image: minio/mc
+    depends_on:
+      - minio
+    container_name: cpeman_buckets
+    entrypoint: >
+      /bin/sh -c "
+      until (/usr/bin/mc config host add cpeman http://minio:9000 minio_access_key minio_secret_key) do echo '...waiting...' && sleep 1; done;
+      /usr/bin/mc mb cpeman/cpeman-private/;
+      /usr/bin/mc mb cpeman/cpeman-public/;
+      /usr/bin/mc anonymous set public cpeman/cpeman-public;
+      echo EMPTY > empty.txt;
+      /usr/bin/mc cp empty.txt cpeman/cpeman-private/empty.txt;
+      /usr/bin/mc cp empty.txt cpeman/cpeman-public/empty.txt;
+      exit 0;
+      "
+
+volumes:
+  db:
+    driver: local
+  s3:
+    driver: local

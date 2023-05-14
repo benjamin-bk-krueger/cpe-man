@@ -1,0 +1,63 @@
+/*
+    Adds page margin and padding for all pages.
+    Displays a PNG wallpaper in parallax mode.
+ */
+body {
+    padding: 10px;
+    margin: 10px;
+    background: url('/static/background_para.jpg') no-repeat center center fixed;
+    -webkit-background-size: cover;
+    -moz-background-size: cover;
+    background-size: cover;
+    -o-background-size: cover;
+}
+
+/*
+    Parallax mode does not seem to be fully compatible on iOS devices.
+    Just use a very large static image instead.
+ */
+@media (pointer:none), (pointer:coarse) {
+    body {
+        background: url('/static/background.jpg') center center scroll;
+    }
+}
+
+.header {
+	text-align: center;
+}
+
+/*
+    Always stretch the carousel images, but limit their size to a certain value.
+ */
+.carousel-inner img {
+    max-width: 100%;
+    max-height: 100%;
+    height: 300px;
+}
+
+/*
+    Bootstrap and Markdown editor CSS are conflicting regarding the toolbar background color.
+    Overwrite it here so the foreground colors are clearly visible.
+ */
+.editor-toolbar {
+    background: #f8f9fa;
+}
+
+/*
+    Add some individual styles which aren't available in the Bootstrap package by default.
+ */
+.btn-space {
+    margin-right: 15px;
+}
+
+hr.solid {
+    border-top: 2px solid #999;
+}
+
+hr.little {
+    border-top: 1px solid #c9c9c9;
+}
+
+table .w-5 { width:5%; }
+table .w-10 { width:10%; }
+table .w-30 { width:30%; }

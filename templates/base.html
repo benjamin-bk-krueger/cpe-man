@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>CPE Manager - {% block title %} {% endblock %}</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+        <!-- Bootstrap v5.1.3 -->
+        <!-- https://www.bootstrapcdn.com -->
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
+
+        <!-- Bootstrap Icons v1.8.3 -->
+        <!-- https://icons.getbootstrap.com/#icon-font -->
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.3/font/bootstrap-icons.css">
+
+        <!-- Own functions and stylesheets, overrides -->
+        <script src="{{ prefix }}/static/helper_func.js"></script>
+        {% if session['style'] %}
+            <link rel="stylesheet" type="text/css" href="{{ prefix }}/static/{{ session['style'] }}">
+        {% else %}
+            <link rel="stylesheet" type="text/css" href="{{ prefix }}/static/main.css">
+        {% endif %}
+
+        <!-- Favicon -->
+        <link rel="icon" type="image/png" href="{{ prefix }}/static/cpeman_logo_s.png">
+    </head>
+
+    <body>
+        {#  Anchor to allow the user to return to the page start #}
+        <div id="page-start"></div>
+
+        {#
+            Navigation bar which may be collapsed on smaller displays.
+        #}
+        <nav class="navbar navbar-expand-lg navbar-light bg-light">
+            <div class="container-fluid">
+                <a class="navbar-brand" href="{{ url_for('show_index') }}">CPE Manager</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+            </div>
+        </nav>
+
+        {#  Content space for all depending page templates #}
+        {% block content %} {% endblock %}
+
+        <hr class="solid mt-4 mb-4">
+
+        {#  Page footer - 2 column layout #}
+        <footer class="page-footer">
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-lg-8 col-md-8 col-sm-12">
+                        <h6 class="font-weight-bold">
+                            {% if current_user.is_authenticated %}
+                                Logged in as {{ current_user.creator_name }}.
+                            {% else %}
+                                Not logged in.
+                            {% endif %}
+                        </h6>
+                    </div>
+                    <div class="col-lg-4 col-md-4 col-sm-12">
+                        <h6 class="font-weight-bold">
+                            <a class="link-dark" href="{{ prefix }}/static/doc/index.html">Open Help</a><br>
+                        </h6>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-copyright text-center"><a class="link-dark" href="#page-start">Go to top of page</a></div>
+        </footer>
+    </body>
+</html>

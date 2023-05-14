@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    {#  Page header #}
+    <div class="container-fluid pb-2 mt-4 mb-2">
+        <h2>{% block title %} Error {% endblock %}</h2>
+    </div>
+
+    {#  Show error message #}
+    <div class="card mb-3" style="max-width: 720px;">
+        <div class="row g-0">
+            <div class="col-md-4">
+                <img src="/static/victor.png" class="img-fluid rounded-start" alt="Victor">
+            </div>
+            <div class="col-md-8">
+                <div class="card-body">
+                    <h5 class="card-title"><b>Oops</b>, you have found a crack in the matrix.</h5>
+                    <p class="card-text">{{ 'Victor says: ' + error_message if error_message else 'Victor says oink.' }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
