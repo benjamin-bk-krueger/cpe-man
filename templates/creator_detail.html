@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    {#  Page header #}
+    <div class="container-fluid pb-2 mt-4 mb-2">
+        <h2>{% block title %} {{ creator.creator_name }} {% endblock %} ({% if creator.creator_role == "creator" %}<i class="bi bi-mortarboard"></i> World Creator{% else %}User{% endif %})</h2>
+    </div>
+
+    {#  Page content #}
+    <div class="container-fluid pb-3 mt-2 mb-2">
+
+        {#  Show detailed information regarding the selected creator #}
+        <div class="card mb-3" style="max-width: 720px;">
+            <div class="row g-0">
+                <div class="col-md-4">
+                    <img src="{{ s3_prefix + "/" + creator.creator_img if (creator.creator_img!='NoImage') else '/static/not_found.jpg' }}" class="img-fluid rounded-start" alt="Creator Image">
+                </div>
+                <div class="col-md-8">
+                    <div class="card-body">
+                        <p class="card-text">{{ creator.creator_desc }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {#  Display action buttons regarding the selected creator #}
+        <div class="btn-toolbar" role="toolbar" aria-label="Toolbar with button groups">
+
+            {#  Text-based links #}
+            <div class="btn-group me-2" role="group" aria-label="Button group with nested dropdown">
+                <div class="btn-group" role="group">
+                    <button id="btnGroupDrop1" type="button" class="btn btn-primary dropdown-toggle mt-4 mb-4" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="bi bi-activity"></i> Actions
+                    </button>
+                    <ul class="dropdown-menu" aria-labelledby="btnGroupDrop1">
+                        <li><a class="dropdown-item" href="{{ url_for('show_creators') }}">All Creators</a></li>
+                        {%  if current_user.creator_role == "admin" %}
+                            <li><a class="dropdown-item" href="{{ url_for('show_approve_creator', creator_id=creator.creator_id) }}">Approve Creator</a></li>
+                        {%  endif %}
+                    </ul>
+                </div>
+            </div>
+
+            {#  Same links implemented using small buttons #}
+            <div class="btn-group me-2" role="group" aria-label="Second group">
+                <a href="{{ url_for('show_creators') }}" data-toggle="tooltip" title="All Creators" class="btn btn-primary mt-4 mb-4"><i class="bi bi-list-ul"></i></a>
+            </div>
+            <div class="btn-group me-2" role="group" aria-label="Third group">
+                {%  if current_user.creator_role == "admin" and creator.active == 0 %}
+                    <a href="{{ url_for('show_approve_creator', creator_id=creator.creator_id) }}" data-toggle="tooltip" title="Approve Creator" class="btn btn-primary mt-4 mb-4"><i class="bi bi-person-check"></i></a>
+                {%  endif %}
+            </div>
+        </div>
+    </div>
+{% endblock %}

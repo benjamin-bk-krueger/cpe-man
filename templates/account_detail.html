@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    {#  Page header #}
+    <div class="container-fluid pb-2 mt-4 mb-2">
+        <h2>{% block title %} Edit Account {% endblock %}</h2>
+    </div>
+
+    {#  Page content #}
+    <div class="container-fluid pb-3 mt-2 mb-2">
+
+        {# Modal dialog window - delete currently logged in user #}
+        <div id="myModal_del" class="modal fade" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h4 class="modal-title">Delete Account</h4>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form action="{{ url_for('show_my_del_creator') }}" method="POST" id="form_deletion">
+                            {{ form3.csrf_token }}
+                            Are you sure?
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-danger mt-4 mb-4 btn-space" form="form_deletion">Confirm</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {# Display form and possible error message - change user data #}
+        <h4 class="mb-3">Please enter data</h4>
+        <form action="{{ url_for('show_my_mail_creator') }}" method="POST">
+            {{ form1.csrf_token }}
+            <div class="form-group mt-2 mb-2">
+                <label for="email">{{ form1.email.label }}</label>
+                {{ form1.email(size=20, class="form-control", style="max-width: 720px;", onkeypress="return event.charCode != 32") }}
+            </div>
+            <div class="form-group mt-2 mb-2">
+                <label for="description">{{ form1.description.label }}</label>
+                {{ form1.description(size=40, class="form-control", style="max-width: 720px;") }}
+            </div>
+            <div class="form-group mt-2 mb-2">
+                <label for="image">{{ form1.image.label }}</label>
+                {{ form1.image(class="form-select", style="max-width: 720px;") }}
+            </div>
+            <div class="form-check mt-2 mb-2">
+                <label class="form-check-label" for="notification">{{ form1.notification.label }}</label>
+                {{ form1.notification(class="form-check-input") }}
+            </div>
+            {% for error in form1.email.errors %}
+                <div class="alert alert-warning"><strong>Warning!</strong> {{ error }}</div>
+            {% endfor %}
+            {% for error in form1.image.errors %}
+                <div class="alert alert-warning"><strong>Warning!</strong> {{ error }}</div>
+            {% endfor %}
+            {% for error in form1.notification.errors %}
+                <div class="alert alert-warning"><strong>Warning!</strong> {{ error }}</div>
+            {% endfor %}
+            <button type="submit" class="btn btn-primary mt-4 mb-4">Update</button>
+        </form>
+
+        <hr class="little mt-4 mb-4">
+
+        {# Display form and possible error message - set a password for currently logged in user #}
+        <h4 class="mb-3">Set new password</h4>
+        <form action="{{ url_for('show_my_pass_creator') }}" method="POST">
+            {{ form2.csrf_token }}
+            <div class="form-group mt-2 mb-2">
+                <label for="password">{{ form2.password.label }}</label>
+                {{ form2.password(size=20, class="form-control", style="max-width: 720px;") }}
+            </div>
+            <div class="form-group mt-2 mb-2">
+                <label for="password2">{{ form2.password2.label }}</label>
+                {{ form2.password2(size=20, class="form-control", style="max-width: 720px;") }}
+            </div>
+            {% for error in form2.password.errors %}
+                <div class="alert alert-warning"><strong>Warning!</strong> {{ error }}</div>
+            {% endfor %}
+            <button type="submit" class="btn btn-primary mt-4 mb-4">Set</button>
+        </form>
+
+        <hr class="little mt-4 mb-4">
+
+        {# Display simple button - show modal dialog window to delete currently logged in user #}
+        <h4 class="mb-3">Delete this user account</h4>
+        <button type="button" class="btn btn-danger mt-4 mb-4" data-bs-toggle="modal" data-bs-target="#myModal_del">Delete Account</button>
+    </div>
+{% endblock %}

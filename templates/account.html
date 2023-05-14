@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    {#  Page header #}
+    <div class="container-fluid pb-2 mt-4 mb-2">
+        <h2>{% block title %} New Account {% endblock %}</h2>
+    </div>
+
+    {#  Page content #}
+    <div class="container-fluid pb-3 mt-2 mb-2">
+
+        {# Display form and possible error message - create a new user #}
+        <h4 class="mb-3">Please enter data</h4>
+        <form action="{{ url_for('show_new_creator') }}" method="POST">
+            {{ form.csrf_token }}
+            <div class="form-group mt-2 mb-2">
+                <a href="#" data-toggle="tooltip" title="Also used as your login, may not contain spaces"><label for="creator">{{ form.creator.label }}</label></a>
+                {{ form.creator(size=20, class="form-control", onkeypress="return event.charCode != 32") }}
+            </div>
+            {% for error in form.creator.errors %}
+                <div class="alert alert-warning"><strong>Warning!</strong> {{ error }}</div>
+            {% endfor %}
+            <div class="form-group mt-2 mb-2">
+                <a href="#" data-toggle="tooltip" title="Only used to send notifications about account changes like e-mail address changes"><label for="email">{{ form.email.label }}</label></a>
+                {{ form.email(size=20, class="form-control", onkeypress="return event.charCode != 32") }}
+            </div>
+            {% for error in form.email.errors %}
+                <div class="alert alert-warning"><strong>Warning!</strong> {{ error }}</div>
+            {% endfor %}
+            <div class="form-group mt-2 mb-2">
+                <label for="password">{{ form.password.label }}</label>
+                {{ form.password(size=20, class="form-control") }}
+            </div>
+            <div class="form-group mt-2 mb-2">
+                <label for="password2">{{ form.password2.label }}</label>
+                {{ form.password2(size=20, class="form-control") }}
+            </div>
+            {% for error in form.password.errors %}
+                <div class="alert alert-warning"><strong>Warning!</strong> {{ error }}</div>
+            {% endfor %}
+            <div class="form-group mt-2 mb-2">
+                <a href="#" data-toggle="tooltip" title="Currently you need an invitation code. Just get in contact with me to get one"><label for="invitation">{{ form.invitation.label }}</label></a>
+                {{ form.invitation(size=20, class="form-control") }}
+            </div>
+            {% for error in form.invitation.errors %}
+                <div class="alert alert-warning"><strong>Warning!</strong> {{ error }}</div>
+            {% endfor %}
+            <button type="submit" class="btn btn-primary mt-4 mb-4">Create</button>
+        </form>
+    </div>
+{% endblock %}

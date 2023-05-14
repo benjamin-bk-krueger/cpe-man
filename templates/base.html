@@ -40,10 +40,15 @@
                     <span class="navbar-toggler-icon"></span>
                 </button>
                 <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                        <li class="nav-item"><a class="nav-link" href="{{ url_for('show_creators') }}">Creators</a></li>
+                    </ul>
                     <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
                         {% if current_user.is_authenticated %}
+                            <li class="nav-item"><a class="nav-link" href="{{ url_for('show_my_creator') }}"><i class="bi bi-person-fill"></i> My Account</a></li>
                             <li class="nav-item"><a class="nav-link" href="{{ url_for('show_logout') }}"><i class="bi bi-door-open-fill"></i> Logout</a></li>
                         {% else %}
+                            <li class="nav-item"><a class="nav-link" href="{{ url_for('show_new_creator') }}"><i class="bi bi-person"></i> New Account</a></li>
                             <li class="nav-item"><a class="nav-link" href="{{ url_for('show_logged') }}"><i class="bi bi-door-open"></i> Login</a></li>
                         {% endif %}
                     </ul>
@@ -68,6 +73,7 @@
                                 Not logged in.
                             {% endif %}
                             <br>
+                            <a class="link-dark" href="{{ url_for('show_password')}}">Reset password</a><br>
                             <a class="link-dark" href="{{ url_for('show_release')}}">Version: {{ version }}</a>
                         </h6>
                     </div>
@@ -75,6 +81,7 @@
                         <h6 class="font-weight-bold">
                             <a class="link-dark" href="{{ url_for('show_privacy')}}">Privacy Policy</a><br>
                             <a class="link-dark" href="{{ prefix }}/static/doc/index.html">Open Help</a><br>
+                            <a class="link-dark" href="{{ prefix }}/swagger">Show API</a><br>
                             <a class="link-dark" href="{{ url_for('show_contact')}}">Send a Message</a>
                         </h6>
                     </div>

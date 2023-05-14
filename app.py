@@ -1,8 +1,7 @@
-# import json  # for JSON file handling and parsing
 import os  # for direct file system and environment access
 import re  # for regular expressions
 import random  # for captcha random numbers
-# import string  # for string operations
+import string  # for string operations
 import logging  # enable logging
 
 import boto3  # for S3 storage
@@ -20,7 +19,7 @@ from werkzeug.security import generate_password_hash, check_password_hash  # for
 from werkzeug.utils import secure_filename  # to prevent path traversal attacks
 from logging.handlers import SMTPHandler  # get crashes via mail
 
-from forms import LoginForm, ContactForm  # Flask/Jinja template forms
+from forms import LoginForm, AccountForm, MailCreatorForm, PassCreatorForm, DelCreatorForm, PasswordForm, PasswordResetForm, ContactForm  # Flask/Jinja template forms
 
 
 # the app configuration is done via environmental variables
@@ -246,6 +245,7 @@ class AuthChecker:
 def index():
     # Not needed if you set SITEMAP_INCLUDE_RULES_WITHOUT_PARAMS=True
     yield 'show_index', {}
+    yield 'show_creators', {}
     yield 'show_release', {}
 
 
@@ -351,6 +351,57 @@ def show_logout():
     return redirect(url_for('show_index'))
 
 
+# Show user password reset page
+@app.route(APP_PREFIX + '/web/password', methods=['GET', 'POST'])
+def show_password():
+    form = PasswordForm()
+    if request.method == 'POST' and form.validate_on_submit():
+        if MAIL_ENABLE == 1:
+            creator_email = request.form["email"]
+
+            creators = Creator.query.filter_by(active=1).order_by(Creator.creator_name.asc())
+            recipients = list()
+            for creator in creators:
+                if creator.creator_mail == creator_email:
+                    random_hash = ''.join(random.sample(string.ascii_letters + string.digits, 32))
+                    creator.password_reset = random_hash
+                    db.session.commit()
+
+                    recipients.append(creator.creator_mail)
+                    msg = Message("Password Reset Link",
+                                  sender=MAIL_SENDER,
+                                  recipients=recipients
+                                  )
+                    msg.body = "Reset your password here: " + WWW_SERVER + url_for('show_password_reset',
+                                                                                   random_hash=random_hash)
+                    mail.send(msg)
+        return redirect(url_for('show_index'))
+    else:
+        return render_template('password.html', form=form)
+
+
+# Show user password reset page
+@app.route(APP_PREFIX + '/web/reset_password/<string:random_hash>', methods=['GET', 'POST'])
+def show_password_reset(random_hash):
+    form = PasswordResetForm()
+    if request.method == 'POST' and form.validate_on_submit():
+        creators = Creator.query.filter_by(active=1).order_by(Creator.creator_name.asc())
+        for creator in creators:
+            if creator.password_reset == random_hash and len(random_hash) > 30:
+                creator.creator_pass = generate_password_hash(request.form["password"], method='pbkdf2:sha256',
+                                                              salt_length=16)
+                creator.password_reset = ""
+                db.session.commit()
+        return redirect(url_for('show_index'))
+    else:
+        return render_template('password_reset.html', form=form, random_hash=random_hash)
+
+
+# --------------------------------------------------------------
+# S3 storage pages
+# --------------------------------------------------------------
+
+
 # --------------------------------------------------------------
 # Flask HTML views to read and modify the database contents
 # --------------------------------------------------------------
@@ -404,3 +455,204 @@ def show_contact():
         form.process()
 
         return render_template('contact.html', form=form, random1=random1, random2=random2, check_captcha=check_captcha)
+
+
+# Displays all available creators
+@app.route(APP_PREFIX + '/web/creators', methods=['GET'])
+def show_creators():
+    if current_user.is_authenticated and current_user.creator_id and current_user.creator_role == "admin":
+        creators = Creator.query.order_by(Creator.creator_name.asc())
+    else:
+        creators = Creator.query.filter_by(active=1).order_by(Creator.creator_name.asc())
+    return render_template('creator.html', creators=creators)
+
+
+# Shows information about a specific creator
+@app.route(APP_PREFIX + '/web/creator/<int:creator_id>', methods=['GET'])
+def show_creator(creator_id):
+    if current_user.is_authenticated and current_user.creator_id and current_user.creator_role == "admin":
+        creator = Creator.query.filter_by(creator_id=creator_id).first()
+    else:
+        creator = Creator.query.filter_by(active=1).filter_by(creator_id=creator_id).first()
+
+    if creator:
+        s3_prefix = f"{S3_FOLDER}/user/{creator.creator_name}"
+
+        return render_template('creator_detail.html', creator=creator, s3_prefix=s3_prefix)
+    else:
+        return render_template('error.html', error_message="That creator does not exist.")
+
+
+# Displays a form to create a new user (aka creator)
+@app.route(APP_PREFIX + '/web/new_creator', methods=['GET', 'POST'])
+def show_new_creator():
+    form = AccountForm()
+    if request.method == 'POST' and form.validate_on_submit():
+        code = request.form["invitation"]
+        invitation = Invitation.query.filter_by(invitation_code=code).first()
+
+        existing_creator_1 = Creator.query.filter_by(creator_mail=escape(request.form["email"])).first()
+        existing_creator_2 = Creator.query.filter_by(creator_name=escape(request.form["creator"])).first()
+
+        if existing_creator_1 is None and existing_creator_2 is None:
+            if invitation and (invitation.invitation_forever == 1 or invitation.invitation_taken == 0):
+                creator = Creator()
+                creator.creator_name = escape(request.form["creator"])
+                creator.creator_mail = escape(request.form["email"])
+                creator.creator_desc = ""
+                creator.creator_pass = generate_password_hash(request.form["password"], method='pbkdf2:sha256',
+                                                              salt_length=16)
+                creator.creator_role = invitation.invitation_role
+                creator.creator_img = ""
+                creator.active = 1
+                db.session.add(creator)
+                db.session.commit()
+
+                invitation.invitation_taken = 1
+                db.session.commit()
+
+                send_mail([MAIL_ADMIN], f"{creator.creator_name} - Registration complete",
+                          "A new user has registered using an invitation code. No action necessary.")
+            else:
+                creator = Creator()
+                creator.creator_name = escape(request.form["creator"])
+                creator.creator_mail = escape(request.form["email"])
+                creator.creator_desc = ""
+                creator.creator_pass = generate_password_hash(request.form["password"], method='pbkdf2:sha256',
+                                                              salt_length=16)
+                creator.creator_role = "user"
+                creator.creator_img = ""
+                creator.active = 0
+                db.session.add(creator)
+                db.session.commit()
+
+                send_mail([MAIL_ADMIN], f"{creator.creator_name} - Approval required",
+                          "A new user has registered, please approve registration.")
+
+                send_mail([creator.creator_mail], f"{creator.creator_name} - Registration pending",
+                          "Your registration needs to be approved. This should not take too long.")
+            return redirect(url_for('show_creators'))
+        else:
+            return render_template('account.html', form=form)
+    else:
+        return render_template('account.html', form=form)
+
+
+# Displays various forms to change the currently logged-in user
+@app.route(APP_PREFIX + '/web/my_creator', methods=['GET'])
+@login_required
+def show_my_creator():
+    form1 = MailCreatorForm()
+    form2 = PassCreatorForm()
+    form3 = DelCreatorForm()
+    creator = Creator.query.filter_by(creator_id=current_user.creator_id).first()
+
+    form1.email.default = creator.creator_mail
+    form1.description.default = creator.creator_desc
+    form1.image.choices = get_profile_choices(creator)
+    form1.image.default = creator.creator_img
+    form1.notification.default = creator.notification
+    form1.process()
+    return render_template('account_detail.html', creator=creator, form1=form1, form2=form2, form3=form3)
+
+
+# Post a change of user data or display error message if some data was not entered correctly
+@app.route(APP_PREFIX + '/web/my_mail_creator', methods=['POST'])
+@login_required
+def show_my_mail_creator():
+    form1 = MailCreatorForm()
+    form2 = PassCreatorForm()
+    form3 = DelCreatorForm()
+    creator = Creator.query.filter_by(creator_id=current_user.creator_id).first()
+
+    if creator:
+        if form1.validate_on_submit():
+            old_mail = creator.creator_mail
+            creator.creator_mail = escape(request.form["email"])
+            creator.creator_desc = request.form["description"]
+            creator.creator_img = escape(request.form["image"])
+            creator.notification = 1 if request.form.get('notification') else 0
+            db.session.commit()
+
+            send_mail([creator.creator_mail], "Notification: E-Mail changed",
+                      f"You have changed you e-mail address from {old_mail} to {creator.creator_mail}.")
+
+            return redirect(url_for('show_my_creator'))
+        else:
+            form1.email.default = creator.creator_mail
+            form1.description.default = creator.creator_desc
+            form1.image.choices = get_profile_choices(creator)
+            form1.image.default = creator.creator_img
+            form1.notification.default = creator.notification
+            form1.process()
+            return render_template('account_detail.html', creator=creator, form1=form1, form2=form2, form3=form3)
+    else:
+        return render_template('error.html', error_message="That creator does not exist.")
+
+
+# Post a user's password change or display error message if some data was not entered correctly
+@app.route(APP_PREFIX + '/web/my_pass_creator', methods=['POST'])
+@login_required
+def show_my_pass_creator():
+    form1 = MailCreatorForm()
+    form2 = PassCreatorForm()
+    form3 = DelCreatorForm()
+    creator = Creator.query.filter_by(creator_id=current_user.creator_id).first()
+
+    if creator:
+        if form2.validate_on_submit():
+            creator.creator_pass = generate_password_hash(request.form["password"], method='pbkdf2:sha256',
+                                                          salt_length=16)
+            db.session.commit()
+            return redirect(url_for('show_my_creator'))
+        else:
+            form1.email.default = creator.creator_mail
+            form1.description.default = creator.creator_desc
+            form1.image.choices = get_profile_choices(creator)
+            form1.image.default = creator.creator_img
+            form1.process()
+            return render_template('account_detail.html', creator=creator, form1=form1, form2=form2, form3=form3)
+    else:
+        return render_template('error.html', error_message="That creator does not exist.")
+
+
+# Delete a user and return to the site index afterwards
+@app.route(APP_PREFIX + '/web/my_del_creator', methods=['POST'])
+@login_required
+def show_my_del_creator():
+    form1 = MailCreatorForm()
+    form2 = PassCreatorForm()
+    form3 = DelCreatorForm()
+    creator = Creator.query.filter_by(creator_id=current_user.creator_id).first()
+
+    if creator:
+        if form3.validate_on_submit():
+            Creator.query.filter_by(creator_id=current_user.creator_id).delete()
+            db.session.commit()
+            logout_user()
+            return redirect(url_for('show_index'))
+        else:
+            form1.email.default = creator.creator_mail
+            form1.description.default = creator.creator_desc
+            form1.image.choices = get_profile_choices(creator)
+            form1.image.default = creator.creator_img
+            form1.process()
+            return render_template('account_detail.html', creator=creator, form1=form1, form2=form2, form3=form3)
+    else:
+        return render_template('error.html', error_message="That creator does not exist.")
+
+# Approve a user's registration
+@app.route(APP_PREFIX + '/web/approve_creator/<int:creator_id>', methods=['GET'])
+@login_required
+def show_approve_creator(creator_id):
+    if current_user.is_authenticated and current_user.creator_id and current_user.creator_role == "admin":
+        creator = Creator.query.filter_by(creator_id=creator_id).first()
+        creator.active = 1
+        db.session.commit()
+
+        send_mail([creator.creator_mail], f"{creator.creator_name} - Registration complete",
+                  "Your registration has been approved. You can use your login now.")
+
+        return redirect(url_for('show_creators'))
+    else:
+        return render_template('error.html')
