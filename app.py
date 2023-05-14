@@ -5,7 +5,7 @@ import string  # for string operations
 import logging  # enable logging
 
 import boto3  # for S3 storage
-from flask import Flask, request, render_template, jsonify, send_file, escape, redirect, url_for, \
+from flask import Flask, request, render_template, send_file, escape, redirect, url_for, \
     session  # most important Flask modules
 from flask_login import UserMixin, LoginManager, login_user, logout_user, login_required, \
     current_user  # to manage user sessions
@@ -19,7 +19,8 @@ from werkzeug.security import generate_password_hash, check_password_hash  # for
 from werkzeug.utils import secure_filename  # to prevent path traversal attacks
 from logging.handlers import SMTPHandler  # get crashes via mail
 
-from forms import LoginForm, AccountForm, MailCreatorForm, PassCreatorForm, DelCreatorForm, PasswordForm, PasswordResetForm, ContactForm  # Flask/Jinja template forms
+from forms import LoginForm, AccountForm, MailCreatorForm, PassCreatorForm, DelCreatorForm, \
+    PasswordForm, PasswordResetForm, ContactForm, FileForm, UploadForm  # Flask/Jinja template forms
 
 
 # the app configuration is done via environmental variables
@@ -283,17 +284,10 @@ def get_profile_choices(creator):
     return image_choices
 
 
-# Internal helpers - persist selected world in the session to improve navigation and remember selected world
-def update_session(world):
-    session['world_id'] = world.world_id
-    session['world_name'] = world.world_name
-    session['reduced'] = world.reduced
-    session['s3_prefix'] = f"{S3_FOLDER}/world/{world.world_name}"
-    session['s3_folder'] = S3_FOLDER
-
-
+# Internal helpers - style manager
 def update_style(style):
     session['style'] = style
+    session['s3_folder'] = S3_FOLDER
 
 
 # --------------------------------------------------------------
@@ -312,7 +306,7 @@ def show_error():
     return render_template('error.html')
 
 
-# Force user log-in and return to the site index afterwards
+# Force user log-in and return to the site index afterward
 @app.route(APP_PREFIX + '/web/logged', methods=['GET'])
 @login_required
 def show_logged():
@@ -343,7 +337,7 @@ def show_login():
         return render_template('login.html', form=form)
 
 
-# Log out user and return to the site index afterwards
+# Log out user and return to the site index afterward
 @app.route(APP_PREFIX + '/web/logout', methods=['GET'])
 def show_logout():
     update_style("main.css")
@@ -401,6 +395,83 @@ def show_password_reset(random_hash):
 # S3 storage pages
 # --------------------------------------------------------------
 
+# Show list of all uploaded filed and upload form
+@app.route(APP_PREFIX + "/web/storage/<string:section_name>/<string:folder_name>", methods=['GET', 'POST'])
+@login_required
+def show_storage(section_name, folder_name):
+    form = UploadForm()
+    form2 = FileForm()
+
+    if section_name == "user" and current_user.is_authenticated and current_user.creator_name == folder_name:
+        space_used_in_mb = round((get_size(BUCKET_PUBLIC, f"{section_name}/{folder_name}/") / 1024 / 1024), 2)
+        space_used = int(space_used_in_mb / int(S3_QUOTA) * 100)
+
+        if request.method == 'POST' and form.validate_on_submit():
+            filename = secure_filename(form.file.data.filename)
+
+            if allowed_file(filename) and space_used < 100:
+                local_folder_name = f"{UPLOAD_FOLDER}/{current_user.creator_name}"
+                local_file = os.path.join(local_folder_name, filename)
+                remote_file = f"{section_name}/{folder_name}/{filename}"
+                if not os.path.exists(local_folder_name):
+                    os.makedirs(local_folder_name)
+                form.file.data.save(local_file)
+                upload_file(BUCKET_PUBLIC, remote_file, local_file)
+            return redirect(url_for('show_storage', section_name=section_name, folder_name=folder_name))
+        else:
+            contents = list_files(BUCKET_PUBLIC, section_name, folder_name)
+            return render_template('storage.html', section_name=section_name, folder_name=folder_name,
+                                   contents=contents, space_used_in_mb=space_used_in_mb, space_used=space_used,
+                                   form=form, form2=form2)
+    else:
+        return render_template('error.html')
+
+
+# Change a filename
+@app.route(APP_PREFIX + "/web/rename/<string:section_name>/<string:folder_name>", methods=['POST'])
+@login_required
+def do_rename(section_name, folder_name):
+    if section_name == "user" and current_user.is_authenticated and current_user.creator_name == folder_name:
+        remote_file_new = f"{secure_filename(section_name)}/{secure_filename(folder_name)}/{secure_filename(request.form['filename_new'])} "
+        remote_file_old = f"{secure_filename(section_name)}/{secure_filename(folder_name)}/{secure_filename(request.form['filename_old'])}"
+
+        if remote_file_new != remote_file_old and allowed_file(remote_file_new):
+            rename_file(BUCKET_PUBLIC, remote_file_new, remote_file_old)
+
+        return redirect(url_for('show_storage', section_name=section_name, folder_name=folder_name))
+    else:
+        return render_template('error.html')
+
+
+# Download a specific file from S3 storage
+@app.route(APP_PREFIX + "/web/download/<string:section_name>/<string:folder_name>/<string:filename>", methods=['GET'])
+@login_required
+def do_download(section_name, folder_name, filename):
+    if section_name == "user" and current_user.is_authenticated and current_user.creator_name == folder_name:
+        local_folder_name = f"{DOWNLOAD_FOLDER}/{current_user.creator_name}"
+        local_filename = os.path.join(local_folder_name, secure_filename(filename))
+        remote_file = f"{secure_filename(section_name)}/{secure_filename(folder_name)}/{secure_filename(filename)}"
+
+        if not os.path.exists(local_folder_name):
+            os.makedirs(local_folder_name)
+        output = download_file(BUCKET_PUBLIC, remote_file, local_filename)
+        # return send_from_directory(app.config["UPLOAD_FOLDER"], name)
+        return send_file(output, as_attachment=True)
+    else:
+        return render_template('error.html')
+
+
+# Remove a specific file from S3 storage
+@app.route(APP_PREFIX + "/web/delete/<string:section_name>/<string:folder_name>/<string:filename>", methods=['GET'])
+@login_required
+def do_delete(section_name, folder_name, filename):
+    if section_name == "user" and current_user.is_authenticated and current_user.creator_name == folder_name:
+        remote_file = f"{secure_filename(section_name)}/{secure_filename(folder_name)}/{secure_filename(filename)}"
+        delete_file(BUCKET_PUBLIC, remote_file)
+        return redirect(url_for('show_storage', section_name=section_name, folder_name=folder_name))
+    else:
+        return render_template('error.html')
+
 
 # --------------------------------------------------------------
 # Flask HTML views to read and modify the database contents
@@ -416,6 +487,17 @@ def show_release():
 @app.route(APP_PREFIX + '/web/privacy', methods=['GET'])
 def show_privacy():
     return render_template('privacy.html')
+
+
+# Displays an image file stored on S3 storage
+@app.route(APP_PREFIX + '/web/image/<string:section_name>/<string:folder_name>/<string:filename>', methods=['GET'])
+@login_required
+def show_image(section_name, folder_name, filename):
+    if section_name == "user" and current_user.is_authenticated and current_user.creator_name == folder_name:
+        return render_template('image.html', section_name=secure_filename(section_name),
+                               folder_name=secure_filename(folder_name), filename=secure_filename(filename))
+    else:
+        return render_template('error.html')
 
 
 # Displays a form to send a message to the site admin - implements a simple captcha as well
@@ -616,7 +698,7 @@ def show_my_pass_creator():
         return render_template('error.html', error_message="That creator does not exist.")
 
 
-# Delete a user and return to the site index afterwards
+# Delete a user and return to the site index afterward
 @app.route(APP_PREFIX + '/web/my_del_creator', methods=['POST'])
 @login_required
 def show_my_del_creator():
@@ -640,6 +722,7 @@ def show_my_del_creator():
             return render_template('account_detail.html', creator=creator, form1=form1, form2=form2, form3=form3)
     else:
         return render_template('error.html', error_message="That creator does not exist.")
+
 
 # Approve a user's registration
 @app.route(APP_PREFIX + '/web/approve_creator/<int:creator_id>', methods=['GET'])

@@ -51,6 +51,10 @@ class DelCreatorForm(FlaskForm):
     operation = HiddenField(default='delete')
 
 
+class UploadForm(FlaskForm):
+    file = FileField(validators=[FileRequired(), FileAllowed(['jpg', 'png', 'gif'], 'Images only!')])
+
+
 class ContactForm(FlaskForm):
     contact_name = StringField('Name', validators=[InputRequired(), Length(min=5, max=20)])
     email = StringField('E-Mail', validators=[InputRequired(), Email()])
@@ -58,3 +62,8 @@ class ContactForm(FlaskForm):
     check_captcha = HiddenField(default='0')
     captcha = StringField('Captcha', validators=[InputRequired(), EqualTo('check_captcha', message='Captcha does not '
                                                                                                    'match')])
+
+
+class FileForm(FlaskForm):
+    filename_new = StringField('File Name', validators=[InputRequired()])
+    filename_old = HiddenField(default='filename')
