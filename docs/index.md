@@ -2,4 +2,4 @@
 
 ## About
 
-CPE Manager - work in progress
+CPE-Manager - work in progress
