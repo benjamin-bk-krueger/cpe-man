@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    {#  Page header #}
+    <div class="container-fluid pb-2 mt-4 mb-2">
+        <h2>{% block title %} Login {% endblock %}</h2>
+    </div>
+
+    {#  Page content #}
+    <div class="container-fluid pb-3 mt-2 mb-2">
+
+        {# Display form and possible error message - log in user #}
+        <h4 class="mb-3">Enter your login data</h4>
+        <form action="{{ url_for('show_login') }}" method="POST">
+            {{ form.csrf_token }}
+            <div class="form-group mt-2 mb-2">
+                <label for="creator">{{ form.creator.label }}</label>
+                {{ form.creator(size=20, class="form-control", style="max-width: 720px;", onkeypress="return event.charCode != 32") }}
+            </div>
+            {% for error in form.creator.errors %}
+                <div class="alert alert-warning"><strong>Warning!</strong> {{ error }}</div>
+            {% endfor %}
+            <div class="form-group mt-2 mb-2">
+                <label for="password">{{ form.password.label }}</label>
+                {{ form.password(size=20, class="form-control", style="max-width: 720px;") }}
+            </div>
+            {% for error in form.password.errors %}
+                <div class="alert alert-warning"><strong>Warning!</strong> {{ error }}</div>
+            {% endfor %}
+            <div class="form-check mt-2 mb-2">
+                <label class="form-check-label" for="remember">{{ form.remember.label }}</label>
+                {{ form.remember(class="form-check-input") }}
+            </div>
+            {% if form.remember.errors %}
+                {% for error in form.remember.errors %}
+                    <div class="alert alert-warning"><strong>Warning!</strong> {{ error }}</div>
+                {% endfor %}
+            {% endif %}
+            <button type="submit" class="btn btn-primary mt-4 mb-4">Log in</button>
+        </form>
+    </div>
+{% endblock %}

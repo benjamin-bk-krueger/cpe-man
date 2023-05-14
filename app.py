@@ -20,7 +20,7 @@ from werkzeug.security import generate_password_hash, check_password_hash  # for
 from werkzeug.utils import secure_filename  # to prevent path traversal attacks
 from logging.handlers import SMTPHandler  # get crashes via mail
 
-from forms import ContactForm  # Flask/Jinja template forms
+from forms import LoginForm, ContactForm  # Flask/Jinja template forms
 
 
 # the app configuration is done via environmental variables
@@ -312,6 +312,45 @@ def show_error():
     return render_template('error.html')
 
 
+# Force user log-in and return to the site index afterwards
+@app.route(APP_PREFIX + '/web/logged', methods=['GET'])
+@login_required
+def show_logged():
+    return redirect(url_for('show_index'))
+
+
+# Show user log-in page
+@app.route(APP_PREFIX + '/web/login', methods=['GET', 'POST'])
+def show_login():
+    form = LoginForm()
+    if request.method == 'POST' and form.validate_on_submit():
+        creator_name = request.form["creator"]
+        creator_pass = request.form["password"]
+        remember = True if request.form.get('remember') else False
+        creator = Creator.query.filter_by(active=1).filter_by(creator_name=creator_name).first()
+
+        if not creator or not check_password_hash(creator.creator_pass, creator_pass):
+            return redirect(url_for('show_login'))
+        else:
+            if creator.creator_role == "admin":
+                update_style("main_admin.css")
+            else:
+                update_style("main.css")
+
+            login_user(creator, remember=remember)
+            return redirect(url_for('show_index'))
+    else:
+        return render_template('login.html', form=form)
+
+
+# Log out user and return to the site index afterwards
+@app.route(APP_PREFIX + '/web/logout', methods=['GET'])
+def show_logout():
+    update_style("main.css")
+    logout_user()
+    return redirect(url_for('show_index'))
+
+
 # --------------------------------------------------------------
 # Flask HTML views to read and modify the database contents
 # --------------------------------------------------------------
@@ -320,6 +359,12 @@ def show_error():
 @app.route(APP_PREFIX + '/web/release', methods=['GET'])
 def show_release():
     return render_template('release.html')
+
+
+# Show privacy policy
+@app.route(APP_PREFIX + '/web/privacy', methods=['GET'])
+def show_privacy():
+    return render_template('privacy.html')
 
 
 # Displays a form to send a message to the site admin - implements a simple captcha as well
