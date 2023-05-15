@@ -477,6 +477,17 @@ def do_delete(section_name, folder_name, filename):
 # Flask HTML views to read and modify the database contents
 # --------------------------------------------------------------
 
+# Show statistics regarding available elements stored in the database and on S3 storage
+@app.route(APP_PREFIX + '/web/stats', methods=['GET'])
+def show_stats():
+    counts = dict()
+    counts['creator'] = Creator.query.count()
+
+    bucket_all = get_all_size(BUCKET_PUBLIC)
+
+    return render_template('stats.html', counts=counts, bucket_all=bucket_all)
+
+
 # Show information about all major releases
 @app.route(APP_PREFIX + '/web/release', methods=['GET'])
 def show_release():
