@@ -21,3 +21,5 @@ export MAIL_SENDER=mail@localhost
 export MAIL_ADMIN=admin@localhost
 export APP_VERSION=0.1
 export APP_PREFIX=
+export LOG_ENABLE=0
+export LOG_FILE=cpeman.log

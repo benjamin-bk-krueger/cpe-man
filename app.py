@@ -44,6 +44,8 @@ DOWNLOAD_FOLDER = os.environ['HOME'] + "/downloads"
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 APP_VERSION = os.environ['APP_VERSION']
 APP_PREFIX = os.environ['APP_PREFIX']
+LOG_ENABLE = int(os.environ['LOG_ENABLE'])
+LOG_FILE = os.environ['LOG_FILE']
 
 # Flask app configuration containing static (css, img) path and template directory
 app = Flask(__name__,
@@ -73,6 +75,7 @@ if MAIL_ENABLE == 1:
 
     if not app.debug:
         app.logger.addHandler(mail_handler)
+
 
 # Enable CSRF protection for the app
 csrf = CSRFProtect(app)
@@ -277,6 +280,18 @@ def send_massmail(mail_header, mail_body):
         mail.send(msg)
 
 
+# Internal logging
+def do_log(operation, parameters=["none"]):
+    if LOG_ENABLE == 1:
+        logf = open(LOG_FILE, "a")  # append mode
+        logf.write("Operation: " + operation + "\n")
+        logf.close()
+    elif LOG_ENABLE == 2:
+        logf = open(LOG_FILE, "a")  # append mode
+        logf.write("Operation: " + operation + ", Parameters: " + ', '.join(parameters) + "\n")
+        logf.close()
+
+
 # Internal helpers - return choices list used in HTML select elements
 def get_profile_choices(creator):
     image_choices = list_files(BUCKET_PUBLIC, "user", creator.creator_name)
@@ -434,8 +449,8 @@ def do_rename(section_name, folder_name):
     if section_name == "user" and current_user.is_authenticated and current_user.creator_name == folder_name:
         remote_file_new = f"{secure_filename(section_name)}/{secure_filename(folder_name)}/{secure_filename(request.form['filename_new'])} "
         remote_file_old = f"{secure_filename(section_name)}/{secure_filename(folder_name)}/{secure_filename(request.form['filename_old'])}"
-
         if remote_file_new != remote_file_old and allowed_file(remote_file_new):
+            do_log(__name__, [BUCKET_PUBLIC, remote_file_new, remote_file_old])
             rename_file(BUCKET_PUBLIC, remote_file_new, remote_file_old)
 
         return redirect(url_for('show_storage', section_name=section_name, folder_name=folder_name))

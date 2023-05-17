@@ -23,6 +23,8 @@ services:
       - MAIL_ADMIN=admin@localhost
       - APP_VERSION=0.1
       - APP_PREFIX=
+      - LOG_ENABLE=2
+      - LOG_FILE=cpeman.log
     command: sh /home/cpeman/flask.sh
     user: cpeman
     ports:
