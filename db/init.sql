@@ -23,6 +23,19 @@ CREATE TABLE invitation (
     modified timestamp default current_timestamp
 );
 
+CREATE TABLE provider (
+    provider_id SERIAL PRIMARY KEY,
+    creator_id INT REFERENCES creator ( creator_id ),
+    provider_name VARCHAR ( 100 ),
+    provider_desc VARCHAR ( 1024 ),
+    provider_img VARCHAR ( 384),
+    created timestamp default current_timestamp,
+    modified timestamp default current_timestamp
+);
+
+CREATE UNIQUE INDEX idx_provider_name
+ON provider ( provider_name, creator_id );
+
 CREATE OR REPLACE FUNCTION update_modified_column()   
 RETURNS TRIGGER AS $$
 BEGIN
@@ -33,6 +46,7 @@ $$ language 'plpgsql';
 
 CREATE TRIGGER update_creator_modtime BEFORE UPDATE ON creator FOR EACH ROW EXECUTE PROCEDURE  update_modified_column();
 CREATE TRIGGER update_invitation_modtime BEFORE UPDATE ON invitation FOR EACH ROW EXECUTE PROCEDURE  update_modified_column();
+CREATE TRIGGER update_provider_modtime BEFORE UPDATE ON provider FOR EACH ROW EXECUTE PROCEDURE  update_modified_column();
 
 -- Default credentials, need to be changed on production stage
 INSERT INTO invitation(invitation_code, invitation_role, invitation_forever) VALUES ('heureka', 'creator', 0);

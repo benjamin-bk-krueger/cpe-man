@@ -5,7 +5,7 @@ import string  # for string operations
 import logging  # enable logging
 
 import boto3  # for S3 storage
-from flask import Flask, request, render_template, send_file, escape, redirect, url_for, \
+from flask import Flask, request, render_template, jsonify, send_file, escape, redirect, url_for, \
     session  # most important Flask modules
 from flask_login import UserMixin, LoginManager, login_user, logout_user, login_required, \
     current_user  # to manage user sessions
@@ -158,6 +158,90 @@ class Invitation(db.Model):
         return '<Invitation %s>' % self.invitation_id
 
 
+class Provider(db.Model):
+    __tablename__ = "provider"
+    provider_id = db.Column(db.INTEGER, primary_key=True)
+    creator_id = db.Column(db.INTEGER, db.ForeignKey("creator.creator_id"))
+    provider_name = db.Column(db.VARCHAR(100))
+    provider_desc = db.Column(db.VARCHAR(1024))
+    provider_img = db.Column(db.VARCHAR(384))
+
+    def __repr__(self):
+        return '<Provider %s>' % self.provider_name
+
+
+class ProviderSchema(marsh.Schema):
+    class Meta:
+        fields = ("provider_id", "creator_id", "provider_name", "provider_desc", "provider_img")
+        model = Provider
+
+
+provider_schema = ProviderSchema()
+providers_schema = ProviderSchema(many=True)
+
+
+class ProviderListResource(Resource):
+    @staticmethod
+    def get():
+        providers = Provider.query.all()
+        return providers_schema.dump(providers)
+
+    @staticmethod
+    def post():
+        if all(s in request.json for s in ('provider_name', 'provider_desc', 'provider_img')):
+            creator = Creator.query.filter_by(creator_name=request.authorization['username']).first()
+            if creator.creator_role == 'creator':
+                new_provider = Provider(
+                    creator_id=creator.creator_id,
+                    provider_name=escape(request.json['provider_name']),
+                    provider_desc=request.json['provider_desc'],
+                    provider_img=clean_url(request.json['provider_img'])
+                )
+                db.session.add(new_provider)
+                db.session.commit()
+                return provider_schema.dump(new_provider)
+            else:
+                return jsonify({'error': 'wrong credentials or permissions'})
+        else:
+            return jsonify({'error': 'wrong JSON format'})
+
+
+class ProviderResource(Resource):
+    @staticmethod
+    def get(provider_id):
+        provider = Provider.query.get_or_404(provider_id)
+        return provider_schema.dump(provider)
+
+    @staticmethod
+    def patch(provider_id):
+        provider = Provider.query.get_or_404(provider_id)
+        if all(s in request.json for s in ('provider_name', 'provider_desc', 'provider_img')):
+            if AuthChecker().check(request.authorization, provider.provider_id):
+                provider.provider_name = escape(request.json['provider_name'])
+                provider.provider_desc = request.json['provider_desc']
+                provider.provider_img = clean_url(request.json['provider_img'])
+                db.session.commit()
+                return provider_schema.dump(provider)
+            else:
+                return jsonify({'error': 'wrong credentials or permissions'})
+        else:
+            return jsonify({'error': 'wrong JSON format'})
+
+    @staticmethod
+    def delete(provider_id):
+        provider = Provider.query.get_or_404(provider_id)
+        if AuthChecker().check(request.authorization, provider.provider_id):
+            db.session.delete(provider)
+            db.session.commit()
+            return '', 204
+        else:
+            return jsonify({'error': 'wrong credentials or permissions'})
+
+
+api.add_resource(ProviderListResource, APP_PREFIX + '/api/providers')
+api.add_resource(ProviderResource, APP_PREFIX + '/api/providers/<int:provider_id>')
+
+
 # --------------------------------------------------------------
 # Internal functions
 # --------------------------------------------------------------
@@ -227,19 +311,22 @@ def clean_url(url):
 # Path traversal prevention
 def allowed_file(filename):
     return '.' in filename and \
-           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+        filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
 # check if the basic authentication is valid, used for API calls
 class AuthChecker:
     @staticmethod
-    def check(auth):
+    def check(auth, provider_id):
         if auth:
             creator_name = auth['username']
             creator_pass = auth['password']
             creator = Creator.query.filter_by(active=1).filter_by(creator_name=creator_name).first()
+            provider = Provider.query.filter_by(provider_id=provider_id).first()
 
-            if creator and check_password_hash(creator.creator_pass, creator_pass):
+            if (creator and provider and check_password_hash(creator.creator_pass,
+                                                             creator_pass) and
+                    creator.creator_id == provider.creator_id):
                 return True
         return False
 
@@ -281,7 +368,9 @@ def send_massmail(mail_header, mail_body):
 
 
 # Internal logging
-def log_entry(operation, parameters=["none"]):
+def log_entry(operation, parameters=None):
+    if parameters is None:
+        parameters = ["none"]
     if LOG_ENABLE == 1:
         logf = open(LOG_FILE, "a")  # append mode
         logf.write("Operation: " + operation + "\n")
