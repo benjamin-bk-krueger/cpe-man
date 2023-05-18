@@ -1,0 +1,179 @@
+{
+	"info": {
+		"_postman_id": "f0b58da2-08d7-477d-ac6e-6140502c6c62",
+		"name": "CPE-Manager",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "20357220"
+	},
+	"item": [
+		{
+			"name": "Providers",
+			"item": [
+				{
+					"name": "All Providers",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseurl}}/api/providers",
+							"host": [
+								"{{baseurl}}"
+							],
+							"path": [
+								"api",
+								"providers"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Single Provider",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"provider_desc\": \"Description\",\n    \"provider_img\": \"\",\n    \"provider_name\": \"Name\"\n}"
+						},
+						"url": {
+							"raw": "{{baseurl}}/api/providers",
+							"host": [
+								"{{baseurl}}"
+							],
+							"path": [
+								"api",
+								"providers"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Single Provider",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseurl}}/api/providers/{{num}}",
+							"host": [
+								"{{baseurl}}"
+							],
+							"path": [
+								"api",
+								"providers",
+								"{{num}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Single Provider",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"provider_desc\": \"Description\",\n    \"provider_img\": \"\",\n    \"provider_name\": \"Name\"\n}"
+						},
+						"url": {
+							"raw": "{{baseurl}}/api/providers/{{num}}",
+							"host": [
+								"{{baseurl}}"
+							],
+							"path": [
+								"api",
+								"providers",
+								"{{num}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Single Provider",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"room_id\": 1,\n    \"item_id\": 1,\n    \"world_id\": 1,\n    \"item_desc\": \"Description\",\n    \"item_img\": \"\",\n    \"item_name\": \"Name\"\n}"
+						},
+						"url": {
+							"raw": "{{baseurl}}/api/providers/{{num}}",
+							"host": [
+								"{{baseurl}}"
+							],
+							"path": [
+								"api",
+								"providers",
+								"{{num}}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"auth": {
+		"type": "basic",
+		"basic": [
+			{
+				"key": "password",
+				"value": "{{password}}",
+				"type": "string"
+			},
+			{
+				"key": "username",
+				"value": "{{username}}",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	]
+}
