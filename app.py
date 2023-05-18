@@ -118,10 +118,6 @@ def load_user(creator_id):
     return Creator.query.get(int(creator_id))
 
 
-# set S3 standard folder
-session['s3_folder'] = S3_FOLDER
-
-
 # --------------------------------------------------------------
 # ORM classes
 # --------------------------------------------------------------
@@ -417,6 +413,7 @@ def show_password_reset(random_hash):
 @app.route(APP_PREFIX + "/web/storage/<string:section_name>/<string:folder_name>", methods=['GET', 'POST'])
 @login_required
 def show_storage(section_name, folder_name):
+    session['s3_folder'] = S3_FOLDER
     form = UploadForm()
     form2 = FileForm()
 
@@ -522,6 +519,7 @@ def show_privacy():
 @app.route(APP_PREFIX + '/web/image/<string:section_name>/<string:folder_name>/<string:filename>', methods=['GET'])
 @login_required
 def show_image(section_name, folder_name, filename):
+    session['s3_folder'] = S3_FOLDER
     if section_name == "user" and current_user.is_authenticated and current_user.creator_name == folder_name:
         return render_template('image.html', section_name=secure_filename(section_name),
                                folder_name=secure_filename(folder_name), filename=secure_filename(filename))
