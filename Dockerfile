@@ -13,7 +13,7 @@ RUN rm -rf /var/lib/apt/lists/*
 
 RUN useradd -m -s /bin/false cpeman
 
-EXPOSE 5010
+EXPOSE 5020
 
 USER cpeman
 

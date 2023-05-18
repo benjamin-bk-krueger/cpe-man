@@ -16,7 +16,7 @@ services:
       - S3_QUOTA=100
       - BUCKET_PUBLIC=cpeman-public
       - BUCKET_PRIVATE=cpeman-private
-      - WWW_SERVER=http://localhost:5010
+      - WWW_SERVER=http://localhost:5020
       - MAIL_ENABLE=0
       - MAIL_SERVER=localhost
       - MAIL_SENDER=mail@localhost
@@ -28,7 +28,7 @@ services:
     command: sh /home/cpeman/flask.sh
     user: cpeman
     ports:
-      - "127.0.0.1:5010:5010"
+      - "127.0.0.1:5020:5020"
     container_name: cpeman_web
     volumes:
       - ./.aws/:/home/cpeman/.aws/
