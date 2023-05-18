@@ -118,6 +118,10 @@ def load_user(creator_id):
     return Creator.query.get(int(creator_id))
 
 
+# set S3 standard folder
+session['s3_folder'] = S3_FOLDER
+
+
 # --------------------------------------------------------------
 # ORM classes
 # --------------------------------------------------------------
@@ -281,7 +285,7 @@ def send_massmail(mail_header, mail_body):
 
 
 # Internal logging
-def do_log(operation, parameters=["none"]):
+def log_entry(operation, parameters=["none"]):
     if LOG_ENABLE == 1:
         logf = open(LOG_FILE, "a")  # append mode
         logf.write("Operation: " + operation + "\n")
@@ -302,7 +306,6 @@ def get_profile_choices(creator):
 # Internal helpers - style manager
 def update_style(style):
     session['style'] = style
-    session['s3_folder'] = S3_FOLDER
 
 
 # --------------------------------------------------------------
@@ -447,10 +450,10 @@ def show_storage(section_name, folder_name):
 @login_required
 def do_rename(section_name, folder_name):
     if section_name == "user" and current_user.is_authenticated and current_user.creator_name == folder_name:
-        remote_file_new = f"{secure_filename(section_name)}/{secure_filename(folder_name)}/{secure_filename(request.form['filename_new'])} "
+        remote_file_new = f"{secure_filename(section_name)}/{secure_filename(folder_name)}/{secure_filename(request.form['filename_new'])}"
         remote_file_old = f"{secure_filename(section_name)}/{secure_filename(folder_name)}/{secure_filename(request.form['filename_old'])}"
         if remote_file_new != remote_file_old and allowed_file(remote_file_new):
-            do_log(__name__, [BUCKET_PUBLIC, remote_file_new, remote_file_old])
+            log_entry(__name__, [BUCKET_PUBLIC, remote_file_new, remote_file_old])
             rename_file(BUCKET_PUBLIC, remote_file_new, remote_file_old)
 
         return redirect(url_for('show_storage', section_name=section_name, folder_name=folder_name))
