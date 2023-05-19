@@ -20,7 +20,8 @@ from werkzeug.utils import secure_filename  # to prevent path traversal attacks
 from logging.handlers import SMTPHandler  # get crashes via mail
 
 from forms import LoginForm, AccountForm, MailCreatorForm, PassCreatorForm, DelCreatorForm, \
-    PasswordForm, PasswordResetForm, ContactForm, FileForm, UploadForm  # Flask/Jinja template forms
+    PasswordForm, PasswordResetForm, ContactForm, FileForm, UploadForm, \
+    ProviderForm  # Flask/Jinja template forms
 
 
 # the app configuration is done via environmental variables
@@ -853,5 +854,43 @@ def show_approve_creator(creator_id):
                   "Your registration has been approved. You can use your login now.")
 
         return redirect(url_for('show_creators'))
+    else:
+        return render_template('error.html')
+
+
+# Displays all available providers
+@app.route(APP_PREFIX + '/web/providers', methods=['GET'])
+def show_providers():
+    if current_user.creator_id and current_user.creator_role == "creator":
+        form = ProviderForm()
+
+        form.image.choices = ["No Image"]
+        form.image.default = "No Image"
+        form.process()
+
+        providers = Provider.query.filter_by(creator_id=current_user.creator_id).order_by(Provider.provider_name.asc())
+        return render_template('provider.html', providers=providers, form=form)
+    else:
+        return render_template('error.html')
+
+
+# Post a new provider - if it doesn't already exist
+@app.route(APP_PREFIX + '/web/providers', methods=['POST'])
+@login_required
+def show_providers_p():
+    if current_user.creator_id and current_user.creator_role == "creator":
+        provider_name = escape(request.form["name"])
+        provider = Provider.query.filter_by(provider_name=provider_name).first()
+
+        if not provider:
+            provider = Provider()
+            provider.provider_name = provider_name
+            provider.provider_url = clean_url(request.form["url"])
+            provider.provider_desc = request.form["description"]
+            provider.provider_img = clean_url(request.form["image"])
+            provider.creator_id = current_user.creator_id
+            db.session.add(provider)
+            db.session.commit()
+        return redirect(url_for('show_providers'))
     else:
         return render_template('error.html')

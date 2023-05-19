@@ -28,6 +28,7 @@ CREATE TABLE provider (
     creator_id INT REFERENCES creator ( creator_id ),
     provider_name VARCHAR ( 100 ),
     provider_desc VARCHAR ( 1024 ),
+    provider_url VARCHAR ( 256 ),
     provider_img VARCHAR ( 384),
     created timestamp default current_timestamp,
     modified timestamp default current_timestamp

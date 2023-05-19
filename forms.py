@@ -67,3 +67,10 @@ class ContactForm(FlaskForm):
 class FileForm(FlaskForm):
     filename_new = StringField('File Name', validators=[InputRequired()])
     filename_old = HiddenField(default='filename')
+
+
+class ProviderForm(FlaskForm):
+    name = StringField('Name', validators=[InputRequired()])
+    url = StringField('URL')
+    description = TextAreaField('Description')
+    image = SelectField('Image', choices=["none"], validate_choice=False)
