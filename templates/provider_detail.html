@@ -1,0 +1,121 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    {#  Page header #}
+    <div class="container-fluid pb-2 mt-4 mb-2">
+        <h2>{% block title %} {{ provider.provider_name }} {% endblock %}</h2>
+    </div>
+
+    {#  Page content #}
+    <div class="container-fluid pb-3 mt-2 mb-2">
+
+        {#  Show detailed information regarding the selected provider #}
+        <div class="card mb-3" style="max-width: 720px;">
+            <div class="row g-0">
+                <div class="col-md-4">
+                    <img src="{{ s3_prefix + "/" + provider.provider_img if (provider.provider_img!='NoImage') else '/static/not_found.jpg' }}" class="img-fluid rounded-start" alt="Provider Image">
+                </div>
+                <div class="col-md-8">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ provider.provider_url }}</h5>
+                        <h6 class="card-subtitle mb-2 text-muted">Created by <a href="{{ url_for('show_creator', creator_id=creator.creator_id)}}">{{ creator.creator_name }}</a></h6>
+                        <p class="card-text">{{ provider.provider_desc }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {# Modal dialog window - delete currently selected provider #}
+        <div id="myModal_del" class="modal fade" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h4 class="modal-title">Delete Provider</h4>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form action="{{ url_for('show_deleted_provider', provider_id=provider.provider_id) }}" id="form_deletion">
+                            Are you sure?
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-danger mt-4 mb-4 btn-space" form="form_deletion">Confirm</button>
+                        <button type="button" class="btn btn-secondary mt-4 mb-4" data-bs-dismiss="modal">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {# Modal dialog window - edit currently selected provider #}
+        <div id="myModal" class="modal fade" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h4 class="modal-title">Edit Provider</h4>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form action="{{ url_for('show_provider_p', provider_id=provider.provider_id) }}" method="POST" id="form_edit">
+                            {{ form.csrf_token }}
+                            <div class="form-group mt-2 mb-2">
+                                <label for="{{ form.name.name }}">{{ form.name.label }}</label>
+                                {{ form.name(size=20, class="form-control", onkeypress="return event.charCode != 32", readonly=true) }}
+                            </div>
+                            <div class="form-group mt-2 mb-2">
+                                <label for="{{ form.url.name }}">{{ form.url.label }}</label>
+                                {{ form.url(size=20, class="form-control", onkeypress="return event.charCode != 32") }}
+                            </div>
+                            <div class="form-group mt-2 mb-2">
+                                <label for="{{ form.description.name }}">{{ form.description.label }}</label>
+                                {{ form.description(size=40, class="form-control") }}
+                            </div>
+                            <div class="form-group mt-2 mb-2">
+                                <label for="{{ form.image.name }}">{{ form.image.label }}</label>
+                                {{ form.image(class="form-select") }}
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-primary mt-4 mb-4 btn-space" form="form_edit">Update</button>
+                        <button type="button" class="btn btn-secondary mt-4 mb-4" data-bs-dismiss="modal">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {#  Display action buttons regarding the selected provider #}
+        <div class="btn-toolbar" role="toolbar" aria-label="Toolbar with button groups">
+
+            {#  Text-based links #}
+            <div class="btn-group me-2" role="group" aria-label="Button group with nested dropdown">
+                <div class="btn-group" role="group">
+                    <button id="btnGroupDrop1" type="button" class="btn btn-primary dropdown-toggle mt-4 mb-4" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="bi bi-activity"></i> Actions
+                    </button>
+                    <ul class="dropdown-menu" aria-labelledby="btnGroupDrop1">
+                        <li><a class="dropdown-item" href="{{ url_for('show_providers') }}">All Providers</a></li>
+                        {% if current_user.creator_id == provider.creator_id %}
+                            <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#myModal">Edit Provider</a></li>
+                            <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#myModal_del">Delete Provider</a></li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+
+            {#  Same links implemented using small buttons #}
+            <div class="btn-group me-2" role="group" aria-label="Second group">
+                <a href="{{ url_for('show_providers') }}" data-toggle="tooltip" title="All Providers" class="btn btn-primary mt-4 mb-4"><i class="bi bi-list-ul"></i></a>
+            </div>
+            <div class="btn-group me-2" role="group" aria-label="Third group">
+                {% if current_user.creator_id == provider.creator_id %}
+                    <a href="#" class="btn btn-primary mt-4 mb-4" data-toggle="tooltip" title="Edit Provider" data-bs-toggle="modal" data-bs-target="#myModal"><i class="bi bi-pencil"></i></a>
+                {% endif %}
+            </div>
+            <div class="btn-group me-2" role="group" aria-label="Fourth group">
+                {% if current_user.creator_id == provider.creator_id %}
+                    <a href="#" class="btn btn-danger mt-4 mb-4" data-toggle="tooltip" title="Delete Provider" data-bs-toggle="modal" data-bs-target="#myModal_del"><i class="bi bi-trash"></i></a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+{% endblock %}

@@ -165,6 +165,7 @@ class Provider(db.Model):
     creator_id = db.Column(db.INTEGER, db.ForeignKey("creator.creator_id"))
     provider_name = db.Column(db.VARCHAR(100))
     provider_desc = db.Column(db.VARCHAR(1024))
+    provider_url = db.Column(db.VARCHAR(256))
     provider_img = db.Column(db.VARCHAR(384))
 
     def __repr__(self):
@@ -894,3 +895,49 @@ def show_providers_p():
         return redirect(url_for('show_providers'))
     else:
         return render_template('error.html')
+
+
+# Shows information about a specific provider
+@app.route(APP_PREFIX + '/web/provider/<int:provider_id>', methods=['GET'])
+def show_provider(provider_id):
+    s3_prefix = f"{S3_FOLDER}/user/{provider_id}"
+    form = ProviderForm()
+    provider = Provider.query.filter_by(provider_id=provider_id).first()
+    if provider:
+        creator = Creator.query.filter_by(creator_id=provider.creator_id).first()
+
+        form.name.default = provider.provider_name
+        form.url.default = provider.provider_url
+        form.description.default = provider.provider_desc
+        #form.image.choices = get_files_choices(provider)
+        #form.image.default = provider.provider_img
+        form.process()
+        return render_template('provider_detail.html', provider=provider, creator=creator, form=form, s3_prefix=s3_prefix)
+    else:
+        return render_template('error.html', error_message="That provider does not exist.")
+
+
+# Post a change in a provider's data
+@app.route(APP_PREFIX + '/web/provider/<int:provider_id>', methods=['POST'])
+@login_required
+def show_provider_p(provider_id):
+    provider = Provider.query.filter_by(provider_id=provider_id).first()
+
+    if provider and current_user.creator_id and current_user.creator_id == provider.creator_id:
+        provider.provider_name = clean_url(request.form["name"])
+        provider.provider_url = clean_url(request.form["url"])
+        provider.provider_desc = request.form["description"]
+        provider.provider_img = clean_url(request.form["image"])
+        db.session.commit()
+        return redirect(url_for('show_provider', provider_id=provider.provider_id))
+    else:
+        return render_template('error.html')
+
+
+# Delete a specific provider - and all included elements!!!
+@app.route(APP_PREFIX + '/web/deleted_provider/<int:provider_id>', methods=['GET'])
+@login_required
+def show_deleted_provider(provider_id):
+    Provider.query.filter_by(provider_id=provider_id).filter_by(creator_id=current_user.creator_id).delete()
+    db.session.commit()
+    return redirect(url_for('show_providers'))
