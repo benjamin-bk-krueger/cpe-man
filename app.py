@@ -36,10 +36,8 @@ MAIL_SENDER = os.environ['MAIL_SENDER']
 MAIL_ADMIN = os.environ['MAIL_ADMIN']
 MAIL_ENABLE = int(os.environ['MAIL_ENABLE'])
 S3_ENDPOINT = os.environ['S3_ENDPOINT']  # where S3 buckets are located
-S3_FOLDER = os.environ['S3_FOLDER']
 S3_QUOTA = os.environ['S3_QUOTA']
-BUCKET_PUBLIC = os.environ['BUCKET_PUBLIC']
-BUCKET_PRIVATE = os.environ['BUCKET_PRIVATE']
+S3_BUCKET = os.environ['S3_BUCKET']
 UPLOAD_FOLDER = os.environ['HOME'] + "/uploads"  # directory for game data
 DOWNLOAD_FOLDER = os.environ['HOME'] + "/downloads"
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
@@ -174,7 +172,7 @@ class Provider(db.Model):
 
 class ProviderSchema(marsh.Schema):
     class Meta:
-        fields = ("provider_id", "creator_id", "provider_name", "provider_desc", "provider_img")
+        fields = ("provider_id", "creator_id", "provider_name", "provider_desc", "provider_url", "provider_img")
         model = Provider
 
 
@@ -190,13 +188,14 @@ class ProviderListResource(Resource):
 
     @staticmethod
     def post():
-        if all(s in request.json for s in ('provider_name', 'provider_desc', 'provider_img')):
+        if all(s in request.json for s in ('provider_name', 'provider_desc', 'provider_url', 'provider_img')):
             creator = Creator.query.filter_by(creator_name=request.authorization['username']).first()
             if creator.creator_role == 'creator':
                 new_provider = Provider(
                     creator_id=creator.creator_id,
                     provider_name=escape(request.json['provider_name']),
                     provider_desc=request.json['provider_desc'],
+                    provider_url=clean_url(request.json['provider_url']),
                     provider_img=clean_url(request.json['provider_img'])
                 )
                 db.session.add(new_provider)
@@ -217,10 +216,11 @@ class ProviderResource(Resource):
     @staticmethod
     def patch(provider_id):
         provider = Provider.query.get_or_404(provider_id)
-        if all(s in request.json for s in ('provider_name', 'provider_desc', 'provider_img')):
+        if all(s in request.json for s in ('provider_name', 'provider_desc', 'provider_url', 'provider_img')):
             if AuthChecker().check(request.authorization, provider.provider_id):
                 provider.provider_name = escape(request.json['provider_name'])
                 provider.provider_desc = request.json['provider_desc']
+                provider.provider_url = clean_url(request.json['provider_url'])
                 provider.provider_img = clean_url(request.json['provider_img'])
                 db.session.commit()
                 return provider_schema.dump(provider)
@@ -319,16 +319,13 @@ def allowed_file(filename):
 # check if the basic authentication is valid, used for API calls
 class AuthChecker:
     @staticmethod
-    def check(auth, provider_id):
+    def check(auth):
         if auth:
             creator_name = auth['username']
             creator_pass = auth['password']
             creator = Creator.query.filter_by(active=1).filter_by(creator_name=creator_name).first()
-            provider = Provider.query.filter_by(provider_id=provider_id).first()
 
-            if (creator and provider and check_password_hash(creator.creator_pass,
-                                                             creator_pass) and
-                    creator.creator_id == provider.creator_id):
+            if creator and check_password_hash(creator.creator_pass, creator_pass):
                 return True
         return False
 
@@ -338,7 +335,6 @@ class AuthChecker:
 def index():
     # Not needed if you set SITEMAP_INCLUDE_RULES_WITHOUT_PARAMS=True
     yield 'show_index', {}
-    yield 'show_creators', {}
     yield 'show_release', {}
 
 
@@ -385,7 +381,7 @@ def log_entry(operation, parameters=None):
 
 # Internal helpers - return choices list used in HTML select elements
 def get_profile_choices(creator):
-    image_choices = list_files(BUCKET_PUBLIC, "user", creator.creator_name)
+    image_choices = list_files(S3_BUCKET, "user", creator.creator_name)
     image_choices.insert(0, "No Image")
     return image_choices
 
@@ -504,12 +500,11 @@ def show_password_reset(random_hash):
 @app.route(APP_PREFIX + "/web/storage/<string:section_name>/<string:folder_name>", methods=['GET', 'POST'])
 @login_required
 def show_storage(section_name, folder_name):
-    session['s3_folder'] = S3_FOLDER
     form = UploadForm()
     form2 = FileForm()
 
     if section_name == "user" and current_user.is_authenticated and current_user.creator_name == folder_name:
-        space_used_in_mb = round((get_size(BUCKET_PUBLIC, f"{section_name}/{folder_name}/") / 1024 / 1024), 2)
+        space_used_in_mb = round((get_size(S3_BUCKET, f"{section_name}/{folder_name}/") / 1024 / 1024), 2)
         space_used = int(space_used_in_mb / int(S3_QUOTA) * 100)
 
         if request.method == 'POST' and form.validate_on_submit():
@@ -522,10 +517,10 @@ def show_storage(section_name, folder_name):
                 if not os.path.exists(local_folder_name):
                     os.makedirs(local_folder_name)
                 form.file.data.save(local_file)
-                upload_file(BUCKET_PUBLIC, remote_file, local_file)
+                upload_file(S3_BUCKET, remote_file, local_file)
             return redirect(url_for('show_storage', section_name=section_name, folder_name=folder_name))
         else:
-            contents = list_files(BUCKET_PUBLIC, section_name, folder_name)
+            contents = list_files(S3_BUCKET, section_name, folder_name)
             return render_template('storage.html', section_name=section_name, folder_name=folder_name,
                                    contents=contents, space_used_in_mb=space_used_in_mb, space_used=space_used,
                                    form=form, form2=form2)
@@ -541,8 +536,8 @@ def do_rename(section_name, folder_name):
         remote_file_new = f"{secure_filename(section_name)}/{secure_filename(folder_name)}/{secure_filename(request.form['filename_new'])}"
         remote_file_old = f"{secure_filename(section_name)}/{secure_filename(folder_name)}/{secure_filename(request.form['filename_old'])}"
         if remote_file_new != remote_file_old and allowed_file(remote_file_new):
-            log_entry(__name__, [BUCKET_PUBLIC, remote_file_new, remote_file_old])
-            rename_file(BUCKET_PUBLIC, remote_file_new, remote_file_old)
+            log_entry(__name__, [S3_BUCKET, remote_file_new, remote_file_old])
+            rename_file(S3_BUCKET, remote_file_new, remote_file_old)
 
         return redirect(url_for('show_storage', section_name=section_name, folder_name=folder_name))
     else:
@@ -560,7 +555,7 @@ def do_download(section_name, folder_name, filename):
 
         if not os.path.exists(local_folder_name):
             os.makedirs(local_folder_name)
-        output = download_file(BUCKET_PUBLIC, remote_file, local_filename)
+        output = download_file(S3_BUCKET, remote_file, local_filename)
         # return send_from_directory(app.config["UPLOAD_FOLDER"], name)
         return send_file(output, as_attachment=True)
     else:
@@ -573,7 +568,7 @@ def do_download(section_name, folder_name, filename):
 def do_delete(section_name, folder_name, filename):
     if section_name == "user" and current_user.is_authenticated and current_user.creator_name == folder_name:
         remote_file = f"{secure_filename(section_name)}/{secure_filename(folder_name)}/{secure_filename(filename)}"
-        delete_file(BUCKET_PUBLIC, remote_file)
+        delete_file(S3_BUCKET, remote_file)
         return redirect(url_for('show_storage', section_name=section_name, folder_name=folder_name))
     else:
         return render_template('error.html')
@@ -589,7 +584,7 @@ def show_stats():
     counts = dict()
     counts['creator'] = Creator.query.count()
 
-    bucket_all = get_all_size(BUCKET_PUBLIC)
+    bucket_all = get_all_size(S3_BUCKET)
 
     return render_template('stats.html', counts=counts, bucket_all=bucket_all)
 
@@ -610,7 +605,6 @@ def show_privacy():
 @app.route(APP_PREFIX + '/web/image/<string:section_name>/<string:folder_name>/<string:filename>', methods=['GET'])
 @login_required
 def show_image(section_name, folder_name, filename):
-    session['s3_folder'] = S3_FOLDER
     if section_name == "user" and current_user.is_authenticated and current_user.creator_name == folder_name:
         return render_template('image.html', section_name=secure_filename(section_name),
                                folder_name=secure_filename(folder_name), filename=secure_filename(filename))
@@ -676,9 +670,7 @@ def show_creator(creator_id):
         creator = Creator.query.filter_by(active=1).filter_by(creator_id=creator_id).first()
 
     if creator:
-        s3_prefix = f"{S3_FOLDER}/user/{creator.creator_name}"
-
-        return render_template('creator_detail.html', creator=creator, s3_prefix=s3_prefix)
+        return render_template('creator_detail.html', creator=creator)
     else:
         return render_template('error.html', error_message="That creator does not exist.")
 
@@ -900,7 +892,6 @@ def show_providers_p():
 # Shows information about a specific provider
 @app.route(APP_PREFIX + '/web/provider/<int:provider_id>', methods=['GET'])
 def show_provider(provider_id):
-    s3_prefix = f"{S3_FOLDER}/user/{provider_id}"
     form = ProviderForm()
     provider = Provider.query.filter_by(provider_id=provider_id).first()
     if provider:
@@ -912,7 +903,7 @@ def show_provider(provider_id):
         #form.image.choices = get_files_choices(provider)
         #form.image.default = provider.provider_img
         form.process()
-        return render_template('provider_detail.html', provider=provider, creator=creator, form=form, s3_prefix=s3_prefix)
+        return render_template('provider_detail.html', provider=provider, creator=creator, form=form)
     else:
         return render_template('error.html', error_message="That provider does not exist.")
 

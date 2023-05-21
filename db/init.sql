@@ -51,4 +51,3 @@ CREATE TRIGGER update_provider_modtime BEFORE UPDATE ON provider FOR EACH ROW EX
 
 -- Default credentials, need to be changed on production stage
 INSERT INTO invitation(invitation_code, invitation_role, invitation_forever) VALUES ('heureka', 'creator', 0);
-INSERT INTO invitation(invitation_code, invitation_role, invitation_forever) VALUES ('sunshine', 'user', 1);

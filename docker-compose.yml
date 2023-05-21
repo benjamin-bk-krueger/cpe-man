@@ -12,10 +12,8 @@ services:
       - FLASK_ENV=development
       - FLASK_DEBUG=1
       - S3_ENDPOINT=http://minio:9000
-      - S3_FOLDER=http://localhost:9000/cpeman-public
       - S3_QUOTA=100
-      - BUCKET_PUBLIC=cpeman-public
-      - BUCKET_PRIVATE=cpeman-private
+      - S3_BUCKET=cpeman
       - WWW_SERVER=http://localhost:5020
       - MAIL_ENABLE=0
       - MAIL_SERVER=localhost
@@ -67,12 +65,9 @@ services:
     entrypoint: >
       /bin/sh -c "
       until (/usr/bin/mc config host add cpeman http://minio:9000 minio_access_key minio_secret_key) do echo '...waiting...' && sleep 1; done;
-      /usr/bin/mc mb cpeman/cpeman-private/;
-      /usr/bin/mc mb cpeman/cpeman-public/;
-      /usr/bin/mc anonymous set public cpeman/cpeman-public;
+      /usr/bin/mc mb cpeman/cpeman/;
       echo EMPTY > empty.txt;
-      /usr/bin/mc cp empty.txt cpeman/cpeman-private/empty.txt;
-      /usr/bin/mc cp empty.txt cpeman/cpeman-public/empty.txt;
+      /usr/bin/mc cp empty.txt cpeman/cpeman/empty.txt;
       exit 0;
       "
 
