@@ -86,7 +86,7 @@ app.config['MAX_CONTENT_LENGTH'] = 16 * 1000 * 1000
 ext = Sitemap(app=app)
 
 # REST API configuration
-api = Api(app)
+api = Api(app, decorators=[csrf.exempt])
 
 # Marshall configuration
 marsh = Marshmallow(app)
@@ -183,14 +183,19 @@ providers_schema = ProviderSchema(many=True)
 class ProviderListResource(Resource):
     @staticmethod
     def get():
-        providers = Provider.query.all()
-        return providers_schema.dump(providers)
+        if AuthChecker().check(request.authorization):
+            creator = Creator.query.filter_by(creator_name=request.authorization['username']).first()
+            providers = Provider.query.filter_by(creator_id=creator.creator_id)
+            return providers_schema.dump(providers)
+        else:
+            return jsonify({'error': 'wrong credentials or permissions'})
 
     @staticmethod
     def post():
-        if all(s in request.json for s in ('provider_name', 'provider_desc', 'provider_url', 'provider_img')):
+        if AuthChecker().check(request.authorization):
             creator = Creator.query.filter_by(creator_name=request.authorization['username']).first()
-            if creator.creator_role == 'creator':
+            if (all(s in request.json for s in ('provider_name', 'provider_desc', 'provider_url', 'provider_img'))) \
+                    and creator.creator_role == 'creator':
                 new_provider = Provider(
                     creator_id=creator.creator_id,
                     provider_name=escape(request.json['provider_name']),
@@ -202,22 +207,27 @@ class ProviderListResource(Resource):
                 db.session.commit()
                 return provider_schema.dump(new_provider)
             else:
-                return jsonify({'error': 'wrong credentials or permissions'})
+                return jsonify({'error': 'wrong JSON format'})
         else:
-            return jsonify({'error': 'wrong JSON format'})
+            return jsonify({'error': 'wrong credentials or permissions'})
 
 
 class ProviderResource(Resource):
     @staticmethod
     def get(provider_id):
-        provider = Provider.query.get_or_404(provider_id)
-        return provider_schema.dump(provider)
+        if AuthChecker().check(request.authorization):
+            creator = Creator.query.filter_by(creator_name=request.authorization['username']).first()
+            provider = Provider.query.filter_by(creator_id=creator.creator_id).filter_by(provider_id=provider_id).first()
+            return provider_schema.dump(provider)
+        else:
+            return jsonify({'error': 'wrong credentials or permissions'})
 
     @staticmethod
     def patch(provider_id):
-        provider = Provider.query.get_or_404(provider_id)
-        if all(s in request.json for s in ('provider_name', 'provider_desc', 'provider_url', 'provider_img')):
-            if AuthChecker().check(request.authorization, provider.provider_id):
+        if AuthChecker().check(request.authorization):
+            creator = Creator.query.filter_by(creator_name=request.authorization['username']).first()
+            provider = Provider.query.filter_by(creator_id=creator.creator_id).filter_by(provider_id=provider_id).first()
+            if all(s in request.json for s in ('provider_name', 'provider_desc', 'provider_url', 'provider_img')):
                 provider.provider_name = escape(request.json['provider_name'])
                 provider.provider_desc = request.json['provider_desc']
                 provider.provider_url = clean_url(request.json['provider_url'])
@@ -225,14 +235,15 @@ class ProviderResource(Resource):
                 db.session.commit()
                 return provider_schema.dump(provider)
             else:
-                return jsonify({'error': 'wrong credentials or permissions'})
+                return jsonify({'error': 'wrong JSON format'})
         else:
-            return jsonify({'error': 'wrong JSON format'})
+            return jsonify({'error': 'wrong credentials or permissions'})
 
     @staticmethod
     def delete(provider_id):
-        provider = Provider.query.get_or_404(provider_id)
-        if AuthChecker().check(request.authorization, provider.provider_id):
+        if AuthChecker().check(request.authorization):
+            creator = Creator.query.filter_by(creator_name=request.authorization['username']).first()
+            provider = Provider.query.filter_by(creator_id=creator.creator_id).filter_by(provider_id=provider_id).first()
             db.session.delete(provider)
             db.session.commit()
             return '', 204
@@ -599,6 +610,7 @@ def do_delete(folder_name, filename):
 def show_stats():
     counts = dict()
     counts['creator'] = Creator.query.count()
+    counts['provider'] = Provider.query.count()
 
     bucket_all = get_all_size(S3_BUCKET)
 
