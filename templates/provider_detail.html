@@ -13,7 +13,7 @@
         <div class="card mb-3" style="max-width: 720px;">
             <div class="row g-0">
                 <div class="col-md-4">
-                    <img src="{{ s3_prefix + "/" + provider.provider_img if (provider.provider_img!='NoImage') else '/static/not_found.jpg' }}" class="img-fluid rounded-start" alt="Provider Image">
+                    <img src="{{ url_for('do_display', folder_name=creator.creator_name, filename=provider.provider_img) if (provider.provider_img!='NoImage') else '/static/not_found.jpg' }}" class="img-fluid rounded-start" alt="Provider Image">
                 </div>
                 <div class="col-md-8">
                     <div class="card-body">

@@ -8,12 +8,12 @@
 
     {#  Page content #}
     <div class="container-fluid pb-3 mt-2 mb-2">
-        <img src="{{ session['s3_folder'] }}/{{ section_name }}/{{ folder_name }}/{{ filename }}" class="img-fluid rounded-start" alt="Uploaded Image">
+        <img src="{{ url_for('do_display', folder_name=folder_name, filename=filename) }}" class="img-fluid rounded-start" alt="Uploaded Image">
     </div>
 
     {# Display simple button - go back to the file overview page #}
     <div class="container-fluid pb-3 mt-2 mb-2">
-        <a href="{{ url_for('show_storage', section_name=section_name, folder_name=folder_name) }}" class="btn btn-primary mt-4 mb-4">
+        <a href="{{ url_for('show_storage', folder_name=folder_name) }}" class="btn btn-primary mt-4 mb-4">
             <i class="bi bi-list-ul"></i> All Files
         </a>
     </div>

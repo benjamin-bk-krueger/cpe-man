@@ -272,12 +272,12 @@ def rename_file(bucket, object_name_new, object_name_old):
     s3.Object(bucket, object_name_old).delete()
 
 
-def list_files(bucket, section_name, folder_name):
+def list_files(bucket, folder_name):
     s3 = boto3.client('s3', endpoint_url=S3_ENDPOINT)
     contents = []
     for item in s3.list_objects(Bucket=bucket)['Contents']:
-        if item['Key'].startswith(f"{section_name}/{folder_name}") and item['Key'] != f"{section_name}/{folder_name}/":
-            contents.append(item['Key'].replace(f"{section_name}/{folder_name}/", ""))
+        if item['Key'].startswith(f"{folder_name}") and item['Key'] != f"{folder_name}/":
+            contents.append(item['Key'].replace(f"{folder_name}/", ""))
     return contents
 
 
@@ -381,7 +381,7 @@ def log_entry(operation, parameters=None):
 
 # Internal helpers - return choices list used in HTML select elements
 def get_profile_choices(creator):
-    image_choices = list_files(S3_BUCKET, "user", creator.creator_name)
+    image_choices = list_files(S3_BUCKET, creator.creator_name)
     image_choices.insert(0, "No Image")
     return image_choices
 
@@ -497,14 +497,14 @@ def show_password_reset(random_hash):
 # --------------------------------------------------------------
 
 # Show list of all uploaded filed and upload form
-@app.route(APP_PREFIX + "/web/storage/<string:section_name>/<string:folder_name>", methods=['GET', 'POST'])
+@app.route(APP_PREFIX + "/web/storage/<string:folder_name>", methods=['GET', 'POST'])
 @login_required
-def show_storage(section_name, folder_name):
+def show_storage(folder_name):
     form = UploadForm()
     form2 = FileForm()
 
-    if section_name == "user" and current_user.is_authenticated and current_user.creator_name == folder_name:
-        space_used_in_mb = round((get_size(S3_BUCKET, f"{section_name}/{folder_name}/") / 1024 / 1024), 2)
+    if current_user.is_authenticated and current_user.creator_name == folder_name:
+        space_used_in_mb = round((get_size(S3_BUCKET, f"{folder_name}/") / 1024 / 1024), 2)
         space_used = int(space_used_in_mb / int(S3_QUOTA) * 100)
 
         if request.method == 'POST' and form.validate_on_submit():
@@ -513,15 +513,15 @@ def show_storage(section_name, folder_name):
             if allowed_file(filename) and space_used < 100:
                 local_folder_name = f"{UPLOAD_FOLDER}/{current_user.creator_name}"
                 local_file = os.path.join(local_folder_name, filename)
-                remote_file = f"{section_name}/{folder_name}/{filename}"
+                remote_file = f"{folder_name}/{filename}"
                 if not os.path.exists(local_folder_name):
                     os.makedirs(local_folder_name)
                 form.file.data.save(local_file)
                 upload_file(S3_BUCKET, remote_file, local_file)
-            return redirect(url_for('show_storage', section_name=section_name, folder_name=folder_name))
+            return redirect(url_for('show_storage', folder_name=folder_name))
         else:
-            contents = list_files(S3_BUCKET, section_name, folder_name)
-            return render_template('storage.html', section_name=section_name, folder_name=folder_name,
+            contents = list_files(S3_BUCKET, folder_name)
+            return render_template('storage.html', folder_name=folder_name,
                                    contents=contents, space_used_in_mb=space_used_in_mb, space_used=space_used,
                                    form=form, form2=form2)
     else:
@@ -529,29 +529,29 @@ def show_storage(section_name, folder_name):
 
 
 # Change a filename
-@app.route(APP_PREFIX + "/web/rename/<string:section_name>/<string:folder_name>", methods=['POST'])
+@app.route(APP_PREFIX + "/web/rename/<string:folder_name>", methods=['POST'])
 @login_required
-def do_rename(section_name, folder_name):
-    if section_name == "user" and current_user.is_authenticated and current_user.creator_name == folder_name:
-        remote_file_new = f"{secure_filename(section_name)}/{secure_filename(folder_name)}/{secure_filename(request.form['filename_new'])}"
-        remote_file_old = f"{secure_filename(section_name)}/{secure_filename(folder_name)}/{secure_filename(request.form['filename_old'])}"
+def do_rename(folder_name):
+    if current_user.is_authenticated and current_user.creator_name == folder_name:
+        remote_file_new = f"{secure_filename(folder_name)}/{secure_filename(request.form['filename_new'])}"
+        remote_file_old = f"{secure_filename(folder_name)}/{secure_filename(request.form['filename_old'])}"
         if remote_file_new != remote_file_old and allowed_file(remote_file_new):
             log_entry(__name__, [S3_BUCKET, remote_file_new, remote_file_old])
             rename_file(S3_BUCKET, remote_file_new, remote_file_old)
 
-        return redirect(url_for('show_storage', section_name=section_name, folder_name=folder_name))
+        return redirect(url_for('show_storage', folder_name=folder_name))
     else:
         return render_template('error.html')
 
 
 # Download a specific file from S3 storage
-@app.route(APP_PREFIX + "/web/download/<string:section_name>/<string:folder_name>/<string:filename>", methods=['GET'])
+@app.route(APP_PREFIX + "/web/download/<string:folder_name>/<string:filename>", methods=['GET'])
 @login_required
-def do_download(section_name, folder_name, filename):
-    if section_name == "user" and current_user.is_authenticated and current_user.creator_name == folder_name:
+def do_download(folder_name, filename):
+    if current_user.is_authenticated and current_user.creator_name == folder_name:
         local_folder_name = f"{DOWNLOAD_FOLDER}/{current_user.creator_name}"
         local_filename = os.path.join(local_folder_name, secure_filename(filename))
-        remote_file = f"{secure_filename(section_name)}/{secure_filename(folder_name)}/{secure_filename(filename)}"
+        remote_file = f"{secure_filename(folder_name)}/{secure_filename(filename)}"
 
         if not os.path.exists(local_folder_name):
             os.makedirs(local_folder_name)
@@ -562,14 +562,30 @@ def do_download(section_name, folder_name, filename):
         return render_template('error.html')
 
 
-# Remove a specific file from S3 storage
-@app.route(APP_PREFIX + "/web/delete/<string:section_name>/<string:folder_name>/<string:filename>", methods=['GET'])
+# Download a specific file from S3 storage
+@app.route(APP_PREFIX + "/web/display/<string:folder_name>/<string:filename>", methods=['GET'])
 @login_required
-def do_delete(section_name, folder_name, filename):
-    if section_name == "user" and current_user.is_authenticated and current_user.creator_name == folder_name:
-        remote_file = f"{secure_filename(section_name)}/{secure_filename(folder_name)}/{secure_filename(filename)}"
+def do_display(folder_name, filename):
+    if current_user.is_authenticated and current_user.creator_name == folder_name:
+        local_folder_name = f"{DOWNLOAD_FOLDER}/{current_user.creator_name}"
+        local_filename = os.path.join(local_folder_name, secure_filename(filename))
+        remote_file = f"{secure_filename(folder_name)}/{secure_filename(filename)}"
+
+        if not os.path.exists(local_folder_name):
+            os.makedirs(local_folder_name)
+        output = download_file(S3_BUCKET, remote_file, local_filename)
+        # return send_from_directory(app.config["UPLOAD_FOLDER"], name)
+        return send_file(output, as_attachment=False)
+
+
+# Remove a specific file from S3 storage
+@app.route(APP_PREFIX + "/web/delete/<string:folder_name>/<string:filename>", methods=['GET'])
+@login_required
+def do_delete(folder_name, filename):
+    if current_user.is_authenticated and current_user.creator_name == folder_name:
+        remote_file = f"{secure_filename(folder_name)}/{secure_filename(filename)}"
         delete_file(S3_BUCKET, remote_file)
-        return redirect(url_for('show_storage', section_name=section_name, folder_name=folder_name))
+        return redirect(url_for('show_storage', folder_name=folder_name))
     else:
         return render_template('error.html')
 
@@ -602,11 +618,11 @@ def show_privacy():
 
 
 # Displays an image file stored on S3 storage
-@app.route(APP_PREFIX + '/web/image/<string:section_name>/<string:folder_name>/<string:filename>', methods=['GET'])
+@app.route(APP_PREFIX + '/web/image/<string:folder_name>/<string:filename>', methods=['GET'])
 @login_required
-def show_image(section_name, folder_name, filename):
-    if section_name == "user" and current_user.is_authenticated and current_user.creator_name == folder_name:
-        return render_template('image.html', section_name=secure_filename(section_name),
+def show_image(folder_name, filename):
+    if current_user.is_authenticated and current_user.creator_name == folder_name:
+        return render_template('image.html',
                                folder_name=secure_filename(folder_name), filename=secure_filename(filename))
     else:
         return render_template('error.html')
@@ -670,7 +686,7 @@ def show_creator(creator_id):
         creator = Creator.query.filter_by(active=1).filter_by(creator_id=creator_id).first()
 
     if creator:
-        return render_template('creator_detail.html', creator=creator)
+        return render_template('creator_detail.html', folder_name=current_user.creator_name, creator=creator)
     else:
         return render_template('error.html', error_message="That creator does not exist.")
 
@@ -900,8 +916,8 @@ def show_provider(provider_id):
         form.name.default = provider.provider_name
         form.url.default = provider.provider_url
         form.description.default = provider.provider_desc
-        #form.image.choices = get_files_choices(provider)
-        #form.image.default = provider.provider_img
+        form.image.choices = get_profile_choices(creator)
+        form.image.default = provider.provider_img
         form.process()
         return render_template('provider_detail.html', provider=provider, creator=creator, form=form)
     else:
