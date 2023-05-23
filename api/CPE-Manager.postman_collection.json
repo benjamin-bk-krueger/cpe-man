@@ -61,14 +61,14 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{baseurl}}/api/providers/{{num}}",
+							"raw": "{{baseurl}}/api/providers/{{name}}",
 							"host": [
 								"{{baseurl}}"
 							],
 							"path": [
 								"api",
 								"providers",
-								"{{num}}"
+								"{{name}}"
 							]
 						}
 					},
@@ -90,14 +90,14 @@
 							"raw": "{\n    \"provider_desc\": \"Description\",\n    \"provider_img\": \"\",\n    \"provider_name\": \"Name\",\n    \"provider_url\": \"\"\n}"
 						},
 						"url": {
-							"raw": "{{baseurl}}/api/providers/{{num}}",
+							"raw": "{{baseurl}}/api/providers/{{name}}",
 							"host": [
 								"{{baseurl}}"
 							],
 							"path": [
 								"api",
 								"providers",
-								"{{num}}"
+								"{{name}}"
 							]
 						}
 					},
@@ -119,14 +119,14 @@
 							"raw": "{\n    \"room_id\": 1,\n    \"item_id\": 1,\n    \"world_id\": 1,\n    \"item_desc\": \"Description\",\n    \"item_img\": \"\",\n    \"item_name\": \"Name\"\n}"
 						},
 						"url": {
-							"raw": "{{baseurl}}/api/providers/{{num}}",
+							"raw": "{{baseurl}}/api/providers/{{name}}",
 							"host": [
 								"{{baseurl}}"
 							],
 							"path": [
 								"api",
 								"providers",
-								"{{num}}"
+								"{{name}}"
 							]
 						}
 					},
