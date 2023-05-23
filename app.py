@@ -216,7 +216,8 @@ class ProviderResource(Resource):
     def get(provider_name):
         if AuthChecker().check(request.authorization):
             creator = Creator.query.filter_by(creator_name=request.authorization['username']).first()
-            provider = Provider.query.filter_by(creator_id=creator.creator_id).filter_by(provider_name=provider_name).first()
+            provider = Provider.query.filter_by(creator_id=creator.creator_id).\
+                filter_by(provider_name=provider_name).first()
             return provider_schema.dump(provider)
         else:
             return jsonify({'error': 'wrong credentials or permissions'})
@@ -225,7 +226,8 @@ class ProviderResource(Resource):
     def patch(provider_name):
         if AuthChecker().check(request.authorization):
             creator = Creator.query.filter_by(creator_name=request.authorization['username']).first()
-            provider = Provider.query.filter_by(creator_id=creator.creator_id).filter_by(provider_name=provider_name).first()
+            provider = Provider.query.filter_by(creator_id=creator.creator_id).\
+                filter_by(provider_name=provider_name).first()
             if all(s in request.json for s in ('provider_name', 'provider_desc', 'provider_url', 'provider_img')):
                 provider.provider_name = escape(request.json['provider_name'])
                 provider.provider_desc = request.json['provider_desc']
@@ -242,7 +244,8 @@ class ProviderResource(Resource):
     def delete(provider_name):
         if AuthChecker().check(request.authorization):
             creator = Creator.query.filter_by(creator_name=request.authorization['username']).first()
-            provider = Provider.query.filter_by(creator_id=creator.creator_id).filter_by(provider_name=provider_name).first()
+            provider = Provider.query.filter_by(creator_id=creator.creator_id).\
+                filter_by(provider_name=provider_name).first()
             db.session.delete(provider)
             db.session.commit()
             return '', 204
@@ -893,7 +896,8 @@ def show_providers():
 @login_required
 def show_providers_p():
     provider_name = escape(request.form["name"])
-    provider = Provider.query.filter_by(creator_id=current_user.creator_id).filter_by(provider_name=provider_name).first()
+    provider = Provider.query.filter_by(creator_id=current_user.creator_id).\
+        filter_by(provider_name=provider_name).first()
 
     if not provider:
         provider = Provider()
@@ -912,7 +916,8 @@ def show_providers_p():
 @login_required
 def show_provider(provider_name):
     form = ProviderForm()
-    provider = Provider.query.filter_by(creator_id=current_user.creator_id).filter_by(provider_name=provider_name).first()
+    provider = Provider.query.filter_by(creator_id=current_user.creator_id).\
+        filter_by(provider_name=provider_name).first()
     if provider:
         creator = Creator.query.filter_by(creator_id=provider.creator_id).first()
 
@@ -931,7 +936,8 @@ def show_provider(provider_name):
 @app.route(APP_PREFIX + '/web/provider/<string:provider_name>', methods=['POST'])
 @login_required
 def show_provider_p(provider_name):
-    provider = Provider.query.filter_by(creator_id=current_user.creator_id).filter_by(provider_name=provider_name).first()
+    provider = Provider.query.filter_by(creator_id=current_user.creator_id).\
+        filter_by(provider_name=provider_name).first()
 
     if provider:
         provider.provider_name = clean_url(request.form["name"])
