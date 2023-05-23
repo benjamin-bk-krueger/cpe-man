@@ -607,6 +607,7 @@ def do_delete(folder_name, filename):
 
 # Show statistics regarding available elements stored in the database and on S3 storage
 @app.route(APP_PREFIX + '/web/stats', methods=['GET'])
+@login_required
 def show_stats():
     counts = dict()
     counts['creator'] = Creator.query.count()
@@ -681,6 +682,7 @@ def show_contact():
 
 # Displays all available creators
 @app.route(APP_PREFIX + '/web/creators', methods=['GET'])
+@login_required
 def show_creators():
     if current_user.is_authenticated and current_user.creator_id and current_user.creator_role == "admin":
         creators = Creator.query.order_by(Creator.creator_name.asc())
@@ -691,6 +693,7 @@ def show_creators():
 
 # Shows information about a specific creator
 @app.route(APP_PREFIX + '/web/creator/<int:creator_id>', methods=['GET'])
+@login_required
 def show_creator(creator_id):
     if current_user.is_authenticated and current_user.creator_id and current_user.creator_role == "admin":
         creator = Creator.query.filter_by(creator_id=creator_id).first()
@@ -881,6 +884,7 @@ def show_approve_creator(creator_id):
 
 # Displays all available providers
 @app.route(APP_PREFIX + '/web/providers', methods=['GET'])
+@login_required
 def show_providers():
     if current_user.creator_id and current_user.creator_role == "creator":
         form = ProviderForm()
@@ -919,6 +923,7 @@ def show_providers_p():
 
 # Shows information about a specific provider
 @app.route(APP_PREFIX + '/web/provider/<int:provider_id>', methods=['GET'])
+@login_required
 def show_provider(provider_id):
     form = ProviderForm()
     provider = Provider.query.filter_by(provider_id=provider_id).first()
