@@ -194,8 +194,7 @@ class ProviderListResource(Resource):
     def post():
         if AuthChecker().check(request.authorization):
             creator = Creator.query.filter_by(creator_name=request.authorization['username']).first()
-            if (all(s in request.json for s in ('provider_name', 'provider_desc', 'provider_url', 'provider_img'))) \
-                    and creator.creator_role == 'creator':
+            if all(s in request.json for s in ('provider_name', 'provider_desc', 'provider_url', 'provider_img')):
                 new_provider = Provider(
                     creator_id=creator.creator_id,
                     provider_name=escape(request.json['provider_name']),
@@ -214,19 +213,19 @@ class ProviderListResource(Resource):
 
 class ProviderResource(Resource):
     @staticmethod
-    def get(provider_id):
+    def get(provider_name):
         if AuthChecker().check(request.authorization):
             creator = Creator.query.filter_by(creator_name=request.authorization['username']).first()
-            provider = Provider.query.filter_by(creator_id=creator.creator_id).filter_by(provider_id=provider_id).first()
+            provider = Provider.query.filter_by(creator_id=creator.creator_id).filter_by(provider_name=provider_name).first()
             return provider_schema.dump(provider)
         else:
             return jsonify({'error': 'wrong credentials or permissions'})
 
     @staticmethod
-    def patch(provider_id):
+    def patch(provider_name):
         if AuthChecker().check(request.authorization):
             creator = Creator.query.filter_by(creator_name=request.authorization['username']).first()
-            provider = Provider.query.filter_by(creator_id=creator.creator_id).filter_by(provider_id=provider_id).first()
+            provider = Provider.query.filter_by(creator_id=creator.creator_id).filter_by(provider_name=provider_name).first()
             if all(s in request.json for s in ('provider_name', 'provider_desc', 'provider_url', 'provider_img')):
                 provider.provider_name = escape(request.json['provider_name'])
                 provider.provider_desc = request.json['provider_desc']
@@ -240,10 +239,10 @@ class ProviderResource(Resource):
             return jsonify({'error': 'wrong credentials or permissions'})
 
     @staticmethod
-    def delete(provider_id):
+    def delete(provider_name):
         if AuthChecker().check(request.authorization):
             creator = Creator.query.filter_by(creator_name=request.authorization['username']).first()
-            provider = Provider.query.filter_by(creator_id=creator.creator_id).filter_by(provider_id=provider_id).first()
+            provider = Provider.query.filter_by(creator_id=creator.creator_id).filter_by(provider_name=provider_name).first()
             db.session.delete(provider)
             db.session.commit()
             return '', 204
@@ -252,7 +251,7 @@ class ProviderResource(Resource):
 
 
 api.add_resource(ProviderListResource, APP_PREFIX + '/api/providers')
-api.add_resource(ProviderResource, APP_PREFIX + '/api/providers/<int:provider_id>')
+api.add_resource(ProviderResource, APP_PREFIX + '/api/providers/<string:provider_name>')
 
 
 # --------------------------------------------------------------
@@ -508,97 +507,84 @@ def show_password_reset(random_hash):
 # --------------------------------------------------------------
 
 # Show list of all uploaded filed and upload form
-@app.route(APP_PREFIX + "/web/storage/<string:folder_name>", methods=['GET', 'POST'])
+@app.route(APP_PREFIX + "/web/storage", methods=['GET', 'POST'])
 @login_required
-def show_storage(folder_name):
+def show_storage():
     form = UploadForm()
     form2 = FileForm()
 
-    if current_user.is_authenticated and current_user.creator_name == folder_name:
-        space_used_in_mb = round((get_size(S3_BUCKET, f"{folder_name}/") / 1024 / 1024), 2)
-        space_used = int(space_used_in_mb / int(S3_QUOTA) * 100)
+    space_used_in_mb = round((get_size(S3_BUCKET, f"{current_user.creator_name}/") / 1024 / 1024), 2)
+    space_used = int(space_used_in_mb / int(S3_QUOTA) * 100)
 
-        if request.method == 'POST' and form.validate_on_submit():
-            filename = secure_filename(form.file.data.filename)
+    if request.method == 'POST' and form.validate_on_submit():
+        filename = secure_filename(form.file.data.filename)
 
-            if allowed_file(filename) and space_used < 100:
-                local_folder_name = f"{UPLOAD_FOLDER}/{current_user.creator_name}"
-                local_file = os.path.join(local_folder_name, filename)
-                remote_file = f"{folder_name}/{filename}"
-                if not os.path.exists(local_folder_name):
-                    os.makedirs(local_folder_name)
-                form.file.data.save(local_file)
-                upload_file(S3_BUCKET, remote_file, local_file)
-            return redirect(url_for('show_storage', folder_name=folder_name))
-        else:
-            contents = list_files(S3_BUCKET, folder_name)
-            return render_template('storage.html', folder_name=folder_name,
-                                   contents=contents, space_used_in_mb=space_used_in_mb, space_used=space_used,
-                                   form=form, form2=form2)
+        if allowed_file(filename) and space_used < 100:
+            local_folder_name = f"{UPLOAD_FOLDER}/{current_user.creator_name}"
+            local_file = os.path.join(local_folder_name, filename)
+            remote_file = f"{current_user.creator_name}/{filename}"
+            if not os.path.exists(local_folder_name):
+                os.makedirs(local_folder_name)
+            form.file.data.save(local_file)
+            upload_file(S3_BUCKET, remote_file, local_file)
+        return redirect(url_for('show_storage'))
     else:
-        return render_template('error.html')
+        contents = list_files(S3_BUCKET, current_user.creator_name)
+        return render_template('storage.html',
+                               contents=contents, space_used_in_mb=space_used_in_mb, space_used=space_used,
+                               form=form, form2=form2)
 
 
 # Change a filename
-@app.route(APP_PREFIX + "/web/rename/<string:folder_name>", methods=['POST'])
+@app.route(APP_PREFIX + "/web/rename", methods=['POST'])
 @login_required
-def do_rename(folder_name):
-    if current_user.is_authenticated and current_user.creator_name == folder_name:
-        remote_file_new = f"{secure_filename(folder_name)}/{secure_filename(request.form['filename_new'])}"
-        remote_file_old = f"{secure_filename(folder_name)}/{secure_filename(request.form['filename_old'])}"
-        if remote_file_new != remote_file_old and allowed_file(remote_file_new):
-            log_entry(__name__, [S3_BUCKET, remote_file_new, remote_file_old])
-            rename_file(S3_BUCKET, remote_file_new, remote_file_old)
+def do_rename():
+    remote_file_new = f"{secure_filename(current_user.creator_name)}/{secure_filename(request.form['filename_new'])}"
+    remote_file_old = f"{secure_filename(current_user.creator_name)}/{secure_filename(request.form['filename_old'])}"
+    if remote_file_new != remote_file_old and allowed_file(remote_file_new):
+        log_entry(__name__, [S3_BUCKET, remote_file_new, remote_file_old])
+        rename_file(S3_BUCKET, remote_file_new, remote_file_old)
 
-        return redirect(url_for('show_storage', folder_name=folder_name))
-    else:
-        return render_template('error.html')
+    return redirect(url_for('show_storage'))
 
 
 # Download a specific file from S3 storage
-@app.route(APP_PREFIX + "/web/download/<string:folder_name>/<string:filename>", methods=['GET'])
+@app.route(APP_PREFIX + "/web/download/<string:filename>", methods=['GET'])
 @login_required
-def do_download(folder_name, filename):
-    if current_user.is_authenticated and current_user.creator_name == folder_name:
-        local_folder_name = f"{DOWNLOAD_FOLDER}/{current_user.creator_name}"
-        local_filename = os.path.join(local_folder_name, secure_filename(filename))
-        remote_file = f"{secure_filename(folder_name)}/{secure_filename(filename)}"
+def do_download(filename):
+    local_folder_name = f"{DOWNLOAD_FOLDER}/{current_user.creator_name}"
+    local_filename = os.path.join(local_folder_name, secure_filename(filename))
+    remote_file = f"{secure_filename(current_user.creator_name)}/{secure_filename(filename)}"
 
-        if not os.path.exists(local_folder_name):
-            os.makedirs(local_folder_name)
-        output = download_file(S3_BUCKET, remote_file, local_filename)
-        # return send_from_directory(app.config["UPLOAD_FOLDER"], name)
-        return send_file(output, as_attachment=True)
-    else:
-        return render_template('error.html')
+    if not os.path.exists(local_folder_name):
+        os.makedirs(local_folder_name)
+    output = download_file(S3_BUCKET, remote_file, local_filename)
+    # return send_from_directory(app.config["UPLOAD_FOLDER"], name)
+    return send_file(output, as_attachment=True)
 
 
 # Download a specific file from S3 storage
-@app.route(APP_PREFIX + "/web/display/<string:folder_name>/<string:filename>", methods=['GET'])
+@app.route(APP_PREFIX + "/web/display/<string:filename>", methods=['GET'])
 @login_required
-def do_display(folder_name, filename):
-    if current_user.is_authenticated and current_user.creator_name == folder_name:
-        local_folder_name = f"{DOWNLOAD_FOLDER}/{current_user.creator_name}"
-        local_filename = os.path.join(local_folder_name, secure_filename(filename))
-        remote_file = f"{secure_filename(folder_name)}/{secure_filename(filename)}"
+def do_display(filename):
+    local_folder_name = f"{DOWNLOAD_FOLDER}/{current_user.creator_name}"
+    local_filename = os.path.join(local_folder_name, secure_filename(filename))
+    remote_file = f"{secure_filename(current_user.creator_name)}/{secure_filename(filename)}"
 
-        if not os.path.exists(local_folder_name):
-            os.makedirs(local_folder_name)
-        output = download_file(S3_BUCKET, remote_file, local_filename)
-        # return send_from_directory(app.config["UPLOAD_FOLDER"], name)
-        return send_file(output, as_attachment=False)
+    if not os.path.exists(local_folder_name):
+        os.makedirs(local_folder_name)
+    output = download_file(S3_BUCKET, remote_file, local_filename)
+    # return send_from_directory(app.config["UPLOAD_FOLDER"], name)
+    return send_file(output, as_attachment=False)
 
 
 # Remove a specific file from S3 storage
-@app.route(APP_PREFIX + "/web/delete/<string:folder_name>/<string:filename>", methods=['GET'])
+@app.route(APP_PREFIX + "/web/delete/<string:filename>", methods=['GET'])
 @login_required
-def do_delete(folder_name, filename):
-    if current_user.is_authenticated and current_user.creator_name == folder_name:
-        remote_file = f"{secure_filename(folder_name)}/{secure_filename(filename)}"
-        delete_file(S3_BUCKET, remote_file)
-        return redirect(url_for('show_storage', folder_name=folder_name))
-    else:
-        return render_template('error.html')
+def do_delete(filename):
+    remote_file = f"{secure_filename(current_user.creator_name)}/{secure_filename(filename)}"
+    delete_file(S3_BUCKET, remote_file)
+    return redirect(url_for('show_storage'))
 
 
 # --------------------------------------------------------------
@@ -609,13 +595,23 @@ def do_delete(folder_name, filename):
 @app.route(APP_PREFIX + '/web/stats', methods=['GET'])
 @login_required
 def show_stats():
-    counts = dict()
-    counts['creator'] = Creator.query.count()
-    counts['provider'] = Provider.query.count()
+    if current_user.creator_role == "admin":
+        counts = dict()
+        counts['creator'] = Creator.query.count()
+        counts['provider'] = Provider.query.count()
 
-    bucket_all = get_all_size(S3_BUCKET)
+        bucket_all = get_all_size(S3_BUCKET)
 
-    return render_template('stats.html', counts=counts, bucket_all=bucket_all)
+        return render_template('stats.html', counts=counts, bucket_all=bucket_all)
+    else:
+        counts = dict()
+        counts['creator'] = Creator.query.filter_by(creator_id=current_user.creator_id).count()
+        counts['provider'] = Provider.query.filter_by(creator_id=current_user.creator_id).count()
+
+        bucket_all = dict()
+        bucket_all[current_user.creator_name] = get_size(S3_BUCKET, current_user.creator_name)
+
+        return render_template('stats.html', counts=counts, bucket_all=bucket_all)
 
 
 # Show information about all major releases
@@ -631,14 +627,10 @@ def show_privacy():
 
 
 # Displays an image file stored on S3 storage
-@app.route(APP_PREFIX + '/web/image/<string:folder_name>/<string:filename>', methods=['GET'])
+@app.route(APP_PREFIX + '/web/image/<string:filename>', methods=['GET'])
 @login_required
-def show_image(folder_name, filename):
-    if current_user.is_authenticated and current_user.creator_name == folder_name:
-        return render_template('image.html',
-                               folder_name=secure_filename(folder_name), filename=secure_filename(filename))
-    else:
-        return render_template('error.html')
+def show_image(filename):
+    return render_template('image.html', filename=secure_filename(filename))
 
 
 # Displays a form to send a message to the site admin - implements a simple captcha as well
@@ -684,24 +676,24 @@ def show_contact():
 @app.route(APP_PREFIX + '/web/creators', methods=['GET'])
 @login_required
 def show_creators():
-    if current_user.is_authenticated and current_user.creator_id and current_user.creator_role == "admin":
+    if current_user.creator_role == "admin":
         creators = Creator.query.order_by(Creator.creator_name.asc())
     else:
-        creators = Creator.query.filter_by(active=1).order_by(Creator.creator_name.asc())
+        creators = Creator.query.filter_by(creator_id=current_user.creator_id).order_by(Creator.creator_name.asc())
     return render_template('creator.html', creators=creators)
 
 
 # Shows information about a specific creator
-@app.route(APP_PREFIX + '/web/creator/<int:creator_id>', methods=['GET'])
+@app.route(APP_PREFIX + '/web/creator/<string:creator_name>', methods=['GET'])
 @login_required
-def show_creator(creator_id):
-    if current_user.is_authenticated and current_user.creator_id and current_user.creator_role == "admin":
-        creator = Creator.query.filter_by(creator_id=creator_id).first()
+def show_creator(creator_name):
+    if current_user.creator_role == "admin":
+        creator = Creator.query.filter_by(creator_name=creator_name).first()
     else:
-        creator = Creator.query.filter_by(active=1).filter_by(creator_id=creator_id).first()
+        creator = Creator.query.filter_by(creator_id=current_user.creator_id).first()
 
     if creator:
-        return render_template('creator_detail.html', folder_name=current_user.creator_name, creator=creator)
+        return render_template('creator_detail.html', folder_name=creator.creator_name, creator=creator)
     else:
         return render_template('error.html', error_message="That creator does not exist.")
 
@@ -743,7 +735,7 @@ def show_new_creator():
                 creator.creator_desc = ""
                 creator.creator_pass = generate_password_hash(request.form["password"], method='pbkdf2:sha256',
                                                               salt_length=16)
-                creator.creator_role = "user"
+                creator.creator_role = "creator"
                 creator.creator_img = ""
                 creator.active = 0
                 db.session.add(creator)
@@ -866,11 +858,11 @@ def show_my_del_creator():
 
 
 # Approve a user's registration
-@app.route(APP_PREFIX + '/web/approve_creator/<int:creator_id>', methods=['GET'])
+@app.route(APP_PREFIX + '/web/approve_creator/<string:creator_name>', methods=['GET'])
 @login_required
-def show_approve_creator(creator_id):
-    if current_user.is_authenticated and current_user.creator_id and current_user.creator_role == "admin":
-        creator = Creator.query.filter_by(creator_id=creator_id).first()
+def show_approve_creator(creator_name):
+    if current_user.creator_role == "admin":
+        creator = Creator.query.filter_by(creator_name=creator_name).first()
         creator.active = 1
         db.session.commit()
 
@@ -886,47 +878,41 @@ def show_approve_creator(creator_id):
 @app.route(APP_PREFIX + '/web/providers', methods=['GET'])
 @login_required
 def show_providers():
-    if current_user.creator_id and current_user.creator_role == "creator":
-        form = ProviderForm()
+    form = ProviderForm()
 
-        form.image.choices = ["No Image"]
-        form.image.default = "No Image"
-        form.process()
+    form.image.choices = ["No Image"]
+    form.image.default = "No Image"
+    form.process()
 
-        providers = Provider.query.filter_by(creator_id=current_user.creator_id).order_by(Provider.provider_name.asc())
-        return render_template('provider.html', providers=providers, form=form)
-    else:
-        return render_template('error.html')
+    providers = Provider.query.filter_by(creator_id=current_user.creator_id).order_by(Provider.provider_name.asc())
+    return render_template('provider.html', providers=providers, form=form)
 
 
 # Post a new provider - if it doesn't already exist
 @app.route(APP_PREFIX + '/web/providers', methods=['POST'])
 @login_required
 def show_providers_p():
-    if current_user.creator_id and current_user.creator_role == "creator":
-        provider_name = escape(request.form["name"])
-        provider = Provider.query.filter_by(provider_name=provider_name).first()
+    provider_name = escape(request.form["name"])
+    provider = Provider.query.filter_by(creator_id=current_user.creator_id).filter_by(provider_name=provider_name).first()
 
-        if not provider:
-            provider = Provider()
-            provider.provider_name = provider_name
-            provider.provider_url = clean_url(request.form["url"])
-            provider.provider_desc = request.form["description"]
-            provider.provider_img = clean_url(request.form["image"])
-            provider.creator_id = current_user.creator_id
-            db.session.add(provider)
-            db.session.commit()
-        return redirect(url_for('show_providers'))
-    else:
-        return render_template('error.html')
+    if not provider:
+        provider = Provider()
+        provider.provider_name = provider_name
+        provider.provider_url = clean_url(request.form["url"])
+        provider.provider_desc = request.form["description"]
+        provider.provider_img = clean_url(request.form["image"])
+        provider.creator_id = current_user.creator_id
+        db.session.add(provider)
+        db.session.commit()
+    return redirect(url_for('show_providers'))
 
 
 # Shows information about a specific provider
-@app.route(APP_PREFIX + '/web/provider/<int:provider_id>', methods=['GET'])
+@app.route(APP_PREFIX + '/web/provider/<string:provider_name>', methods=['GET'])
 @login_required
-def show_provider(provider_id):
+def show_provider(provider_name):
     form = ProviderForm()
-    provider = Provider.query.filter_by(provider_id=provider_id).first()
+    provider = Provider.query.filter_by(creator_id=current_user.creator_id).filter_by(provider_name=provider_name).first()
     if provider:
         creator = Creator.query.filter_by(creator_id=provider.creator_id).first()
 
@@ -942,26 +928,26 @@ def show_provider(provider_id):
 
 
 # Post a change in a provider's data
-@app.route(APP_PREFIX + '/web/provider/<int:provider_id>', methods=['POST'])
+@app.route(APP_PREFIX + '/web/provider/<string:provider_name>', methods=['POST'])
 @login_required
-def show_provider_p(provider_id):
-    provider = Provider.query.filter_by(provider_id=provider_id).first()
+def show_provider_p(provider_name):
+    provider = Provider.query.filter_by(creator_id=current_user.creator_id).filter_by(provider_name=provider_name).first()
 
-    if provider and current_user.creator_id and current_user.creator_id == provider.creator_id:
+    if provider:
         provider.provider_name = clean_url(request.form["name"])
         provider.provider_url = clean_url(request.form["url"])
         provider.provider_desc = request.form["description"]
         provider.provider_img = clean_url(request.form["image"])
         db.session.commit()
-        return redirect(url_for('show_provider', provider_id=provider.provider_id))
+        return redirect(url_for('show_provider', provider_name=provider.provider_name))
     else:
         return render_template('error.html')
 
 
 # Delete a specific provider - and all included elements!!!
-@app.route(APP_PREFIX + '/web/deleted_provider/<int:provider_id>', methods=['GET'])
+@app.route(APP_PREFIX + '/web/deleted_provider/<string:provider_name>', methods=['GET'])
 @login_required
-def show_deleted_provider(provider_id):
-    Provider.query.filter_by(provider_id=provider_id).filter_by(creator_id=current_user.creator_id).delete()
+def show_deleted_provider(provider_name):
+    Provider.query.filter_by(creator_id=current_user.creator_id).filter_by(provider_name=provider_name).delete()
     db.session.commit()
     return redirect(url_for('show_providers'))

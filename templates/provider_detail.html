@@ -13,12 +13,12 @@
         <div class="card mb-3" style="max-width: 720px;">
             <div class="row g-0">
                 <div class="col-md-4">
-                    <img src="{{ url_for('do_display', folder_name=creator.creator_name, filename=provider.provider_img) if (provider.provider_img!='NoImage') else '/static/not_found.jpg' }}" class="img-fluid rounded-start" alt="Provider Image">
+                    <img src="{{ url_for('do_display', filename=provider.provider_img) if (provider.provider_img!='NoImage') else '/static/not_found.jpg' }}" class="img-fluid rounded-start" alt="Provider Image">
                 </div>
                 <div class="col-md-8">
                     <div class="card-body">
                         <h5 class="card-title">{{ provider.provider_url }}</h5>
-                        <h6 class="card-subtitle mb-2 text-muted">Created by <a href="{{ url_for('show_creator', creator_id=creator.creator_id)}}">{{ creator.creator_name }}</a></h6>
+                        <h6 class="card-subtitle mb-2 text-muted">Created by <a href="{{ url_for('show_creator', creator_name=creator.creator_name)}}">{{ creator.creator_name }}</a></h6>
                         <p class="card-text">{{ provider.provider_desc }}</p>
                     </div>
                 </div>
@@ -34,7 +34,7 @@
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        <form action="{{ url_for('show_deleted_provider', provider_id=provider.provider_id) }}" id="form_deletion">
+                        <form action="{{ url_for('show_deleted_provider', provider_name=provider.provider_name) }}" id="form_deletion">
                             Are you sure?
                         </form>
                     </div>
@@ -55,7 +55,7 @@
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        <form action="{{ url_for('show_provider_p', provider_id=provider.provider_id) }}" method="POST" id="form_edit">
+                        <form action="{{ url_for('show_provider_p', provider_name=provider.provider_name) }}" method="POST" id="form_edit">
                             {{ form.csrf_token }}
                             <div class="form-group mt-2 mb-2">
                                 <label for="{{ form.name.name }}">{{ form.name.label }}</label>

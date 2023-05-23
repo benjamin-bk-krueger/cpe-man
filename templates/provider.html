@@ -15,7 +15,7 @@
         {% else %}
             <div class="list-group">
                 {% for provider in providers %}
-                    <a href="{{ url_for('show_provider', provider_id=provider.provider_id)}}" class="list-group-item">{{ provider.provider_name }}</a>
+                    <a href="{{ url_for('show_provider', provider_name=provider.provider_name)}}" class="list-group-item">{{ provider.provider_name }}</a>
                 {% endfor %}
             </div>
         {% endif %}

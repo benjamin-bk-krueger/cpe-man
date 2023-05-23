@@ -3,7 +3,7 @@
 {% block content %}
     {#  Page header #}
     <div class="container-fluid pb-2 mt-4 mb-2">
-        <h2>{% block title %} {{ creator.creator_name }} {% endblock %} ({% if creator.creator_role == "creator" %}<i class="bi bi-mortarboard"></i> World Creator{% else %}User{% endif %})</h2>
+        <h2>{% block title %} {{ creator.creator_name }} {% endblock %} ({% if creator.creator_role == "admin" %}<i class="bi bi-mortarboard"></i> Admin{% else %}User{% endif %})</h2>
     </div>
 
     {#  Page content #}
@@ -13,7 +13,7 @@
         <div class="card mb-3" style="max-width: 720px;">
             <div class="row g-0">
                 <div class="col-md-4">
-                    <img src="{{ url_for('do_display', folder_name=creator.creator_name, filename=creator.creator_img) if (creator.creator_img!='NoImage') else '/static/not_found.jpg' }}" class="img-fluid rounded-start" alt="Creator Image">
+                    <img src="{{ url_for('do_display', filename=creator.creator_img) if (creator.creator_img!='NoImage') else '/static/not_found.jpg' }}" class="img-fluid rounded-start" alt="Creator Image">
                 </div>
                 <div class="col-md-8">
                     <div class="card-body">
@@ -35,7 +35,7 @@
                     <ul class="dropdown-menu" aria-labelledby="btnGroupDrop1">
                         <li><a class="dropdown-item" href="{{ url_for('show_creators') }}">All Creators</a></li>
                         {%  if current_user.creator_role == "admin" %}
-                            <li><a class="dropdown-item" href="{{ url_for('show_approve_creator', creator_id=creator.creator_id) }}">Approve Creator</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('show_approve_creator', creator_name=creator.creator_name) }}">Approve Creator</a></li>
                         {%  endif %}
                     </ul>
                 </div>
@@ -47,7 +47,7 @@
             </div>
             <div class="btn-group me-2" role="group" aria-label="Third group">
                 {%  if current_user.creator_role == "admin" and creator.active == 0 %}
-                    <a href="{{ url_for('show_approve_creator', creator_id=creator.creator_id) }}" data-toggle="tooltip" title="Approve Creator" class="btn btn-primary mt-4 mb-4"><i class="bi bi-person-check"></i></a>
+                    <a href="{{ url_for('show_approve_creator', creator_name=creator.creator_name) }}" data-toggle="tooltip" title="Approve Creator" class="btn btn-primary mt-4 mb-4"><i class="bi bi-person-check"></i></a>
                 {%  endif %}
             </div>
         </div>
