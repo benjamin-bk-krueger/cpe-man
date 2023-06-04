@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    {#  Page header #}
+    <div class="container-fluid pb-2 mt-4 mb-2">
+        <h2>{% block title %} All Certifications {% endblock %}</h2>
+    </div>
+
+    {#  Page content #}
+    <div class="container-fluid pb-3 mt-2 mb-2">
+
+        {#  Show list of all certifications #}
+        {% if certifications.count() == 0 %}
+            No entries found.<br>
+        {% else %}
+            <div class="list-group">
+                {% for certification in certifications %}
+                    <a href="{{ url_for('show_certification', certification_name=certification.certification_name)}}" class="list-group-item">{{ certification.certification_name }}</a>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        {# Modal dialog window - create a new certification #}
+        <div id="myModal" class="modal fade" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h4 class="modal-title">Create Certification</h4>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                       <form action="{{ url_for('show_certifications_p') }}" method="POST" id="form_new">
+                            {{ form.csrf_token }}
+                            <div class="form-group mt-2 mb-2">
+                                <label for="{{ form.name.name }}">{{ form.name.label }}</label>
+                                {{ form.name(size=20, class="form-control", onkeypress="return event.charCode != 32") }}
+                            </div>
+                           <div class="form-group mt-2 mb-2">
+                                <label for="{{ form.url.name }}">{{ form.url.label }}</label>
+                                {{ form.url(size=20, class="form-control", onkeypress="return event.charCode != 32") }}
+                            </div>
+                            <div class="form-group mt-2 mb-2">
+                                <label for="{{ form.description.name }}">{{ form.description.label }}</label>
+                                {{ form.description(size=40, class="form-control") }}
+                            </div>
+                            <div class="form-group mt-2 mb-2">
+                                <label for="{{ form.image.name }}">{{ form.image.label }}</label>
+                                {{ form.image(class="form-select") }}
+                            </div>
+                           <div class="form-group mt-2 mb-2">
+                                <label for="{{ form.organization.name }}">{{ form.organization.label }}</label>
+                                {{ form.organization(class="form-select") }}
+                            </div>
+                           <div class="form-group mt-2 mb-2">
+                                <label for="{{ form.certification_date.name }}">{{ form.certification_date.label }}</label>
+                                {{ form.certification_date(size=20, class="form-control") }}
+                            </div>
+                           <div class="form-group mt-2 mb-2">
+                                <label for="{{ form.cycle_length.name }}">{{ form.cycle_length.label }}</label>
+                                {{ form.cycle_length(class="form-select") }}
+                            </div>
+                           <div class="form-group mt-2 mb-2">
+                                <label for="{{ form.cycle_start.name }}">{{ form.cycle_start.label }}</label>
+                                {{ form.cycle_start(size=20, class="form-control") }}
+                            </div>
+                           <div class="form-group mt-2 mb-2">
+                                <label for="{{ form.requirement_year.name }}">{{ form.requirement_year.label }}</label>
+                                {{ form.requirement_year(class="form-select") }}
+                            </div>
+                           <div class="form-group mt-2 mb-2">
+                                <label for="{{ form.requirement_full.name }}">{{ form.requirement_full.label }}</label>
+                                {{ form.requirement_full(class="form-select") }}
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-primary mt-4 mb-4 btn-space" form="form_new">Create</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {#  Display action buttons regarding the selected item #}
+        <div class="btn-toolbar" role="toolbar" aria-label="Toolbar with button groups">
+
+            {#  Text-based links #}
+            <div class="btn-group me-2" role="group" aria-label="Button group with nested dropdown">
+                <div class="btn-group" role="group">
+                    <button id="btnGroupDrop1" type="button" class="btn btn-primary dropdown-toggle mt-4 mb-4" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="bi bi-activity"></i> Actions
+                    </button>
+                    <ul class="dropdown-menu" aria-labelledby="btnGroupDrop1">
+                        {% if current_user.student_role == "student" %}
+                            <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#myModal">Create Certification</a></li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+
+            {#  Same links implemented using small buttons #}
+            <div class="btn-group me-2" role="group" aria-label="Second group">
+                {% if current_user.student_role == "student" %}
+                    <a href="#" class="btn btn-primary mt-4 mb-4" data-toggle="tooltip" title="Create Certification" data-bs-toggle="modal" data-bs-target="#myModal"><i class="bi bi-plus-square"></i></a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+{% endblock %}

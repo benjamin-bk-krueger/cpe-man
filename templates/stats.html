@@ -14,6 +14,7 @@
         <ul class="list-group">
             <li class="list-group-item">Students <span class="badge bg-secondary">{{ counts['student'] }}</span></li>
             <li class="list-group-item">Organizations <span class="badge bg-secondary">{{ counts['organization'] }}</span></li>
+            <li class="list-group-item">Certifications <span class="badge bg-secondary">{{ counts['certification'] }}</span></li>
         </ul>
 
         {% if current_user.is_authenticated %}

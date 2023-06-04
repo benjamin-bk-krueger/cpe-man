@@ -22,7 +22,7 @@ from logging.handlers import SMTPHandler  # get crashes via mail
 
 from forms import LoginForm, AccountForm, MailStudentForm, PassStudentForm, DelStudentForm, \
     PasswordForm, PasswordResetForm, ContactForm, FileForm, UploadForm, \
-    OrganizationForm  # Flask/Jinja template forms
+    OrganizationForm, CertificationForm  # Flask/Jinja template forms
 
 
 # the app configuration is done via environmental variables
@@ -518,6 +518,13 @@ def get_profile_choices(student):
     return image_choices
 
 
+def get_organization_choices(organizations):
+    organizations_choices = list()
+    for organization in organizations:
+        organizations_choices.append((organization.organization_id, organization.organization_name))
+    return organizations_choices
+
+
 # Internal helpers - style manager
 def update_style(style):
     session['style'] = style
@@ -721,6 +728,7 @@ def show_stats():
         counts = dict()
         counts['student'] = Student.query.count()
         counts['organization'] = Organization.query.count()
+        counts['certification'] = Certification.query.count()
 
         bucket_all = get_all_size(S3_BUCKET)
 
@@ -729,6 +737,7 @@ def show_stats():
         counts = dict()
         counts['student'] = Student.query.filter_by(student_id=current_user.student_id).count()
         counts['organization'] = Organization.query.filter_by(student_id=current_user.student_id).count()
+        counts['certification'] = Certification.query.filter_by(student_id=current_user.student_id).count()
 
         bucket_all = dict()
         bucket_all[current_user.student_name] = get_size(S3_BUCKET, current_user.student_name)
@@ -1001,8 +1010,9 @@ def show_approve_student(student_name):
 @login_required
 def show_organizations():
     form = OrganizationForm()
+    student = Student.query.filter_by(student_id=current_user.student_id).first()
 
-    form.image.choices = ["No Image"]
+    form.image.choices = get_profile_choices(student)
     form.image.default = "No Image"
     form.process()
 
@@ -1076,3 +1086,112 @@ def show_deleted_organization(organization_name):
     Organization.query.filter_by(student_id=current_user.student_id).filter_by(organization_name=organization_name).delete()
     db.session.commit()
     return redirect(url_for('show_organizations'))
+
+
+# Displays all available certifications
+@app.route(APP_PREFIX + '/web/certifications', methods=['GET'])
+@login_required
+def show_certifications():
+    form = CertificationForm()
+    student = Student.query.filter_by(student_id=current_user.student_id).first()
+    organizations = Organization.query.filter_by(student_id=student.student_id).order_by(Organization.organization_name.asc())
+
+    form.image.choices = get_profile_choices(student)
+    form.image.default = "No Image"
+    form.organization.choices = get_organization_choices(organizations)
+    form.process()
+
+    certifications = Certification.query.filter_by(student_id=current_user.student_id).order_by(Certification.certification_name.asc())
+    return render_template('certification.html', certifications=certifications, form=form)
+
+
+# Post a new certification - if it doesn't already exist
+@app.route(APP_PREFIX + '/web/certifications', methods=['POST'])
+@login_required
+def show_certifications_p():
+    certification_name = escape(request.form["name"])
+    certification = Certification.query.filter_by(student_id=current_user.student_id).\
+        filter_by(certification_name=certification_name).first()
+
+    if not certification:
+        certification = Certification()
+        certification.certification_name = certification_name
+        certification.certification_url = clean_url(request.form["url"])
+        certification.certification_desc = request.form["description"]
+        certification.certification_img = clean_url(request.form["image"])
+        certification.student_id = current_user.student_id
+        certification.organization_id = int(escape(request.form["organization"]))
+        certification.certification_date = escape(request.form["certification_date"])
+        certification.cycle_length = int(escape(request.form["cycle_length"]))
+        certification.cycle_start = escape(request.form["cycle_start"])
+        certification.requirement_year = int(escape(request.form["requirement_year"]))
+        certification.requirement_full = int(escape(request.form["requirement_full"]))
+
+        db.session.add(certification)
+        db.session.commit()
+    return redirect(url_for('show_certifications'))
+
+
+# Shows information about a specific certification
+@app.route(APP_PREFIX + '/web/certification/<string:certification_name>', methods=['GET'])
+@login_required
+def show_certification(certification_name):
+    form = CertificationForm()
+    certification = Certification.query.filter_by(student_id=current_user.student_id).\
+        filter_by(certification_name=certification_name).first()
+    if certification:
+        student = Student.query.filter_by(student_id=certification.student_id).first()
+        organizations = Organization.query.filter_by(student_id=student.student_id).order_by(
+            Organization.organization_name.asc())
+
+        form.name.default = certification.certification_name
+        form.url.default = certification.certification_url
+        form.description.default = certification.certification_desc
+        form.image.choices = get_profile_choices(student)
+        form.image.default = certification.certification_img
+        form.organization.choices = get_organization_choices(organizations)
+        form.organization.default = certification.organization_id
+        form.certification_date.default = certification.certification_date
+        form.cycle_length.default = int(certification.cycle_length)
+        form.cycle_start.default = certification.cycle_start
+        form.requirement_year.default = int(certification.requirement_year)
+        form.requirement_full.default = int(certification.requirement_full)
+
+        form.process()
+        return render_template('certification_detail.html', certification=certification, student=student, form=form)
+    else:
+        return render_template('error.html', error_message="That certification does not exist.")
+
+
+# Post a change in a certification's data
+@app.route(APP_PREFIX + '/web/certification/<string:certification_name>', methods=['POST'])
+@login_required
+def show_certification_p(certification_name):
+    certification = Certification.query.filter_by(student_id=current_user.student_id).\
+        filter_by(certification_name=certification_name).first()
+
+    if certification:
+        certification.certification_name = clean_url(request.form["name"])
+        certification.certification_url = clean_url(request.form["url"])
+        certification.certification_desc = request.form["description"]
+        certification.certification_img = clean_url(request.form["image"])
+        certification.organization_id = int(escape(request.form["organization"]))
+        certification.certification_date = escape(request.form["certification_date"])
+        certification.cycle_length = int(escape(request.form["cycle_length"]))
+        certification.cycle_start = escape(request.form["cycle_start"])
+        certification.requirement_year = int(escape(request.form["requirement_year"]))
+        certification.requirement_full = int(escape(request.form["requirement_full"]))
+        db.session.commit()
+        return redirect(url_for('show_certification', certification_name=certification.certification_name))
+    else:
+        return render_template('error.html')
+
+
+# Delete a specific certification - and all included elements!!!
+@app.route(APP_PREFIX + '/web/deleted_certification/<string:certification_name>', methods=['GET'])
+@login_required
+def show_deleted_certification(certification_name):
+    Certification.query.filter_by(student_id=current_user.student_id).filter_by(certification_name=certification_name).delete()
+    db.session.commit()
+    return redirect(url_for('show_certifications'))
+
