@@ -67,7 +67,7 @@
                         <i class="bi bi-activity"></i> Actions
                     </button>
                     <ul class="dropdown-menu" aria-labelledby="btnGroupDrop1">
-                        {% if current_user.creator_role == "creator" %}
+                        {% if current_user.student_role == "student" %}
                             <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#myModal">Create Organization</a></li>
                         {% endif %}
                     </ul>
@@ -76,7 +76,7 @@
 
             {#  Same links implemented using small buttons #}
             <div class="btn-group me-2" role="group" aria-label="Second group">
-                {% if current_user.creator_role == "creator" %}
+                {% if current_user.student_role == "student" %}
                     <a href="#" class="btn btn-primary mt-4 mb-4" data-toggle="tooltip" title="Create Organization" data-bs-toggle="modal" data-bs-target="#myModal"><i class="bi bi-plus-square"></i></a>
                 {% endif %}
             </div>

@@ -19,7 +19,7 @@ from werkzeug.security import generate_password_hash, check_password_hash  # for
 from werkzeug.utils import secure_filename  # to prevent path traversal attacks
 from logging.handlers import SMTPHandler  # get crashes via mail
 
-from forms import LoginForm, AccountForm, MailCreatorForm, PassCreatorForm, DelCreatorForm, \
+from forms import LoginForm, AccountForm, MailStudentForm, PassStudentForm, DelStudentForm, \
     PasswordForm, PasswordResetForm, ContactForm, FileForm, UploadForm, \
     OrganizationForm  # Flask/Jinja template forms
 
@@ -112,37 +112,37 @@ login_manager.init_app(app)
 
 # link the Login Manager to the correct user entry
 @login_manager.user_loader
-def load_user(creator_id):
-    # since the creator_id is just the primary key of our user table, use it in the query for the user
-    return Creator.query.get(int(creator_id))
+def load_user(student_id):
+    # since the student_id is just the primary key of our user table, use it in the query for the user
+    return Student.query.get(int(student_id))
 
 
 # --------------------------------------------------------------
 # ORM classes
 # --------------------------------------------------------------
 
-# ORM model classes, Creator table is used for the Login Manager
+# ORM model classes, Student table is used for the Login Manager
 # for each REST-enabled element, we add marshmallow schemas
 # enable a REST API to modify the database contents
-class Creator(UserMixin, db.Model):
-    __tablename__ = "creator"
-    creator_id = db.Column(db.INTEGER, primary_key=True)
-    creator_name = db.Column(db.VARCHAR(100), unique=True)
-    creator_mail = db.Column(db.VARCHAR(100), unique=True)
-    creator_desc = db.Column(db.VARCHAR(1024))
-    creator_pass = db.Column(db.VARCHAR(256))
-    creator_img = db.Column(db.VARCHAR(384))
-    creator_role = db.Column(db.VARCHAR(20))
+class Student(UserMixin, db.Model):
+    __tablename__ = "student"
+    student_id = db.Column(db.INTEGER, primary_key=True)
+    student_name = db.Column(db.VARCHAR(100), unique=True)
+    student_mail = db.Column(db.VARCHAR(100), unique=True)
+    student_desc = db.Column(db.VARCHAR(1024))
+    student_pass = db.Column(db.VARCHAR(256))
+    student_img = db.Column(db.VARCHAR(384))
+    student_role = db.Column(db.VARCHAR(20))
     active = db.Column(db.INTEGER, default=0)
     notification = db.Column(db.INTEGER, default=0)
     password_reset = db.Column(db.VARCHAR(100))
 
     # match the correct row for the Login Manager ID
     def get_id(self):
-        return self.creator_id
+        return self.student_id
 
     def __repr__(self):
-        return '<Creator %s>' % self.creator_name
+        return '<Student %s>' % self.student_name
 
 
 class Invitation(db.Model):
@@ -160,7 +160,7 @@ class Invitation(db.Model):
 class Organization(db.Model):
     __tablename__ = "organization"
     organization_id = db.Column(db.INTEGER, primary_key=True)
-    creator_id = db.Column(db.INTEGER, db.ForeignKey("creator.creator_id"))
+    student_id = db.Column(db.INTEGER, db.ForeignKey("student.student_id"))
     organization_name = db.Column(db.VARCHAR(100))
     organization_desc = db.Column(db.VARCHAR(1024))
     organization_url = db.Column(db.VARCHAR(256))
@@ -172,7 +172,7 @@ class Organization(db.Model):
 
 class OrganizationSchema(marsh.Schema):
     class Meta:
-        fields = ("organization_id", "creator_id", "organization_name", "organization_desc", "organization_url", "organization_img")
+        fields = ("organization_id", "student_id", "organization_name", "organization_desc", "organization_url", "organization_img")
         model = Organization
 
 
@@ -184,8 +184,8 @@ class OrganizationListResource(Resource):
     @staticmethod
     def get():
         if AuthChecker().check(request.authorization):
-            creator = Creator.query.filter_by(creator_name=request.authorization['username']).first()
-            organizations = Organization.query.filter_by(creator_id=creator.creator_id)
+            student = Student.query.filter_by(student_name=request.authorization['username']).first()
+            organizations = Organization.query.filter_by(student_id=student.student_id)
             return organizations_schema.dump(organizations)
         else:
             return jsonify({'error': 'wrong credentials or permissions'})
@@ -193,10 +193,10 @@ class OrganizationListResource(Resource):
     @staticmethod
     def post():
         if AuthChecker().check(request.authorization):
-            creator = Creator.query.filter_by(creator_name=request.authorization['username']).first()
+            student = Student.query.filter_by(student_name=request.authorization['username']).first()
             if all(s in request.json for s in ('organization_name', 'organization_desc', 'organization_url', 'organization_img')):
                 new_organization = Organization(
-                    creator_id=creator.creator_id,
+                    student_id=student.student_id,
                     organization_name=escape(request.json['organization_name']),
                     organization_desc=request.json['organization_desc'],
                     organization_url=clean_url(request.json['organization_url']),
@@ -215,8 +215,8 @@ class OrganizationResource(Resource):
     @staticmethod
     def get(organization_name):
         if AuthChecker().check(request.authorization):
-            creator = Creator.query.filter_by(creator_name=request.authorization['username']).first()
-            organization = Organization.query.filter_by(creator_id=creator.creator_id).\
+            student = Student.query.filter_by(student_name=request.authorization['username']).first()
+            organization = Organization.query.filter_by(student_id=student.student_id).\
                 filter_by(organization_name=organization_name).first()
             return organization_schema.dump(organization)
         else:
@@ -225,8 +225,8 @@ class OrganizationResource(Resource):
     @staticmethod
     def patch(organization_name):
         if AuthChecker().check(request.authorization):
-            creator = Creator.query.filter_by(creator_name=request.authorization['username']).first()
-            organization = Organization.query.filter_by(creator_id=creator.creator_id).\
+            student = Student.query.filter_by(student_name=request.authorization['username']).first()
+            organization = Organization.query.filter_by(student_id=student.student_id).\
                 filter_by(organization_name=organization_name).first()
             if all(s in request.json for s in ('organization_name', 'organization_desc', 'organization_url', 'organization_img')):
                 organization.organization_name = escape(request.json['organization_name'])
@@ -243,8 +243,8 @@ class OrganizationResource(Resource):
     @staticmethod
     def delete(organization_name):
         if AuthChecker().check(request.authorization):
-            creator = Creator.query.filter_by(creator_name=request.authorization['username']).first()
-            organization = Organization.query.filter_by(creator_id=creator.creator_id).\
+            student = Student.query.filter_by(student_name=request.authorization['username']).first()
+            organization = Organization.query.filter_by(student_id=student.student_id).\
                 filter_by(organization_name=organization_name).first()
             db.session.delete(organization)
             db.session.commit()
@@ -334,11 +334,11 @@ class AuthChecker:
     @staticmethod
     def check(auth):
         if auth:
-            creator_name = auth['username']
-            creator_pass = auth['password']
-            creator = Creator.query.filter_by(active=1).filter_by(creator_name=creator_name).first()
+            student_name = auth['username']
+            student_pass = auth['password']
+            student = Student.query.filter_by(active=1).filter_by(student_name=student_name).first()
 
-            if creator and check_password_hash(creator.creator_pass, creator_pass):
+            if student and check_password_hash(student.student_pass, student_pass):
                 return True
         return False
 
@@ -363,13 +363,13 @@ def send_mail(recipients, mail_header, mail_body):
 
 def send_massmail(mail_header, mail_body):
     if MAIL_ENABLE == 1:
-        creators = Creator.query.filter_by(active=1).order_by(Creator.creator_name.asc())
+        students = Student.query.filter_by(active=1).order_by(Student.student_name.asc())
         recipients = list()
         bcc = list()
         recipients.append(MAIL_SENDER)
-        for creator in creators:
-            if creator.notification == 1:
-                bcc.append(creator.creator_mail)
+        for student in students:
+            if student.notification == 1:
+                bcc.append(student.student_mail)
         msg = Message(mail_header,
                       sender=MAIL_SENDER,
                       recipients=recipients,
@@ -393,8 +393,8 @@ def log_entry(operation, parameters=None):
 
 
 # Internal helpers - return choices list used in HTML select elements
-def get_profile_choices(creator):
-    image_choices = list_files(S3_BUCKET, creator.creator_name)
+def get_profile_choices(student):
+    image_choices = list_files(S3_BUCKET, student.student_name)
     image_choices.insert(0, "No Image")
     return image_choices
 
@@ -432,20 +432,20 @@ def show_logged():
 def show_login():
     form = LoginForm()
     if request.method == 'POST' and form.validate_on_submit():
-        creator_name = request.form["creator"]
-        creator_pass = request.form["password"]
+        student_name = request.form["student"]
+        student_pass = request.form["password"]
         remember = True if request.form.get('remember') else False
-        creator = Creator.query.filter_by(active=1).filter_by(creator_name=creator_name).first()
+        student = Student.query.filter_by(active=1).filter_by(student_name=student_name).first()
 
-        if not creator or not check_password_hash(creator.creator_pass, creator_pass):
+        if not student or not check_password_hash(student.student_pass, student_pass):
             return redirect(url_for('show_login'))
         else:
-            if creator.creator_role == "admin":
+            if student.student_role == "admin":
                 update_style("main_admin.css")
             else:
                 update_style("main.css")
 
-            login_user(creator, remember=remember)
+            login_user(student, remember=remember)
             return redirect(url_for('show_index'))
     else:
         return render_template('login.html', form=form)
@@ -465,17 +465,17 @@ def show_password():
     form = PasswordForm()
     if request.method == 'POST' and form.validate_on_submit():
         if MAIL_ENABLE == 1:
-            creator_email = request.form["email"]
+            student_email = request.form["email"]
 
-            creators = Creator.query.filter_by(active=1).order_by(Creator.creator_name.asc())
+            students = Student.query.filter_by(active=1).order_by(Student.student_name.asc())
             recipients = list()
-            for creator in creators:
-                if creator.creator_mail == creator_email:
+            for student in students:
+                if student.student_mail == student_email:
                     random_hash = ''.join(random.sample(string.ascii_letters + string.digits, 32))
-                    creator.password_reset = random_hash
+                    student.password_reset = random_hash
                     db.session.commit()
 
-                    recipients.append(creator.creator_mail)
+                    recipients.append(student.student_mail)
                     msg = Message("Password Reset Link",
                                   sender=MAIL_SENDER,
                                   recipients=recipients
@@ -493,12 +493,12 @@ def show_password():
 def show_password_reset(random_hash):
     form = PasswordResetForm()
     if request.method == 'POST' and form.validate_on_submit():
-        creators = Creator.query.filter_by(active=1).order_by(Creator.creator_name.asc())
-        for creator in creators:
-            if creator.password_reset == random_hash and len(random_hash) > 30:
-                creator.creator_pass = generate_password_hash(request.form["password"], method='pbkdf2:sha256',
+        students = Student.query.filter_by(active=1).order_by(Student.student_name.asc())
+        for student in students:
+            if student.password_reset == random_hash and len(random_hash) > 30:
+                student.student_pass = generate_password_hash(request.form["password"], method='pbkdf2:sha256',
                                                               salt_length=16)
-                creator.password_reset = ""
+                student.password_reset = ""
                 db.session.commit()
         return redirect(url_for('show_index'))
     else:
@@ -516,23 +516,23 @@ def show_storage():
     form = UploadForm()
     form2 = FileForm()
 
-    space_used_in_mb = round((get_size(S3_BUCKET, f"{current_user.creator_name}/") / 1024 / 1024), 2)
+    space_used_in_mb = round((get_size(S3_BUCKET, f"{current_user.student_name}/") / 1024 / 1024), 2)
     space_used = int(space_used_in_mb / int(S3_QUOTA) * 100)
 
     if request.method == 'POST' and form.validate_on_submit():
         filename = secure_filename(form.file.data.filename)
 
         if allowed_file(filename) and space_used < 100:
-            local_folder_name = f"{UPLOAD_FOLDER}/{current_user.creator_name}"
+            local_folder_name = f"{UPLOAD_FOLDER}/{current_user.student_name}"
             local_file = os.path.join(local_folder_name, filename)
-            remote_file = f"{current_user.creator_name}/{filename}"
+            remote_file = f"{current_user.student_name}/{filename}"
             if not os.path.exists(local_folder_name):
                 os.makedirs(local_folder_name)
             form.file.data.save(local_file)
             upload_file(S3_BUCKET, remote_file, local_file)
         return redirect(url_for('show_storage'))
     else:
-        contents = list_files(S3_BUCKET, current_user.creator_name)
+        contents = list_files(S3_BUCKET, current_user.student_name)
         return render_template('storage.html',
                                contents=contents, space_used_in_mb=space_used_in_mb, space_used=space_used,
                                form=form, form2=form2)
@@ -542,8 +542,8 @@ def show_storage():
 @app.route(APP_PREFIX + "/web/rename", methods=['POST'])
 @login_required
 def do_rename():
-    remote_file_new = f"{secure_filename(current_user.creator_name)}/{secure_filename(request.form['filename_new'])}"
-    remote_file_old = f"{secure_filename(current_user.creator_name)}/{secure_filename(request.form['filename_old'])}"
+    remote_file_new = f"{secure_filename(current_user.student_name)}/{secure_filename(request.form['filename_new'])}"
+    remote_file_old = f"{secure_filename(current_user.student_name)}/{secure_filename(request.form['filename_old'])}"
     if remote_file_new != remote_file_old and allowed_file(remote_file_new):
         log_entry(__name__, [S3_BUCKET, remote_file_new, remote_file_old])
         rename_file(S3_BUCKET, remote_file_new, remote_file_old)
@@ -555,9 +555,9 @@ def do_rename():
 @app.route(APP_PREFIX + "/web/download/<string:filename>", methods=['GET'])
 @login_required
 def do_download(filename):
-    local_folder_name = f"{DOWNLOAD_FOLDER}/{current_user.creator_name}"
+    local_folder_name = f"{DOWNLOAD_FOLDER}/{current_user.student_name}"
     local_filename = os.path.join(local_folder_name, secure_filename(filename))
-    remote_file = f"{secure_filename(current_user.creator_name)}/{secure_filename(filename)}"
+    remote_file = f"{secure_filename(current_user.student_name)}/{secure_filename(filename)}"
 
     if not os.path.exists(local_folder_name):
         os.makedirs(local_folder_name)
@@ -570,9 +570,9 @@ def do_download(filename):
 @app.route(APP_PREFIX + "/web/display/<string:filename>", methods=['GET'])
 @login_required
 def do_display(filename):
-    local_folder_name = f"{DOWNLOAD_FOLDER}/{current_user.creator_name}"
+    local_folder_name = f"{DOWNLOAD_FOLDER}/{current_user.student_name}"
     local_filename = os.path.join(local_folder_name, secure_filename(filename))
-    remote_file = f"{secure_filename(current_user.creator_name)}/{secure_filename(filename)}"
+    remote_file = f"{secure_filename(current_user.student_name)}/{secure_filename(filename)}"
 
     if not os.path.exists(local_folder_name):
         os.makedirs(local_folder_name)
@@ -585,7 +585,7 @@ def do_display(filename):
 @app.route(APP_PREFIX + "/web/delete/<string:filename>", methods=['GET'])
 @login_required
 def do_delete(filename):
-    remote_file = f"{secure_filename(current_user.creator_name)}/{secure_filename(filename)}"
+    remote_file = f"{secure_filename(current_user.student_name)}/{secure_filename(filename)}"
     delete_file(S3_BUCKET, remote_file)
     return redirect(url_for('show_storage'))
 
@@ -598,9 +598,9 @@ def do_delete(filename):
 @app.route(APP_PREFIX + '/web/stats', methods=['GET'])
 @login_required
 def show_stats():
-    if current_user.creator_role == "admin":
+    if current_user.student_role == "admin":
         counts = dict()
-        counts['creator'] = Creator.query.count()
+        counts['student'] = Student.query.count()
         counts['organization'] = Organization.query.count()
 
         bucket_all = get_all_size(S3_BUCKET)
@@ -608,11 +608,11 @@ def show_stats():
         return render_template('stats.html', counts=counts, bucket_all=bucket_all)
     else:
         counts = dict()
-        counts['creator'] = Creator.query.filter_by(creator_id=current_user.creator_id).count()
-        counts['organization'] = Organization.query.filter_by(creator_id=current_user.creator_id).count()
+        counts['student'] = Student.query.filter_by(student_id=current_user.student_id).count()
+        counts['organization'] = Organization.query.filter_by(student_id=current_user.student_id).count()
 
         bucket_all = dict()
-        bucket_all[current_user.creator_name] = get_size(S3_BUCKET, current_user.creator_name)
+        bucket_all[current_user.student_name] = get_size(S3_BUCKET, current_user.student_name)
 
         return render_template('stats.html', counts=counts, bucket_all=bucket_all)
 
@@ -675,81 +675,81 @@ def show_contact():
         return render_template('contact.html', form=form, random1=random1, random2=random2, check_captcha=check_captcha)
 
 
-# Displays all available creators
-@app.route(APP_PREFIX + '/web/creators', methods=['GET'])
+# Displays all available students
+@app.route(APP_PREFIX + '/web/students', methods=['GET'])
 @login_required
-def show_creators():
-    if current_user.creator_role == "admin":
-        creators = Creator.query.order_by(Creator.creator_name.asc())
+def show_students():
+    if current_user.student_role == "admin":
+        students = Student.query.order_by(Student.student_name.asc())
     else:
-        creators = Creator.query.filter_by(creator_id=current_user.creator_id).order_by(Creator.creator_name.asc())
-    return render_template('creator.html', creators=creators)
+        students = Student.query.filter_by(student_id=current_user.student_id).order_by(Student.student_name.asc())
+    return render_template('student.html', students=students)
 
 
-# Shows information about a specific creator
-@app.route(APP_PREFIX + '/web/creator/<string:creator_name>', methods=['GET'])
+# Shows information about a specific student
+@app.route(APP_PREFIX + '/web/student/<string:student_name>', methods=['GET'])
 @login_required
-def show_creator(creator_name):
-    if current_user.creator_role == "admin":
-        creator = Creator.query.filter_by(creator_name=creator_name).first()
+def show_student(student_name):
+    if current_user.student_role == "admin":
+        student = Student.query.filter_by(student_name=student_name).first()
     else:
-        creator = Creator.query.filter_by(creator_id=current_user.creator_id).first()
+        student = Student.query.filter_by(student_id=current_user.student_id).first()
 
-    if creator:
-        return render_template('creator_detail.html', folder_name=creator.creator_name, creator=creator)
+    if student:
+        return render_template('student_detail.html', folder_name=student.student_name, student=student)
     else:
-        return render_template('error.html', error_message="That creator does not exist.")
+        return render_template('error.html', error_message="That student does not exist.")
 
 
-# Displays a form to create a new user (aka creator)
-@app.route(APP_PREFIX + '/web/new_creator', methods=['GET', 'POST'])
-def show_new_creator():
+# Displays a form to create a new user (aka student)
+@app.route(APP_PREFIX + '/web/new_student', methods=['GET', 'POST'])
+def show_new_student():
     form = AccountForm()
     if request.method == 'POST' and form.validate_on_submit():
         code = request.form["invitation"]
         invitation = Invitation.query.filter_by(invitation_code=code).first()
 
-        existing_creator_1 = Creator.query.filter_by(creator_mail=escape(request.form["email"])).first()
-        existing_creator_2 = Creator.query.filter_by(creator_name=escape(request.form["creator"])).first()
+        existing_student_1 = Student.query.filter_by(student_mail=escape(request.form["email"])).first()
+        existing_student_2 = Student.query.filter_by(student_name=escape(request.form["student"])).first()
 
-        if existing_creator_1 is None and existing_creator_2 is None:
+        if existing_student_1 is None and existing_student_2 is None:
             if invitation and (invitation.invitation_forever == 1 or invitation.invitation_taken == 0):
-                creator = Creator()
-                creator.creator_name = escape(request.form["creator"])
-                creator.creator_mail = escape(request.form["email"])
-                creator.creator_desc = ""
-                creator.creator_pass = generate_password_hash(request.form["password"], method='pbkdf2:sha256',
+                student = Student()
+                student.student_name = escape(request.form["student"])
+                student.student_mail = escape(request.form["email"])
+                student.student_desc = ""
+                student.student_pass = generate_password_hash(request.form["password"], method='pbkdf2:sha256',
                                                               salt_length=16)
-                creator.creator_role = invitation.invitation_role
-                creator.creator_img = ""
-                creator.active = 1
-                db.session.add(creator)
+                student.student_role = invitation.invitation_role
+                student.student_img = ""
+                student.active = 1
+                db.session.add(student)
                 db.session.commit()
 
                 invitation.invitation_taken = 1
                 db.session.commit()
 
-                send_mail([MAIL_ADMIN], f"{creator.creator_name} - Registration complete",
+                send_mail([MAIL_ADMIN], f"{student.student_name} - Registration complete",
                           "A new user has registered using an invitation code. No action necessary.")
             else:
-                creator = Creator()
-                creator.creator_name = escape(request.form["creator"])
-                creator.creator_mail = escape(request.form["email"])
-                creator.creator_desc = ""
-                creator.creator_pass = generate_password_hash(request.form["password"], method='pbkdf2:sha256',
+                student = Student()
+                student.student_name = escape(request.form["student"])
+                student.student_mail = escape(request.form["email"])
+                student.student_desc = ""
+                student.student_pass = generate_password_hash(request.form["password"], method='pbkdf2:sha256',
                                                               salt_length=16)
-                creator.creator_role = "creator"
-                creator.creator_img = ""
-                creator.active = 0
-                db.session.add(creator)
+                student.student_role = "student"
+                student.student_img = ""
+                student.active = 0
+                db.session.add(student)
                 db.session.commit()
 
-                send_mail([MAIL_ADMIN], f"{creator.creator_name} - Approval required",
+                send_mail([MAIL_ADMIN], f"{student.student_name} - Approval required",
                           "A new user has registered, please approve registration.")
 
-                send_mail([creator.creator_mail], f"{creator.creator_name} - Registration pending",
+                send_mail([student.student_mail], f"{student.student_name} - Registration pending",
                           "Your registration needs to be approved. This should not take too long.")
-            return redirect(url_for('show_creators'))
+            return redirect(url_for('show_students'))
         else:
             return render_template('account.html', form=form)
     else:
@@ -757,122 +757,122 @@ def show_new_creator():
 
 
 # Displays various forms to change the currently logged-in user
-@app.route(APP_PREFIX + '/web/my_creator', methods=['GET'])
+@app.route(APP_PREFIX + '/web/my_student', methods=['GET'])
 @login_required
-def show_my_creator():
-    form1 = MailCreatorForm()
-    form2 = PassCreatorForm()
-    form3 = DelCreatorForm()
-    creator = Creator.query.filter_by(creator_id=current_user.creator_id).first()
+def show_my_student():
+    form1 = MailStudentForm()
+    form2 = PassStudentForm()
+    form3 = DelStudentForm()
+    student = Student.query.filter_by(student_id=current_user.student_id).first()
 
-    form1.email.default = creator.creator_mail
-    form1.description.default = creator.creator_desc
-    form1.image.choices = get_profile_choices(creator)
-    form1.image.default = creator.creator_img
-    form1.notification.default = creator.notification
+    form1.email.default = student.student_mail
+    form1.description.default = student.student_desc
+    form1.image.choices = get_profile_choices(student)
+    form1.image.default = student.student_img
+    form1.notification.default = student.notification
     form1.process()
-    return render_template('account_detail.html', creator=creator, form1=form1, form2=form2, form3=form3)
+    return render_template('account_detail.html', student=student, form1=form1, form2=form2, form3=form3)
 
 
 # Post a change of user data or display error message if some data was not entered correctly
-@app.route(APP_PREFIX + '/web/my_mail_creator', methods=['POST'])
+@app.route(APP_PREFIX + '/web/my_mail_student', methods=['POST'])
 @login_required
-def show_my_mail_creator():
-    form1 = MailCreatorForm()
-    form2 = PassCreatorForm()
-    form3 = DelCreatorForm()
-    creator = Creator.query.filter_by(creator_id=current_user.creator_id).first()
+def show_my_mail_student():
+    form1 = MailStudentForm()
+    form2 = PassStudentForm()
+    form3 = DelStudentForm()
+    student = Student.query.filter_by(student_id=current_user.student_id).first()
 
-    if creator:
+    if student:
         if form1.validate_on_submit():
-            old_mail = creator.creator_mail
-            creator.creator_mail = escape(request.form["email"])
-            creator.creator_desc = request.form["description"]
-            creator.creator_img = escape(request.form["image"])
-            creator.notification = 1 if request.form.get('notification') else 0
+            old_mail = student.student_mail
+            student.student_mail = escape(request.form["email"])
+            student.student_desc = request.form["description"]
+            student.student_img = escape(request.form["image"])
+            student.notification = 1 if request.form.get('notification') else 0
             db.session.commit()
 
-            send_mail([creator.creator_mail], "Notification: E-Mail changed",
-                      f"You have changed you e-mail address from {old_mail} to {creator.creator_mail}.")
+            send_mail([student.student_mail], "Notification: E-Mail changed",
+                      f"You have changed you e-mail address from {old_mail} to {student.student_mail}.")
 
-            return redirect(url_for('show_my_creator'))
+            return redirect(url_for('show_my_student'))
         else:
-            form1.email.default = creator.creator_mail
-            form1.description.default = creator.creator_desc
-            form1.image.choices = get_profile_choices(creator)
-            form1.image.default = creator.creator_img
-            form1.notification.default = creator.notification
+            form1.email.default = student.student_mail
+            form1.description.default = student.student_desc
+            form1.image.choices = get_profile_choices(student)
+            form1.image.default = student.student_img
+            form1.notification.default = student.notification
             form1.process()
-            return render_template('account_detail.html', creator=creator, form1=form1, form2=form2, form3=form3)
+            return render_template('account_detail.html', student=student, form1=form1, form2=form2, form3=form3)
     else:
-        return render_template('error.html', error_message="That creator does not exist.")
+        return render_template('error.html', error_message="That student does not exist.")
 
 
 # Post a user's password change or display error message if some data was not entered correctly
-@app.route(APP_PREFIX + '/web/my_pass_creator', methods=['POST'])
+@app.route(APP_PREFIX + '/web/my_pass_student', methods=['POST'])
 @login_required
-def show_my_pass_creator():
-    form1 = MailCreatorForm()
-    form2 = PassCreatorForm()
-    form3 = DelCreatorForm()
-    creator = Creator.query.filter_by(creator_id=current_user.creator_id).first()
+def show_my_pass_student():
+    form1 = MailStudentForm()
+    form2 = PassStudentForm()
+    form3 = DelStudentForm()
+    student = Student.query.filter_by(student_id=current_user.student_id).first()
 
-    if creator:
+    if student:
         if form2.validate_on_submit():
-            creator.creator_pass = generate_password_hash(request.form["password"], method='pbkdf2:sha256',
+            student.student_pass = generate_password_hash(request.form["password"], method='pbkdf2:sha256',
                                                           salt_length=16)
             db.session.commit()
-            return redirect(url_for('show_my_creator'))
+            return redirect(url_for('show_my_student'))
         else:
-            form1.email.default = creator.creator_mail
-            form1.description.default = creator.creator_desc
-            form1.image.choices = get_profile_choices(creator)
-            form1.image.default = creator.creator_img
+            form1.email.default = student.student_mail
+            form1.description.default = student.student_desc
+            form1.image.choices = get_profile_choices(student)
+            form1.image.default = student.student_img
             form1.process()
-            return render_template('account_detail.html', creator=creator, form1=form1, form2=form2, form3=form3)
+            return render_template('account_detail.html', student=student, form1=form1, form2=form2, form3=form3)
     else:
-        return render_template('error.html', error_message="That creator does not exist.")
+        return render_template('error.html', error_message="That student does not exist.")
 
 
 # Delete a user and return to the site index afterward
-@app.route(APP_PREFIX + '/web/my_del_creator', methods=['POST'])
+@app.route(APP_PREFIX + '/web/my_del_student', methods=['POST'])
 @login_required
-def show_my_del_creator():
-    form1 = MailCreatorForm()
-    form2 = PassCreatorForm()
-    form3 = DelCreatorForm()
-    creator = Creator.query.filter_by(creator_id=current_user.creator_id).first()
+def show_my_del_student():
+    form1 = MailStudentForm()
+    form2 = PassStudentForm()
+    form3 = DelStudentForm()
+    student = Student.query.filter_by(student_id=current_user.student_id).first()
 
-    if creator:
+    if student:
         if form3.validate_on_submit():
-            Creator.query.filter_by(creator_id=current_user.creator_id).delete()
+            Student.query.filter_by(student_id=current_user.student_id).delete()
             db.session.commit()
             logout_user()
             return redirect(url_for('show_index'))
         else:
-            form1.email.default = creator.creator_mail
-            form1.description.default = creator.creator_desc
-            form1.image.choices = get_profile_choices(creator)
-            form1.image.default = creator.creator_img
+            form1.email.default = student.student_mail
+            form1.description.default = student.student_desc
+            form1.image.choices = get_profile_choices(student)
+            form1.image.default = student.student_img
             form1.process()
-            return render_template('account_detail.html', creator=creator, form1=form1, form2=form2, form3=form3)
+            return render_template('account_detail.html', student=student, form1=form1, form2=form2, form3=form3)
     else:
-        return render_template('error.html', error_message="That creator does not exist.")
+        return render_template('error.html', error_message="That student does not exist.")
 
 
 # Approve a user's registration
-@app.route(APP_PREFIX + '/web/approve_creator/<string:creator_name>', methods=['GET'])
+@app.route(APP_PREFIX + '/web/approve_student/<string:student_name>', methods=['GET'])
 @login_required
-def show_approve_creator(creator_name):
-    if current_user.creator_role == "admin":
-        creator = Creator.query.filter_by(creator_name=creator_name).first()
-        creator.active = 1
+def show_approve_student(student_name):
+    if current_user.student_role == "admin":
+        student = Student.query.filter_by(student_name=student_name).first()
+        student.active = 1
         db.session.commit()
 
-        send_mail([creator.creator_mail], f"{creator.creator_name} - Registration complete",
+        send_mail([student.student_mail], f"{student.student_name} - Registration complete",
                   "Your registration has been approved. You can use your login now.")
 
-        return redirect(url_for('show_creators'))
+        return redirect(url_for('show_students'))
     else:
         return render_template('error.html')
 
@@ -887,7 +887,7 @@ def show_organizations():
     form.image.default = "No Image"
     form.process()
 
-    organizations = Organization.query.filter_by(creator_id=current_user.creator_id).order_by(Organization.organization_name.asc())
+    organizations = Organization.query.filter_by(student_id=current_user.student_id).order_by(Organization.organization_name.asc())
     return render_template('organization.html', organizations=organizations, form=form)
 
 
@@ -896,7 +896,7 @@ def show_organizations():
 @login_required
 def show_organizations_p():
     organization_name = escape(request.form["name"])
-    organization = Organization.query.filter_by(creator_id=current_user.creator_id).\
+    organization = Organization.query.filter_by(student_id=current_user.student_id).\
         filter_by(organization_name=organization_name).first()
 
     if not organization:
@@ -905,7 +905,7 @@ def show_organizations_p():
         organization.organization_url = clean_url(request.form["url"])
         organization.organization_desc = request.form["description"]
         organization.organization_img = clean_url(request.form["image"])
-        organization.creator_id = current_user.creator_id
+        organization.student_id = current_user.student_id
         db.session.add(organization)
         db.session.commit()
     return redirect(url_for('show_organizations'))
@@ -916,18 +916,18 @@ def show_organizations_p():
 @login_required
 def show_organization(organization_name):
     form = OrganizationForm()
-    organization = Organization.query.filter_by(creator_id=current_user.creator_id).\
+    organization = Organization.query.filter_by(student_id=current_user.student_id).\
         filter_by(organization_name=organization_name).first()
     if organization:
-        creator = Creator.query.filter_by(creator_id=organization.creator_id).first()
+        student = Student.query.filter_by(student_id=organization.student_id).first()
 
         form.name.default = organization.organization_name
         form.url.default = organization.organization_url
         form.description.default = organization.organization_desc
-        form.image.choices = get_profile_choices(creator)
+        form.image.choices = get_profile_choices(student)
         form.image.default = organization.organization_img
         form.process()
-        return render_template('organization_detail.html', organization=organization, creator=creator, form=form)
+        return render_template('organization_detail.html', organization=organization, student=student, form=form)
     else:
         return render_template('error.html', error_message="That organization does not exist.")
 
@@ -936,7 +936,7 @@ def show_organization(organization_name):
 @app.route(APP_PREFIX + '/web/organization/<string:organization_name>', methods=['POST'])
 @login_required
 def show_organization_p(organization_name):
-    organization = Organization.query.filter_by(creator_id=current_user.creator_id).\
+    organization = Organization.query.filter_by(student_id=current_user.student_id).\
         filter_by(organization_name=organization_name).first()
 
     if organization:
@@ -954,6 +954,6 @@ def show_organization_p(organization_name):
 @app.route(APP_PREFIX + '/web/deleted_organization/<string:organization_name>', methods=['GET'])
 @login_required
 def show_deleted_organization(organization_name):
-    Organization.query.filter_by(creator_id=current_user.creator_id).filter_by(organization_name=organization_name).delete()
+    Organization.query.filter_by(student_id=current_user.student_id).filter_by(organization_name=organization_name).delete()
     db.session.commit()
     return redirect(url_for('show_organizations'))

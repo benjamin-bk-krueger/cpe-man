@@ -1,11 +1,11 @@
-CREATE TABLE creator (
-    creator_id SERIAL PRIMARY KEY,
-    creator_name VARCHAR ( 100 ) UNIQUE NOT NULL,
-    creator_mail VARCHAR ( 100 ) UNIQUE NOT NULL,
-    creator_desc VARCHAR ( 1024 ),
-    creator_pass VARCHAR ( 256 ),
-    creator_img VARCHAR ( 384 ),
-    creator_role VARCHAR ( 20 ),
+CREATE TABLE student (
+    student_id SERIAL PRIMARY KEY,
+    student_name VARCHAR ( 100 ) UNIQUE NOT NULL,
+    student_mail VARCHAR ( 100 ) UNIQUE NOT NULL,
+    student_desc VARCHAR ( 1024 ),
+    student_pass VARCHAR ( 256 ),
+    student_img VARCHAR ( 384 ),
+    student_role VARCHAR ( 20 ),
     active INT default 0,
     notification INT default 0,
     password_reset VARCHAR ( 100 ),
@@ -25,7 +25,7 @@ CREATE TABLE invitation (
 
 CREATE TABLE organization (
     organization_id SERIAL PRIMARY KEY,
-    creator_id INT REFERENCES creator ( creator_id ),
+    student_id INT REFERENCES student ( student_id ),
     organization_name VARCHAR ( 100 ),
     organization_desc VARCHAR ( 1024 ),
     organization_url VARCHAR ( 256 ),
@@ -35,7 +35,7 @@ CREATE TABLE organization (
 );
 
 CREATE UNIQUE INDEX idx_organization_name
-ON organization ( organization_name, creator_id );
+ON organization ( organization_name, student_id );
 
 CREATE OR REPLACE FUNCTION update_modified_column()   
 RETURNS TRIGGER AS $$
@@ -45,9 +45,9 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
-CREATE TRIGGER update_creator_modtime BEFORE UPDATE ON creator FOR EACH ROW EXECUTE PROCEDURE  update_modified_column();
+CREATE TRIGGER update_student_modtime BEFORE UPDATE ON student FOR EACH ROW EXECUTE PROCEDURE  update_modified_column();
 CREATE TRIGGER update_invitation_modtime BEFORE UPDATE ON invitation FOR EACH ROW EXECUTE PROCEDURE  update_modified_column();
 CREATE TRIGGER update_organization_modtime BEFORE UPDATE ON organization FOR EACH ROW EXECUTE PROCEDURE  update_modified_column();
 
 -- Default credentials, need to be changed on production stage
-INSERT INTO invitation(invitation_code, invitation_role, invitation_forever) VALUES ('heureka', 'creator', 0);
+INSERT INTO invitation(invitation_code, invitation_role, invitation_forever) VALUES ('heureka', 'student', 0);

@@ -18,7 +18,7 @@
                 <div class="col-md-8">
                     <div class="card-body">
                         <h5 class="card-title">{{ organization.organization_url }}</h5>
-                        <h6 class="card-subtitle mb-2 text-muted">Created by <a href="{{ url_for('show_creator', creator_name=creator.creator_name)}}">{{ creator.creator_name }}</a></h6>
+                        <h6 class="card-subtitle mb-2 text-muted">Created by <a href="{{ url_for('show_student', student_name=student.student_name)}}">{{ student.student_name }}</a></h6>
                         <p class="card-text">{{ organization.organization_desc }}</p>
                     </div>
                 </div>
@@ -94,7 +94,7 @@
                     </button>
                     <ul class="dropdown-menu" aria-labelledby="btnGroupDrop1">
                         <li><a class="dropdown-item" href="{{ url_for('show_organizations') }}">All Organizations</a></li>
-                        {% if current_user.creator_id == organization.creator_id %}
+                        {% if current_user.student_id == organization.student_id %}
                             <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#myModal">Edit Organization</a></li>
                             <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#myModal_del">Delete Organization</a></li>
                         {% endif %}
@@ -107,12 +107,12 @@
                 <a href="{{ url_for('show_organizations') }}" data-toggle="tooltip" title="All Organizations" class="btn btn-primary mt-4 mb-4"><i class="bi bi-list-ul"></i></a>
             </div>
             <div class="btn-group me-2" role="group" aria-label="Third group">
-                {% if current_user.creator_id == organization.creator_id %}
+                {% if current_user.student_id == organization.student_id %}
                     <a href="#" class="btn btn-primary mt-4 mb-4" data-toggle="tooltip" title="Edit Organization" data-bs-toggle="modal" data-bs-target="#myModal"><i class="bi bi-pencil"></i></a>
                 {% endif %}
             </div>
             <div class="btn-group me-2" role="group" aria-label="Fourth group">
-                {% if current_user.creator_id == organization.creator_id %}
+                {% if current_user.student_id == organization.student_id %}
                     <a href="#" class="btn btn-danger mt-4 mb-4" data-toggle="tooltip" title="Delete Organization" data-bs-toggle="modal" data-bs-target="#myModal_del"><i class="bi bi-trash"></i></a>
                 {% endif %}
             </div>

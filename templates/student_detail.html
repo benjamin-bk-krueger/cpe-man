@@ -3,27 +3,27 @@
 {% block content %}
     {#  Page header #}
     <div class="container-fluid pb-2 mt-4 mb-2">
-        <h2>{% block title %} {{ creator.creator_name }} {% endblock %} ({% if creator.creator_role == "admin" %}<i class="bi bi-mortarboard"></i> Admin{% else %}User{% endif %})</h2>
+        <h2>{% block title %} {{ student.student_name }} {% endblock %} ({% if student.student_role == "admin" %}<i class="bi bi-mortarboard"></i> Admin{% else %}User{% endif %})</h2>
     </div>
 
     {#  Page content #}
     <div class="container-fluid pb-3 mt-2 mb-2">
 
-        {#  Show detailed information regarding the selected creator #}
+        {#  Show detailed information regarding the selected student #}
         <div class="card mb-3" style="max-width: 720px;">
             <div class="row g-0">
                 <div class="col-md-4">
-                    <img src="{{ url_for('do_display', filename=creator.creator_img) if (creator.creator_img!='NoImage') else '/static/not_found.jpg' }}" class="img-fluid rounded-start" alt="Creator Image">
+                    <img src="{{ url_for('do_display', filename=student.student_img) if (student.student_img!='NoImage') else '/static/not_found.jpg' }}" class="img-fluid rounded-start" alt="Student Image">
                 </div>
                 <div class="col-md-8">
                     <div class="card-body">
-                        <p class="card-text">{{ creator.creator_desc }}</p>
+                        <p class="card-text">{{ student.student_desc }}</p>
                     </div>
                 </div>
             </div>
         </div>
 
-        {#  Display action buttons regarding the selected creator #}
+        {#  Display action buttons regarding the selected student #}
         <div class="btn-toolbar" role="toolbar" aria-label="Toolbar with button groups">
 
             {#  Text-based links #}
@@ -33,9 +33,9 @@
                         <i class="bi bi-activity"></i> Actions
                     </button>
                     <ul class="dropdown-menu" aria-labelledby="btnGroupDrop1">
-                        <li><a class="dropdown-item" href="{{ url_for('show_creators') }}">All Creators</a></li>
-                        {%  if current_user.creator_role == "admin" %}
-                            <li><a class="dropdown-item" href="{{ url_for('show_approve_creator', creator_name=creator.creator_name) }}">Approve Creator</a></li>
+                        <li><a class="dropdown-item" href="{{ url_for('show_students') }}">All Students</a></li>
+                        {%  if current_user.student_role == "admin" %}
+                            <li><a class="dropdown-item" href="{{ url_for('show_approve_student', student_name=student.student_name) }}">Approve Student</a></li>
                         {%  endif %}
                     </ul>
                 </div>
@@ -43,11 +43,11 @@
 
             {#  Same links implemented using small buttons #}
             <div class="btn-group me-2" role="group" aria-label="Second group">
-                <a href="{{ url_for('show_creators') }}" data-toggle="tooltip" title="All Creators" class="btn btn-primary mt-4 mb-4"><i class="bi bi-list-ul"></i></a>
+                <a href="{{ url_for('show_students') }}" data-toggle="tooltip" title="All Students" class="btn btn-primary mt-4 mb-4"><i class="bi bi-list-ul"></i></a>
             </div>
             <div class="btn-group me-2" role="group" aria-label="Third group">
-                {%  if current_user.creator_role == "admin" and creator.active == 0 %}
-                    <a href="{{ url_for('show_approve_creator', creator_name=creator.creator_name) }}" data-toggle="tooltip" title="Approve Creator" class="btn btn-primary mt-4 mb-4"><i class="bi bi-person-check"></i></a>
+                {%  if current_user.student_role == "admin" and student.active == 0 %}
+                    <a href="{{ url_for('show_approve_student', student_name=student.student_name) }}" data-toggle="tooltip" title="Approve Student" class="btn btn-primary mt-4 mb-4"><i class="bi bi-person-check"></i></a>
                 {%  endif %}
             </div>
         </div>

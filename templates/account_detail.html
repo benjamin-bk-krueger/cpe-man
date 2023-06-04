@@ -18,7 +18,7 @@
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        <form action="{{ url_for('show_my_del_creator') }}" method="POST" id="form_deletion">
+                        <form action="{{ url_for('show_my_del_student') }}" method="POST" id="form_deletion">
                             {{ form3.csrf_token }}
                             Are you sure?
                         </form>
@@ -33,7 +33,7 @@
 
         {# Display form and possible error message - change user data #}
         <h4 class="mb-3">Please enter data</h4>
-        <form action="{{ url_for('show_my_mail_creator') }}" method="POST">
+        <form action="{{ url_for('show_my_mail_student') }}" method="POST">
             {{ form1.csrf_token }}
             <div class="form-group mt-2 mb-2">
                 <label for="email">{{ form1.email.label }}</label>
@@ -67,7 +67,7 @@
 
         {# Display form and possible error message - set a password for currently logged in user #}
         <h4 class="mb-3">Set new password</h4>
-        <form action="{{ url_for('show_my_pass_creator') }}" method="POST">
+        <form action="{{ url_for('show_my_pass_student') }}" method="POST">
             {{ form2.csrf_token }}
             <div class="form-group mt-2 mb-2">
                 <label for="password">{{ form2.password.label }}</label>

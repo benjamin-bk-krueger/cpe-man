@@ -7,28 +7,28 @@
 	},
 	"item": [
 		{
-			"name": "Providers",
+			"name": "Organizations",
 			"item": [
 				{
-					"name": "All Providers",
+					"name": "All Organizations",
 					"request": {
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{baseurl}}/api/providers",
+							"raw": "{{baseurl}}/api/organizations",
 							"host": [
 								"{{baseurl}}"
 							],
 							"path": [
 								"api",
-								"providers"
+								"organizations"
 							]
 						}
 					},
 					"response": []
 				},
 				{
-					"name": "Single Provider",
+					"name": "Single Organization",
 					"request": {
 						"method": "POST",
 						"header": [
@@ -40,34 +40,34 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"provider_desc\": \"Description\",\n    \"provider_img\": \"\",\n    \"provider_name\": \"Name\",\n    \"provider_url\": \"\"\n}"
+							"raw": "{\n    \"organization_desc\": \"Description\",\n    \"organization_img\": \"\",\n    \"organization_name\": \"Name\",\n    \"organization_url\": \"\"\n}"
 						},
 						"url": {
-							"raw": "{{baseurl}}/api/providers",
+							"raw": "{{baseurl}}/api/organizations",
 							"host": [
 								"{{baseurl}}"
 							],
 							"path": [
 								"api",
-								"providers"
+								"organizations"
 							]
 						}
 					},
 					"response": []
 				},
 				{
-					"name": "Single Provider",
+					"name": "Single Organization",
 					"request": {
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{baseurl}}/api/providers/{{name}}",
+							"raw": "{{baseurl}}/api/organizations/{{name}}",
 							"host": [
 								"{{baseurl}}"
 							],
 							"path": [
 								"api",
-								"providers",
+								"organizations",
 								"{{name}}"
 							]
 						}
@@ -75,7 +75,7 @@
 					"response": []
 				},
 				{
-					"name": "Single Provider",
+					"name": "Single Organization",
 					"request": {
 						"method": "PATCH",
 						"header": [
@@ -87,16 +87,16 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"provider_desc\": \"Description\",\n    \"provider_img\": \"\",\n    \"provider_name\": \"Name\",\n    \"provider_url\": \"\"\n}"
+							"raw": "{\n    \"organization_desc\": \"Description\",\n    \"organization_img\": \"\",\n    \"organization_name\": \"Name\",\n    \"organization_url\": \"\"\n}"
 						},
 						"url": {
-							"raw": "{{baseurl}}/api/providers/{{name}}",
+							"raw": "{{baseurl}}/api/organizations/{{name}}",
 							"host": [
 								"{{baseurl}}"
 							],
 							"path": [
 								"api",
-								"providers",
+								"organizations",
 								"{{name}}"
 							]
 						}
@@ -104,7 +104,7 @@
 					"response": []
 				},
 				{
-					"name": "Single Provider",
+					"name": "Single Organization",
 					"request": {
 						"method": "DELETE",
 						"header": [
@@ -119,13 +119,13 @@
 							"raw": "{\n    \"room_id\": 1,\n    \"item_id\": 1,\n    \"world_id\": 1,\n    \"item_desc\": \"Description\",\n    \"item_img\": \"\",\n    \"item_name\": \"Name\"\n}"
 						},
 						"url": {
-							"raw": "{{baseurl}}/api/providers/{{name}}",
+							"raw": "{{baseurl}}/api/organizations/{{name}}",
 							"host": [
 								"{{baseurl}}"
 							],
 							"path": [
 								"api",
-								"providers",
+								"organizations",
 								"{{name}}"
 							]
 						}
