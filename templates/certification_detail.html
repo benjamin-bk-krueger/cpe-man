@@ -17,8 +17,8 @@
                 </div>
                 <div class="col-md-8">
                     <div class="card-body">
-                        <h5 class="card-title">{{ certification.certification_url }}</h5>
-                        <h6 class="card-subtitle mb-2 text-muted">Created by <a href="{{ url_for('show_student', student_name=student.student_name)}}">{{ student.student_name }}</a></h6>
+                        <h5 class="card-title">{{ certification.certification_name }}</h5>
+                        <h6 class="card-subtitle mb-2 text-muted">Part of <a href="{{ url_for('show_organization', organization_name=organization.organization_name)}}">{{ organization.organization_name }}</a></h6>
                         <p class="card-text">{{ certification.certification_desc }}</p>
                     </div>
                 </div>

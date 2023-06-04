@@ -1047,6 +1047,8 @@ def show_organization(organization_name):
     form = OrganizationForm()
     organization = Organization.query.filter_by(student_id=current_user.student_id).\
         filter_by(organization_name=organization_name).first()
+    certifications = Certification.query.filter_by(organization_id=organization.organization_id).order_by(Certification.certification_name.asc())
+
     if organization:
         student = Student.query.filter_by(student_id=organization.student_id).first()
 
@@ -1056,7 +1058,7 @@ def show_organization(organization_name):
         form.image.choices = get_profile_choices(student)
         form.image.default = organization.organization_img
         form.process()
-        return render_template('organization_detail.html', organization=organization, student=student, form=form)
+        return render_template('organization_detail.html', organization=organization, student=student, certifications=certifications, form=form)
     else:
         return render_template('error.html', error_message="That organization does not exist.")
 
@@ -1139,6 +1141,7 @@ def show_certification(certification_name):
     form = CertificationForm()
     certification = Certification.query.filter_by(student_id=current_user.student_id).\
         filter_by(certification_name=certification_name).first()
+    organization = Organization.query.filter_by(organization_id=certification.organization_id).first()
     if certification:
         student = Student.query.filter_by(student_id=certification.student_id).first()
         organizations = Organization.query.filter_by(student_id=student.student_id).order_by(
@@ -1158,7 +1161,7 @@ def show_certification(certification_name):
         form.requirement_full.default = int(certification.requirement_full)
 
         form.process()
-        return render_template('certification_detail.html', certification=certification, student=student, form=form)
+        return render_template('certification_detail.html', certification=certification, student=student, organization=organization, form=form)
     else:
         return render_template('error.html', error_message="That certification does not exist.")
 

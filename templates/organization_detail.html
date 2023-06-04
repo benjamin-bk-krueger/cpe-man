@@ -83,6 +83,23 @@
             </div>
         </div>
 
+
+        {#  Display dropdowns containing links to all depending elements #}
+        <div class="dropdown">
+            <a class="btn btn-secondary dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-bs-toggle="dropdown" aria-expanded="false">
+                Available Certifications
+            </a>
+
+            <ul class="dropdown-menu" aria-labelledby="dropdownMenuLink">
+                <li><a class="dropdown-item disabled" href="#" tabindex="-1" aria-disabled="true">Click on an item to open certification</a></li>
+                <li><hr class="dropdown-divider"></li>
+                {% for certification in certifications %}
+                    <li><a class="dropdown-item" href="{{ url_for('show_certification', certification_name=certification.certification_name)}}">{{ certification.certification_name }}</a></li>
+                {% endfor %}
+            </ul>
+        </div>
+
+
         {#  Display action buttons regarding the selected organization #}
         <div class="btn-toolbar" role="toolbar" aria-label="Toolbar with button groups">
 
