@@ -3,6 +3,7 @@ import re  # for regular expressions
 import random  # for captcha random numbers
 import string  # for string operations
 import logging  # enable logging
+import datetime  # for date conversion
 
 import boto3  # for S3 storage
 from flask import Flask, request, render_template, jsonify, send_file, escape, redirect, url_for, \
@@ -255,6 +256,124 @@ class OrganizationResource(Resource):
 
 api.add_resource(OrganizationListResource, APP_PREFIX + '/api/organizations')
 api.add_resource(OrganizationResource, APP_PREFIX + '/api/organizations/<string:organization_name>')
+
+
+class Certification(db.Model):
+    __tablename__ = "certification"
+    certification_id = db.Column(db.INTEGER, primary_key=True)
+    student_id = db.Column(db.INTEGER, db.ForeignKey("student.student_id"))
+    organization_id = db.Column(db.INTEGER, db.ForeignKey("organization.organization_id"))
+    certification_name = db.Column(db.VARCHAR(100))
+    certification_desc = db.Column(db.VARCHAR(1024))
+    certification_url = db.Column(db.VARCHAR(256))
+    certification_img = db.Column(db.VARCHAR(384))
+    certification_date = db.Column(db.TIMESTAMP)
+    cycle_length = db.Column(db.INTEGER, default=3)
+    cycle_start = db.Column(db.TIMESTAMP)
+    requirement_year = db.Column(db.INTEGER, default=20)
+    requirement_full = db.Column(db.INTEGER, default=90)
+
+    def __repr__(self):
+        return '<Certification %s>' % self.certification_name
+
+
+class CertificationSchema(marsh.Schema):
+    class Meta:
+        fields = ("certification_id", "student_id", "organization_id", "certification_name", "certification_desc", "certification_url", "certification_img", "certification_date", "cycle_length", "cycle_start", "requirement_year", "requirement_full")
+        model = Certification
+
+
+certification_schema = CertificationSchema()
+certifications_schema = CertificationSchema(many=True)
+
+
+class CertificationListResource(Resource):
+    @staticmethod
+    def get():
+        if AuthChecker().check(request.authorization):
+            student = Student.query.filter_by(student_name=request.authorization['username']).first()
+            certifications = Certification.query.filter_by(student_id=student.student_id)
+            return certifications_schema.dump(certifications)
+        else:
+            return jsonify({'error': 'wrong credentials or permissions'})
+
+    @staticmethod
+    def post():
+        if AuthChecker().check(request.authorization):
+            student = Student.query.filter_by(student_name=request.authorization['username']).first()
+            if all(s in request.json for s in ('organization_id', 'certification_name', 'certification_desc', 'certification_url', 'certification_img', 'certification_date', 'cycle_length', 'cycle_start', 'requirement_year', 'requirement_full')):
+                new_certification = Certification(
+                    student_id=student.student_id,
+                    organization_id=int(escape(request.json['organization_id'])),
+                    certification_name=escape(request.json['certification_name']),
+                    certification_desc=request.json['certification_desc'],
+                    certification_url=clean_url(request.json['certification_url']),
+                    certification_img=clean_url(request.json['certification_img']),
+                    certification_date=escape(request.json['certification_date']),
+                    cycle_length=int(escape(request.json['cycle_length'])),
+                    cycle_start=escape(request.json['cycle_start']),
+                    requirement_year=int(escape(request.json['requirement_year'])),
+                    requirement_full=int(escape(request.json['requirement_full']))
+                )
+                db.session.add(new_certification)
+                db.session.commit()
+                return certification_schema.dump(new_certification)
+            else:
+                return jsonify({'error': 'wrong JSON format'})
+        else:
+            return jsonify({'error': 'wrong credentials or permissions'})
+
+
+class CertificationResource(Resource):
+    @staticmethod
+    def get(certification_name):
+        if AuthChecker().check(request.authorization):
+            student = Student.query.filter_by(student_name=request.authorization['username']).first()
+            certification = Certification.query.filter_by(student_id=student.student_id).\
+                filter_by(certification_name=certification_name).first()
+            return certification_schema.dump(certification)
+        else:
+            return jsonify({'error': 'wrong credentials or permissions'})
+
+    @staticmethod
+    def patch(certification_name):
+        if AuthChecker().check(request.authorization):
+            student = Student.query.filter_by(student_name=request.authorization['username']).first()
+            certification = Certification.query.filter_by(student_id=student.student_id).\
+                filter_by(certification_name=certification_name).first()
+            if all(s in request.json for s in ('organization_id', 'certification_name', 'certification_desc', 'certification_url', 'certification_img', 'certification_date', 'cycle_length', 'cycle_start', 'requirement_year', 'requirement_full')):
+                certification.organization_id = int(escape(request.json['organization_id'])),
+                certification.certification_name = escape(request.json['certification_name']),
+                certification.certification_desc = request.json['certification_desc'],
+                certification.certification_url = clean_url(request.json['certification_url']),
+                certification.certification_img = clean_url(request.json['certification_img']),
+                certification.certification_date = escape(request.json['certification_date']),
+                certification.cycle_length = int(escape(request.json['cycle_length'])),
+                certification.cycle_start = escape(request.json['cycle_start']),
+                certification.requirement_year = int(escape(request.json['requirement_year'])),
+                certification.requirement_full = int(escape(request.json['requirement_full']))
+                db.session.commit()
+                return certification_schema.dump(certification)
+            else:
+                return jsonify({'error': 'wrong JSON format'})
+        else:
+            return jsonify({'error': 'wrong credentials or permissions'})
+
+    @staticmethod
+    def delete(certification_name):
+        if AuthChecker().check(request.authorization):
+            student = Student.query.filter_by(student_name=request.authorization['username']).first()
+            certification = Certification.query.filter_by(student_id=student.student_id).\
+                filter_by(certification_name=certification_name).first()
+            db.session.delete(certification)
+            db.session.commit()
+            return '', 204
+        else:
+            return jsonify({'error': 'wrong credentials or permissions'})
+
+
+api.add_resource(CertificationListResource, APP_PREFIX + '/api/certifications')
+api.add_resource(CertificationResource, APP_PREFIX + '/api/certifications/<string:certification_name>')
 
 
 # --------------------------------------------------------------

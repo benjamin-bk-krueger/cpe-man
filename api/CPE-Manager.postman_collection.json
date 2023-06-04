@@ -133,6 +133,134 @@
 					"response": []
 				}
 			]
+		},
+		{
+			"name": "Certifications",
+			"item": [
+				{
+					"name": "All Certifications",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseurl}}/api/certifications",
+							"host": [
+								"{{baseurl}}"
+							],
+							"path": [
+								"api",
+								"certifications"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Single Certification",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"organization_id\": \"1\",\n    \"certification_desc\": \"Description\",\n    \"certification_img\": \"\",\n    \"certification_name\": \"Name\",\n    \"certification_url\": \"\",\n    \"certification_date\": \"2020-01-20\",\n    \"cycle_length\": \"3\",\n    \"cycle_start\": \"2020-01-20\",\n    \"requirement_year\": \"20\",\n    \"requirement_full\": \"90\"\n}"
+						},
+						"url": {
+							"raw": "{{baseurl}}/api/certifications",
+							"host": [
+								"{{baseurl}}"
+							],
+							"path": [
+								"api",
+								"certifications"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Single Certification",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseurl}}/api/certifications/{{name}}",
+							"host": [
+								"{{baseurl}}"
+							],
+							"path": [
+								"api",
+								"certifications",
+								"{{name}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Single Certification",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"organization_id\": \"1\",\n    \"certification_desc\": \"Description\",\n    \"certification_img\": \"\",\n    \"certification_name\": \"Name\",\n    \"certification_url\": \"\",\n    \"certification_date\": \"2020-01-20\",\n    \"cycle_length\": \"3\",\n    \"cycle_start\": \"2020-01-20\",\n    \"requirement_year\": \"20\",\n    \"requirement_full\": \"90\"\n}"
+						},
+						"url": {
+							"raw": "{{baseurl}}/api/certifications/{{name}}",
+							"host": [
+								"{{baseurl}}"
+							],
+							"path": [
+								"api",
+								"certifications",
+								"{{name}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Single Certification",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"room_id\": 1,\n    \"item_id\": 1,\n    \"world_id\": 1,\n    \"item_desc\": \"Description\",\n    \"item_img\": \"\",\n    \"item_name\": \"Name\"\n}"
+						},
+						"url": {
+							"raw": "{{baseurl}}/api/certifications/{{name}}",
+							"host": [
+								"{{baseurl}}"
+							],
+							"path": [
+								"api",
+								"certifications",
+								"{{name}}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
 		}
 	],
 	"auth": {
