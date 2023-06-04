@@ -21,7 +21,7 @@ from logging.handlers import SMTPHandler  # get crashes via mail
 
 from forms import LoginForm, AccountForm, MailCreatorForm, PassCreatorForm, DelCreatorForm, \
     PasswordForm, PasswordResetForm, ContactForm, FileForm, UploadForm, \
-    ProviderForm  # Flask/Jinja template forms
+    OrganizationForm  # Flask/Jinja template forms
 
 
 # the app configuration is done via environmental variables
@@ -157,36 +157,36 @@ class Invitation(db.Model):
         return '<Invitation %s>' % self.invitation_id
 
 
-class Provider(db.Model):
-    __tablename__ = "provider"
-    provider_id = db.Column(db.INTEGER, primary_key=True)
+class Organization(db.Model):
+    __tablename__ = "organization"
+    organization_id = db.Column(db.INTEGER, primary_key=True)
     creator_id = db.Column(db.INTEGER, db.ForeignKey("creator.creator_id"))
-    provider_name = db.Column(db.VARCHAR(100))
-    provider_desc = db.Column(db.VARCHAR(1024))
-    provider_url = db.Column(db.VARCHAR(256))
-    provider_img = db.Column(db.VARCHAR(384))
+    organization_name = db.Column(db.VARCHAR(100))
+    organization_desc = db.Column(db.VARCHAR(1024))
+    organization_url = db.Column(db.VARCHAR(256))
+    organization_img = db.Column(db.VARCHAR(384))
 
     def __repr__(self):
-        return '<Provider %s>' % self.provider_name
+        return '<Organization %s>' % self.organization_name
 
 
-class ProviderSchema(marsh.Schema):
+class OrganizationSchema(marsh.Schema):
     class Meta:
-        fields = ("provider_id", "creator_id", "provider_name", "provider_desc", "provider_url", "provider_img")
-        model = Provider
+        fields = ("organization_id", "creator_id", "organization_name", "organization_desc", "organization_url", "organization_img")
+        model = Organization
 
 
-provider_schema = ProviderSchema()
-providers_schema = ProviderSchema(many=True)
+organization_schema = OrganizationSchema()
+organizations_schema = OrganizationSchema(many=True)
 
 
-class ProviderListResource(Resource):
+class OrganizationListResource(Resource):
     @staticmethod
     def get():
         if AuthChecker().check(request.authorization):
             creator = Creator.query.filter_by(creator_name=request.authorization['username']).first()
-            providers = Provider.query.filter_by(creator_id=creator.creator_id)
-            return providers_schema.dump(providers)
+            organizations = Organization.query.filter_by(creator_id=creator.creator_id)
+            return organizations_schema.dump(organizations)
         else:
             return jsonify({'error': 'wrong credentials or permissions'})
 
@@ -194,67 +194,67 @@ class ProviderListResource(Resource):
     def post():
         if AuthChecker().check(request.authorization):
             creator = Creator.query.filter_by(creator_name=request.authorization['username']).first()
-            if all(s in request.json for s in ('provider_name', 'provider_desc', 'provider_url', 'provider_img')):
-                new_provider = Provider(
+            if all(s in request.json for s in ('organization_name', 'organization_desc', 'organization_url', 'organization_img')):
+                new_organization = Organization(
                     creator_id=creator.creator_id,
-                    provider_name=escape(request.json['provider_name']),
-                    provider_desc=request.json['provider_desc'],
-                    provider_url=clean_url(request.json['provider_url']),
-                    provider_img=clean_url(request.json['provider_img'])
+                    organization_name=escape(request.json['organization_name']),
+                    organization_desc=request.json['organization_desc'],
+                    organization_url=clean_url(request.json['organization_url']),
+                    organization_img=clean_url(request.json['organization_img'])
                 )
-                db.session.add(new_provider)
+                db.session.add(new_organization)
                 db.session.commit()
-                return provider_schema.dump(new_provider)
+                return organization_schema.dump(new_organization)
             else:
                 return jsonify({'error': 'wrong JSON format'})
         else:
             return jsonify({'error': 'wrong credentials or permissions'})
 
 
-class ProviderResource(Resource):
+class OrganizationResource(Resource):
     @staticmethod
-    def get(provider_name):
+    def get(organization_name):
         if AuthChecker().check(request.authorization):
             creator = Creator.query.filter_by(creator_name=request.authorization['username']).first()
-            provider = Provider.query.filter_by(creator_id=creator.creator_id).\
-                filter_by(provider_name=provider_name).first()
-            return provider_schema.dump(provider)
+            organization = Organization.query.filter_by(creator_id=creator.creator_id).\
+                filter_by(organization_name=organization_name).first()
+            return organization_schema.dump(organization)
         else:
             return jsonify({'error': 'wrong credentials or permissions'})
 
     @staticmethod
-    def patch(provider_name):
+    def patch(organization_name):
         if AuthChecker().check(request.authorization):
             creator = Creator.query.filter_by(creator_name=request.authorization['username']).first()
-            provider = Provider.query.filter_by(creator_id=creator.creator_id).\
-                filter_by(provider_name=provider_name).first()
-            if all(s in request.json for s in ('provider_name', 'provider_desc', 'provider_url', 'provider_img')):
-                provider.provider_name = escape(request.json['provider_name'])
-                provider.provider_desc = request.json['provider_desc']
-                provider.provider_url = clean_url(request.json['provider_url'])
-                provider.provider_img = clean_url(request.json['provider_img'])
+            organization = Organization.query.filter_by(creator_id=creator.creator_id).\
+                filter_by(organization_name=organization_name).first()
+            if all(s in request.json for s in ('organization_name', 'organization_desc', 'organization_url', 'organization_img')):
+                organization.organization_name = escape(request.json['organization_name'])
+                organization.organization_desc = request.json['organization_desc']
+                organization.organization_url = clean_url(request.json['organization_url'])
+                organization.organization_img = clean_url(request.json['organization_img'])
                 db.session.commit()
-                return provider_schema.dump(provider)
+                return organization_schema.dump(organization)
             else:
                 return jsonify({'error': 'wrong JSON format'})
         else:
             return jsonify({'error': 'wrong credentials or permissions'})
 
     @staticmethod
-    def delete(provider_name):
+    def delete(organization_name):
         if AuthChecker().check(request.authorization):
             creator = Creator.query.filter_by(creator_name=request.authorization['username']).first()
-            provider = Provider.query.filter_by(creator_id=creator.creator_id).\
-                filter_by(provider_name=provider_name).first()
-            db.session.delete(provider)
+            organization = Organization.query.filter_by(creator_id=creator.creator_id).\
+                filter_by(organization_name=organization_name).first()
+            db.session.delete(organization)
             db.session.commit()
             return '', 204
         else:
             return jsonify({'error': 'wrong credentials or permissions'})
 
 
-api.add_resource(ProviderListResource, APP_PREFIX + '/api/providers')
-api.add_resource(ProviderResource, APP_PREFIX + '/api/providers/<string:provider_name>')
+api.add_resource(OrganizationListResource, APP_PREFIX + '/api/organizations')
+api.add_resource(OrganizationResource, APP_PREFIX + '/api/organizations/<string:organization_name>')
 
 
 # --------------------------------------------------------------
@@ -601,7 +601,7 @@ def show_stats():
     if current_user.creator_role == "admin":
         counts = dict()
         counts['creator'] = Creator.query.count()
-        counts['provider'] = Provider.query.count()
+        counts['organization'] = Organization.query.count()
 
         bucket_all = get_all_size(S3_BUCKET)
 
@@ -609,7 +609,7 @@ def show_stats():
     else:
         counts = dict()
         counts['creator'] = Creator.query.filter_by(creator_id=current_user.creator_id).count()
-        counts['provider'] = Provider.query.filter_by(creator_id=current_user.creator_id).count()
+        counts['organization'] = Organization.query.filter_by(creator_id=current_user.creator_id).count()
 
         bucket_all = dict()
         bucket_all[current_user.creator_name] = get_size(S3_BUCKET, current_user.creator_name)
@@ -877,83 +877,83 @@ def show_approve_creator(creator_name):
         return render_template('error.html')
 
 
-# Displays all available providers
-@app.route(APP_PREFIX + '/web/providers', methods=['GET'])
+# Displays all available organizations
+@app.route(APP_PREFIX + '/web/organizations', methods=['GET'])
 @login_required
-def show_providers():
-    form = ProviderForm()
+def show_organizations():
+    form = OrganizationForm()
 
     form.image.choices = ["No Image"]
     form.image.default = "No Image"
     form.process()
 
-    providers = Provider.query.filter_by(creator_id=current_user.creator_id).order_by(Provider.provider_name.asc())
-    return render_template('provider.html', providers=providers, form=form)
+    organizations = Organization.query.filter_by(creator_id=current_user.creator_id).order_by(Organization.organization_name.asc())
+    return render_template('organization.html', organizations=organizations, form=form)
 
 
-# Post a new provider - if it doesn't already exist
-@app.route(APP_PREFIX + '/web/providers', methods=['POST'])
+# Post a new organization - if it doesn't already exist
+@app.route(APP_PREFIX + '/web/organizations', methods=['POST'])
 @login_required
-def show_providers_p():
-    provider_name = escape(request.form["name"])
-    provider = Provider.query.filter_by(creator_id=current_user.creator_id).\
-        filter_by(provider_name=provider_name).first()
+def show_organizations_p():
+    organization_name = escape(request.form["name"])
+    organization = Organization.query.filter_by(creator_id=current_user.creator_id).\
+        filter_by(organization_name=organization_name).first()
 
-    if not provider:
-        provider = Provider()
-        provider.provider_name = provider_name
-        provider.provider_url = clean_url(request.form["url"])
-        provider.provider_desc = request.form["description"]
-        provider.provider_img = clean_url(request.form["image"])
-        provider.creator_id = current_user.creator_id
-        db.session.add(provider)
+    if not organization:
+        organization = Organization()
+        organization.organization_name = organization_name
+        organization.organization_url = clean_url(request.form["url"])
+        organization.organization_desc = request.form["description"]
+        organization.organization_img = clean_url(request.form["image"])
+        organization.creator_id = current_user.creator_id
+        db.session.add(organization)
         db.session.commit()
-    return redirect(url_for('show_providers'))
+    return redirect(url_for('show_organizations'))
 
 
-# Shows information about a specific provider
-@app.route(APP_PREFIX + '/web/provider/<string:provider_name>', methods=['GET'])
+# Shows information about a specific organization
+@app.route(APP_PREFIX + '/web/organization/<string:organization_name>', methods=['GET'])
 @login_required
-def show_provider(provider_name):
-    form = ProviderForm()
-    provider = Provider.query.filter_by(creator_id=current_user.creator_id).\
-        filter_by(provider_name=provider_name).first()
-    if provider:
-        creator = Creator.query.filter_by(creator_id=provider.creator_id).first()
+def show_organization(organization_name):
+    form = OrganizationForm()
+    organization = Organization.query.filter_by(creator_id=current_user.creator_id).\
+        filter_by(organization_name=organization_name).first()
+    if organization:
+        creator = Creator.query.filter_by(creator_id=organization.creator_id).first()
 
-        form.name.default = provider.provider_name
-        form.url.default = provider.provider_url
-        form.description.default = provider.provider_desc
+        form.name.default = organization.organization_name
+        form.url.default = organization.organization_url
+        form.description.default = organization.organization_desc
         form.image.choices = get_profile_choices(creator)
-        form.image.default = provider.provider_img
+        form.image.default = organization.organization_img
         form.process()
-        return render_template('provider_detail.html', provider=provider, creator=creator, form=form)
+        return render_template('organization_detail.html', organization=organization, creator=creator, form=form)
     else:
-        return render_template('error.html', error_message="That provider does not exist.")
+        return render_template('error.html', error_message="That organization does not exist.")
 
 
-# Post a change in a provider's data
-@app.route(APP_PREFIX + '/web/provider/<string:provider_name>', methods=['POST'])
+# Post a change in a organization's data
+@app.route(APP_PREFIX + '/web/organization/<string:organization_name>', methods=['POST'])
 @login_required
-def show_provider_p(provider_name):
-    provider = Provider.query.filter_by(creator_id=current_user.creator_id).\
-        filter_by(provider_name=provider_name).first()
+def show_organization_p(organization_name):
+    organization = Organization.query.filter_by(creator_id=current_user.creator_id).\
+        filter_by(organization_name=organization_name).first()
 
-    if provider:
-        provider.provider_name = clean_url(request.form["name"])
-        provider.provider_url = clean_url(request.form["url"])
-        provider.provider_desc = request.form["description"]
-        provider.provider_img = clean_url(request.form["image"])
+    if organization:
+        organization.organization_name = clean_url(request.form["name"])
+        organization.organization_url = clean_url(request.form["url"])
+        organization.organization_desc = request.form["description"]
+        organization.organization_img = clean_url(request.form["image"])
         db.session.commit()
-        return redirect(url_for('show_provider', provider_name=provider.provider_name))
+        return redirect(url_for('show_organization', organization_name=organization.organization_name))
     else:
         return render_template('error.html')
 
 
-# Delete a specific provider - and all included elements!!!
-@app.route(APP_PREFIX + '/web/deleted_provider/<string:provider_name>', methods=['GET'])
+# Delete a specific organization - and all included elements!!!
+@app.route(APP_PREFIX + '/web/deleted_organization/<string:organization_name>', methods=['GET'])
 @login_required
-def show_deleted_provider(provider_name):
-    Provider.query.filter_by(creator_id=current_user.creator_id).filter_by(provider_name=provider_name).delete()
+def show_deleted_organization(organization_name):
+    Organization.query.filter_by(creator_id=current_user.creator_id).filter_by(organization_name=organization_name).delete()
     db.session.commit()
-    return redirect(url_for('show_providers'))
+    return redirect(url_for('show_organizations'))

@@ -69,7 +69,7 @@ class FileForm(FlaskForm):
     filename_old = HiddenField(default='filename')
 
 
-class ProviderForm(FlaskForm):
+class OrganizationForm(FlaskForm):
     name = StringField('Name', validators=[InputRequired()])
     url = StringField('URL')
     description = TextAreaField('Description')
