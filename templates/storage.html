@@ -92,6 +92,11 @@
                     $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
                 });
             });
+            {% for error in form2.filename_new.errors %}
+                document.forms['filename_change']['filename_new'].value = "{{ filename_new }}";
+                document.forms['filename_change']['filename_old'].value = "{{ filename_old }}";
+                $('#myModal').modal('show');
+            {%  endfor %}
         });
     </script>
 
@@ -157,6 +162,9 @@
                                 {{ form2.filename_new(size=20, class="form-control", onkeypress="return event.charCode != 32") }}
                             </div>
                             {{ form2.filename_old }}
+                            {% for error in form2.filename_new.errors %}
+                                <div class="alert alert-warning"><strong>Warning!</strong> {{ error }}</div>
+                            {% endfor %}
                         </form>
                     </div>
                     <div class="modal-footer">

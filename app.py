@@ -150,7 +150,7 @@ class Student(UserMixin, db.Model):
 class Invitation(db.Model):
     __tablename__ = "invitation"
     invitation_id = db.Column(db.INTEGER, primary_key=True)
-    invitation_code = db.Column(db.VARCHAR(20))
+    invitation_code = db.Column(db.VARCHAR(20), unique=True)
     invitation_role = db.Column(db.VARCHAR(20))
     invitation_forever = db.Column(db.INTEGER, default=0)
     invitation_taken = db.Column(db.INTEGER, default=0)
@@ -163,7 +163,7 @@ class Organization(db.Model):
     __tablename__ = "organization"
     organization_id = db.Column(db.INTEGER, primary_key=True)
     student_id = db.Column(db.INTEGER, db.ForeignKey("student.student_id"))
-    organization_name = db.Column(db.VARCHAR(100))
+    organization_name = db.Column(db.VARCHAR(100), unique=True)
     organization_desc = db.Column(db.VARCHAR(1024))
     organization_url = db.Column(db.VARCHAR(256))
     organization_img = db.Column(db.VARCHAR(384))
@@ -463,6 +463,10 @@ def index():
     # Not needed if you set SITEMAP_INCLUDE_RULES_WITHOUT_PARAMS=True
     yield 'show_index', {}
     yield 'show_release', {}
+    yield 'show_privacy', {}
+    yield 'show_organizations', {}
+    yield 'show_certifications', {}
+    yield 'show_stats', {}
 
 
 # Send an e-mail
@@ -636,6 +640,8 @@ def show_password_reset(random_hash):
 def show_storage():
     form = UploadForm()
     form2 = FileForm()
+    filename_new = form2.filename_new.data if form2.filename_new else "none"
+    filename_old = form2.filename_old.data if form2.filename_old else "none"
     s3_folder = S3_GLOBAL if current_user.student_role == "admin" else current_user.student_name
 
     space_used_in_mb = round((get_size(S3_BUCKET, f"{s3_folder}/") / 1024 / 1024), 2)
@@ -657,21 +663,35 @@ def show_storage():
         contents = list_files(S3_BUCKET, s3_folder)
         return render_template('storage.html',
                                contents=contents, space_used_in_mb=space_used_in_mb, space_used=space_used,
-                               form=form, form2=form2)
+                               form=form, form2=form2, filename_new=filename_new, filename_old=filename_old)
 
 
 # Change a filename
 @app.route(APP_PREFIX + "/web/rename", methods=['POST'])
 @login_required
 def do_rename():
+    form = UploadForm()
+    form2 = FileForm()
+    filename_new = form2.filename_new.data if form2.filename_new else "none"
+    filename_old = form2.filename_old.data if form2.filename_old else "none"
     s3_folder = S3_GLOBAL if current_user.student_role == "admin" else current_user.student_name
-    remote_file_new = f"{secure_filename(s3_folder)}/{secure_filename(request.form['filename_new'])}"
-    remote_file_old = f"{secure_filename(s3_folder)}/{secure_filename(request.form['filename_old'])}"
-    if remote_file_new != remote_file_old and allowed_file(remote_file_new):
-        log_entry(__name__, [S3_BUCKET, remote_file_new, remote_file_old])
-        rename_file(S3_BUCKET, remote_file_new, remote_file_old)
 
-    return redirect(url_for('show_storage'))
+    space_used_in_mb = round((get_size(S3_BUCKET, f"{s3_folder}/") / 1024 / 1024), 2)
+    space_used = int(space_used_in_mb / int(S3_QUOTA) * 100)
+
+    if request.method == 'POST' and form2.validate_on_submit():
+        remote_file_new = f"{secure_filename(s3_folder)}/{secure_filename(request.form['filename_new'])}"
+        remote_file_old = f"{secure_filename(s3_folder)}/{secure_filename(request.form['filename_old'])}"
+        if remote_file_new != remote_file_old and allowed_file(remote_file_new):
+            log_entry(__name__, [S3_BUCKET, remote_file_new, remote_file_old])
+            rename_file(S3_BUCKET, remote_file_new, remote_file_old)
+
+        return redirect(url_for('show_storage'))
+    else:
+        contents = list_files(S3_BUCKET, s3_folder)
+        return render_template('storage.html',
+                               contents=contents, space_used_in_mb=space_used_in_mb, space_used=space_used,
+                               form=form, form2=form2, filename_new=filename_new, filename_old=filename_old)
 
 
 # Download a specific file from S3 storage
@@ -697,7 +717,7 @@ def do_display(username, filename):
         s3_folder = username
     else:
         student = Student.query.filter_by(student_name=username).first()
-        if student and student.student_img == filename:
+        if student and (student.student_img == filename or current_user.student_name == username):
             s3_folder = student.student_name
         else:
             return render_template('error.html', error_message="You are not allowed to view that file.")

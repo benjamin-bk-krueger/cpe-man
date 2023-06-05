@@ -54,6 +54,9 @@
             {% for error in form1.email.errors %}
                 <div class="alert alert-warning"><strong>Warning!</strong> {{ error }}</div>
             {% endfor %}
+            {% for error in form1.description.errors %}
+                <div class="alert alert-warning"><strong>Warning!</strong> {{ error }}</div>
+            {% endfor %}
             {% for error in form1.image.errors %}
                 <div class="alert alert-warning"><strong>Warning!</strong> {{ error }}</div>
             {% endfor %}
