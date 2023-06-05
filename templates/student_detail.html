@@ -13,7 +13,7 @@
         <div class="card mb-3" style="max-width: 720px;">
             <div class="row g-0">
                 <div class="col-md-4">
-                    <img src="{{ url_for('do_display', filename=student.student_img) if (student.student_img!='NoImage') else '/static/not_found.jpg' }}" class="img-fluid rounded-start" alt="Student Image">
+                    <img src="{{ url_for('do_display', username=folder_name, filename=student.student_img) if (student.student_img!='No Image') else '/static/not_found.jpg' }}" class="img-fluid rounded-start" alt="Student Image">
                 </div>
                 <div class="col-md-8">
                     <div class="card-body">

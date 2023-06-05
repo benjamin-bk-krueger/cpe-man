@@ -13,7 +13,7 @@
         <div class="card mb-3" style="max-width: 720px;">
             <div class="row g-0">
                 <div class="col-md-4">
-                    <img src="{{ url_for('do_display', filename=certification.certification_img) if (certification.certification_img!='NoImage') else '/static/not_found.jpg' }}" class="img-fluid rounded-start" alt="Certification Image">
+                    <img src="{{ url_for('do_display', username=folder_name, filename=certification.certification_img) if (certification.certification_img!='NoImage') else '/static/not_found.jpg' }}" class="img-fluid rounded-start" alt="Certification Image">
                 </div>
                 <div class="col-md-8">
                     <div class="card-body">
@@ -25,87 +25,81 @@
             </div>
         </div>
 
-        {# Modal dialog window - delete currently selected certification #}
-        <div id="myModal_del" class="modal fade" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h4 class="modal-title">Delete Certification</h4>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <form action="{{ url_for('show_deleted_certification', certification_name=certification.certification_name) }}" id="form_deletion">
-                            Are you sure?
-                        </form>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="submit" class="btn btn-danger mt-4 mb-4 btn-space" form="form_deletion">Confirm</button>
-                        <button type="button" class="btn btn-secondary mt-4 mb-4" data-bs-dismiss="modal">Cancel</button>
+        {% if current_user.student_role == "admin" %}
+            {# Modal dialog window - delete currently selected certification #}
+            <div id="myModal_del" class="modal fade" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h4 class="modal-title">Delete Certification</h4>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <form action="{{ url_for('show_deleted_certification', certification_name=certification.certification_name) }}" id="form_deletion">
+                                Are you sure?
+                            </form>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="submit" class="btn btn-danger mt-4 mb-4 btn-space" form="form_deletion">Confirm</button>
+                            <button type="button" class="btn btn-secondary mt-4 mb-4" data-bs-dismiss="modal">Cancel</button>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        {# Modal dialog window - edit currently selected certification #}
-        <div id="myModal" class="modal fade" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h4 class="modal-title">Edit Certification</h4>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <form action="{{ url_for('show_certification_p', certification_name=certification.certification_name) }}" method="POST" id="form_edit">
-                            {{ form.csrf_token }}
-                            <div class="form-group mt-2 mb-2">
-                                <label for="{{ form.name.name }}">{{ form.name.label }}</label>
-                                {{ form.name(size=20, class="form-control", onkeypress="return event.charCode != 32", readonly=true) }}
-                            </div>
-                            <div class="form-group mt-2 mb-2">
-                                <label for="{{ form.url.name }}">{{ form.url.label }}</label>
-                                {{ form.url(size=20, class="form-control", onkeypress="return event.charCode != 32") }}
-                            </div>
-                            <div class="form-group mt-2 mb-2">
-                                <label for="{{ form.description.name }}">{{ form.description.label }}</label>
-                                {{ form.description(size=40, class="form-control") }}
-                            </div>
-                            <div class="form-group mt-2 mb-2">
-                                <label for="{{ form.image.name }}">{{ form.image.label }}</label>
-                                {{ form.image(class="form-select") }}
-                            </div>
-                            <div class="form-group mt-2 mb-2">
-                                <label for="{{ form.organization.name }}">{{ form.organization.label }}</label>
-                                {{ form.organization(class="form-select") }}
-                            </div>
-                           <div class="form-group mt-2 mb-2">
-                                <label for="{{ form.certification_date.name }}">{{ form.certification_date.label }}</label>
-                                {{ form.certification_date(size=20, class="form-control") }}
-                            </div>
-                           <div class="form-group mt-2 mb-2">
-                                <label for="{{ form.cycle_length.name }}">{{ form.cycle_length.label }}</label>
-                                {{ form.cycle_length(class="form-select") }}
-                            </div>
-                           <div class="form-group mt-2 mb-2">
-                                <label for="{{ form.cycle_start.name }}">{{ form.cycle_start.label }}</label>
-                                {{ form.cycle_start(size=20, class="form-control") }}
-                            </div>
-                           <div class="form-group mt-2 mb-2">
-                                <label for="{{ form.requirement_year.name }}">{{ form.requirement_year.label }}</label>
-                                {{ form.requirement_year(class="form-select") }}
-                            </div>
-                           <div class="form-group mt-2 mb-2">
-                                <label for="{{ form.requirement_full.name }}">{{ form.requirement_full.label }}</label>
-                                {{ form.requirement_full(class="form-select") }}
-                            </div>
-                        </form>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="submit" class="btn btn-primary mt-4 mb-4 btn-space" form="form_edit">Update</button>
-                        <button type="button" class="btn btn-secondary mt-4 mb-4" data-bs-dismiss="modal">Cancel</button>
+            {# Modal dialog window - edit currently selected certification #}
+            <div id="myModal" class="modal fade" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h4 class="modal-title">Edit Certification</h4>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <form action="{{ url_for('show_certification_p', certification_name=certification.certification_name) }}" method="POST" id="form_edit">
+                                {{ form.csrf_token }}
+                                <div class="form-group mt-2 mb-2">
+                                    <label for="{{ form.name.name }}">{{ form.name.label }}</label>
+                                    {{ form.name(size=20, class="form-control", onkeypress="return event.charCode != 32", readonly=true) }}
+                                </div>
+                                <div class="form-group mt-2 mb-2">
+                                    <label for="{{ form.url.name }}">{{ form.url.label }}</label>
+                                    {{ form.url(size=20, class="form-control", onkeypress="return event.charCode != 32") }}
+                                </div>
+                                <div class="form-group mt-2 mb-2">
+                                    <label for="{{ form.description.name }}">{{ form.description.label }}</label>
+                                    {{ form.description(size=40, class="form-control") }}
+                                </div>
+                                <div class="form-group mt-2 mb-2">
+                                    <label for="{{ form.image.name }}">{{ form.image.label }}</label>
+                                    {{ form.image(class="form-select") }}
+                                </div>
+                                <div class="form-group mt-2 mb-2">
+                                    <label for="{{ form.organization.name }}">{{ form.organization.label }}</label>
+                                    {{ form.organization(class="form-select") }}
+                                </div>
+                               <div class="form-group mt-2 mb-2">
+                                    <label for="{{ form.cycle_length.name }}">{{ form.cycle_length.label }}</label>
+                                    {{ form.cycle_length(class="form-select") }}
+                                </div>
+                               <div class="form-group mt-2 mb-2">
+                                    <label for="{{ form.requirement_year.name }}">{{ form.requirement_year.label }}</label>
+                                    {{ form.requirement_year(class="form-select") }}
+                                </div>
+                               <div class="form-group mt-2 mb-2">
+                                    <label for="{{ form.requirement_full.name }}">{{ form.requirement_full.label }}</label>
+                                    {{ form.requirement_full(class="form-select") }}
+                                </div>
+                            </form>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="submit" class="btn btn-primary mt-4 mb-4 btn-space" form="form_edit">Update</button>
+                            <button type="button" class="btn btn-secondary mt-4 mb-4" data-bs-dismiss="modal">Cancel</button>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
+        {% endif %}
 
         {#  Display action buttons regarding the selected certification #}
         <div class="btn-toolbar" role="toolbar" aria-label="Toolbar with button groups">
@@ -118,7 +112,7 @@
                     </button>
                     <ul class="dropdown-menu" aria-labelledby="btnGroupDrop1">
                         <li><a class="dropdown-item" href="{{ url_for('show_certifications') }}">All Certifications</a></li>
-                        {% if current_user.student_id == certification.student_id %}
+                        {% if current_user.student_role == "admin" %}
                             <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#myModal">Edit Certification</a></li>
                             <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#myModal_del">Delete Certification</a></li>
                         {% endif %}
@@ -131,12 +125,12 @@
                 <a href="{{ url_for('show_certifications') }}" data-toggle="tooltip" title="All Certifications" class="btn btn-primary mt-4 mb-4"><i class="bi bi-list-ul"></i></a>
             </div>
             <div class="btn-group me-2" role="group" aria-label="Third group">
-                {% if current_user.student_id == certification.student_id %}
+                {% if current_user.student_role == "admin" %}
                     <a href="#" class="btn btn-primary mt-4 mb-4" data-toggle="tooltip" title="Edit Certification" data-bs-toggle="modal" data-bs-target="#myModal"><i class="bi bi-pencil"></i></a>
                 {% endif %}
             </div>
             <div class="btn-group me-2" role="group" aria-label="Fourth group">
-                {% if current_user.student_id == certification.student_id %}
+                {% if current_user.student_role == "admin" %}
                     <a href="#" class="btn btn-danger mt-4 mb-4" data-toggle="tooltip" title="Delete Certification" data-bs-toggle="modal" data-bs-target="#myModal_del"><i class="bi bi-trash"></i></a>
                 {% endif %}
             </div>

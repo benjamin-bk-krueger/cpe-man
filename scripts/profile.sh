@@ -12,6 +12,7 @@ export FLASK_DEBUG=0
 export S3_ENDPOINT=http://localhost:9000
 export S3_QUOTA=100
 export S3_BUCKET=cpeman
+export S3_GLOBAL=GLOBAL
 export WWW_SERVER=http://localhost:5020
 export MAIL_ENABLE=1
 export MAIL_SERVER=localhost

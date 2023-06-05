@@ -13,7 +13,7 @@
         <div class="card mb-3" style="max-width: 720px;">
             <div class="row g-0">
                 <div class="col-md-4">
-                    <img src="{{ url_for('do_display', filename=organization.organization_img) if (organization.organization_img!='NoImage') else '/static/not_found.jpg' }}" class="img-fluid rounded-start" alt="Organization Image">
+                    <img src="{{ url_for('do_display', username=folder_name, filename=organization.organization_img) if (organization.organization_img!='NoImage') else '/static/not_found.jpg' }}" class="img-fluid rounded-start" alt="Organization Image">
                 </div>
                 <div class="col-md-8">
                     <div class="card-body">
@@ -25,63 +25,65 @@
             </div>
         </div>
 
-        {# Modal dialog window - delete currently selected organization #}
-        <div id="myModal_del" class="modal fade" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h4 class="modal-title">Delete Organization</h4>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <form action="{{ url_for('show_deleted_organization', organization_name=organization.organization_name) }}" id="form_deletion">
-                            Are you sure?
-                        </form>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="submit" class="btn btn-danger mt-4 mb-4 btn-space" form="form_deletion">Confirm</button>
-                        <button type="button" class="btn btn-secondary mt-4 mb-4" data-bs-dismiss="modal">Cancel</button>
+        {% if current_user.student_role == "admin" %}
+            {# Modal dialog window - delete currently selected organization #}
+            <div id="myModal_del" class="modal fade" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h4 class="modal-title">Delete Organization</h4>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <form action="{{ url_for('show_deleted_organization', organization_name=organization.organization_name) }}" id="form_deletion">
+                                Are you sure?
+                            </form>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="submit" class="btn btn-danger mt-4 mb-4 btn-space" form="form_deletion">Confirm</button>
+                            <button type="button" class="btn btn-secondary mt-4 mb-4" data-bs-dismiss="modal">Cancel</button>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        {# Modal dialog window - edit currently selected organization #}
-        <div id="myModal" class="modal fade" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h4 class="modal-title">Edit Organization</h4>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <form action="{{ url_for('show_organization_p', organization_name=organization.organization_name) }}" method="POST" id="form_edit">
-                            {{ form.csrf_token }}
-                            <div class="form-group mt-2 mb-2">
-                                <label for="{{ form.name.name }}">{{ form.name.label }}</label>
-                                {{ form.name(size=20, class="form-control", onkeypress="return event.charCode != 32", readonly=true) }}
-                            </div>
-                            <div class="form-group mt-2 mb-2">
-                                <label for="{{ form.url.name }}">{{ form.url.label }}</label>
-                                {{ form.url(size=20, class="form-control", onkeypress="return event.charCode != 32") }}
-                            </div>
-                            <div class="form-group mt-2 mb-2">
-                                <label for="{{ form.description.name }}">{{ form.description.label }}</label>
-                                {{ form.description(size=40, class="form-control") }}
-                            </div>
-                            <div class="form-group mt-2 mb-2">
-                                <label for="{{ form.image.name }}">{{ form.image.label }}</label>
-                                {{ form.image(class="form-select") }}
-                            </div>
-                        </form>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="submit" class="btn btn-primary mt-4 mb-4 btn-space" form="form_edit">Update</button>
-                        <button type="button" class="btn btn-secondary mt-4 mb-4" data-bs-dismiss="modal">Cancel</button>
+            {# Modal dialog window - edit currently selected organization #}
+            <div id="myModal" class="modal fade" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h4 class="modal-title">Edit Organization</h4>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <form action="{{ url_for('show_organization_p', organization_name=organization.organization_name) }}" method="POST" id="form_edit">
+                                {{ form.csrf_token }}
+                                <div class="form-group mt-2 mb-2">
+                                    <label for="{{ form.name.name }}">{{ form.name.label }}</label>
+                                    {{ form.name(size=20, class="form-control", onkeypress="return event.charCode != 32", readonly=true) }}
+                                </div>
+                                <div class="form-group mt-2 mb-2">
+                                    <label for="{{ form.url.name }}">{{ form.url.label }}</label>
+                                    {{ form.url(size=20, class="form-control", onkeypress="return event.charCode != 32") }}
+                                </div>
+                                <div class="form-group mt-2 mb-2">
+                                    <label for="{{ form.description.name }}">{{ form.description.label }}</label>
+                                    {{ form.description(size=40, class="form-control") }}
+                                </div>
+                                <div class="form-group mt-2 mb-2">
+                                    <label for="{{ form.image.name }}">{{ form.image.label }}</label>
+                                    {{ form.image(class="form-select") }}
+                                </div>
+                            </form>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="submit" class="btn btn-primary mt-4 mb-4 btn-space" form="form_edit">Update</button>
+                            <button type="button" class="btn btn-secondary mt-4 mb-4" data-bs-dismiss="modal">Cancel</button>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
+        {% endif %}
 
 
         {#  Display dropdowns containing links to all depending elements #}
@@ -111,7 +113,7 @@
                     </button>
                     <ul class="dropdown-menu" aria-labelledby="btnGroupDrop1">
                         <li><a class="dropdown-item" href="{{ url_for('show_organizations') }}">All Organizations</a></li>
-                        {% if current_user.student_id == organization.student_id %}
+                        {% if current_user.student_role == "admin" %}
                             <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#myModal">Edit Organization</a></li>
                             <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#myModal_del">Delete Organization</a></li>
                         {% endif %}
@@ -124,12 +126,12 @@
                 <a href="{{ url_for('show_organizations') }}" data-toggle="tooltip" title="All Organizations" class="btn btn-primary mt-4 mb-4"><i class="bi bi-list-ul"></i></a>
             </div>
             <div class="btn-group me-2" role="group" aria-label="Third group">
-                {% if current_user.student_id == organization.student_id %}
+                {% if current_user.student_role == "admin" %}
                     <a href="#" class="btn btn-primary mt-4 mb-4" data-toggle="tooltip" title="Edit Organization" data-bs-toggle="modal" data-bs-target="#myModal"><i class="bi bi-pencil"></i></a>
                 {% endif %}
             </div>
             <div class="btn-group me-2" role="group" aria-label="Fourth group">
-                {% if current_user.student_id == organization.student_id %}
+                {% if current_user.student_role == "admin" %}
                     <a href="#" class="btn btn-danger mt-4 mb-4" data-toggle="tooltip" title="Delete Organization" data-bs-toggle="modal" data-bs-target="#myModal_del"><i class="bi bi-trash"></i></a>
                 {% endif %}
             </div>

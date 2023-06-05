@@ -8,7 +8,7 @@
 
     {#  Page content #}
     <div class="container-fluid pb-3 mt-2 mb-2">
-        <img src="{{ url_for('do_display', filename=filename) }}" class="img-fluid rounded-start" alt="Uploaded Image">
+        <img src="{{ url_for('do_display', username=username, filename=filename) }}" class="img-fluid rounded-start" alt="Uploaded Image">
     </div>
 
     {# Display simple button - go back to the file overview page #}
