@@ -116,7 +116,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"room_id\": 1,\n    \"item_id\": 1,\n    \"world_id\": 1,\n    \"item_desc\": \"Description\",\n    \"item_img\": \"\",\n    \"item_name\": \"Name\"\n}"
+							"raw": ""
 						},
 						"url": {
 							"raw": "{{baseurl}}/api/organizations/{{name}}",
@@ -244,7 +244,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"room_id\": 1,\n    \"item_id\": 1,\n    \"world_id\": 1,\n    \"item_desc\": \"Description\",\n    \"item_img\": \"\",\n    \"item_name\": \"Name\"\n}"
+							"raw": ""
 						},
 						"url": {
 							"raw": "{{baseurl}}/api/certifications/{{name}}",
@@ -255,6 +255,134 @@
 								"api",
 								"certifications",
 								"{{name}}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Cycles",
+			"item": [
+				{
+					"name": "All Cycles",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseurl}}/api/cycles",
+							"host": [
+								"{{baseurl}}"
+							],
+							"path": [
+								"api",
+								"cycles"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Single Cycle",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"certification_id\": \"4\",\n    \"certification_date\": \"2020-01-20\",\n    \"cycle_start\": \"2020-01-20\"\n}"
+						},
+						"url": {
+							"raw": "{{baseurl}}/api/cycles",
+							"host": [
+								"{{baseurl}}"
+							],
+							"path": [
+								"api",
+								"cycles"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Single Cycle",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseurl}}/api/cycles/{{id}}",
+							"host": [
+								"{{baseurl}}"
+							],
+							"path": [
+								"api",
+								"cycles",
+								"{{id}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Single Cycle",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"certification_date\": \"2020-01-20\",\n    \"cycle_start\": \"2020-01-20\"\n}"
+						},
+						"url": {
+							"raw": "{{baseurl}}/api/cycles/{{id}}",
+							"host": [
+								"{{baseurl}}"
+							],
+							"path": [
+								"api",
+								"cycles",
+								"{{id}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Single Cycle",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{baseurl}}/api/cycles/{{id}}",
+							"host": [
+								"{{baseurl}}"
+							],
+							"path": [
+								"api",
+								"cycles",
+								"{{id}}"
 							]
 						}
 					},

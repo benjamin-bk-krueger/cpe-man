@@ -360,6 +360,93 @@ api.add_resource(CertificationListResource, APP_PREFIX + '/api/certifications')
 api.add_resource(CertificationResource, APP_PREFIX + '/api/certifications/<string:certification_name>')
 
 
+class Cycle(db.Model):
+    __tablename__ = "cycle"
+    cycle_id = db.Column(db.INTEGER, primary_key=True)
+    student_id = db.Column(db.INTEGER, db.ForeignKey("student.student_id"))
+    certification_id = db.Column(db.INTEGER, db.ForeignKey("certification.certification_id"))
+    certification_date = db.Column(db.TIMESTAMP)
+    cycle_start = db.Column(db.TIMESTAMP)
+
+    def __repr__(self):
+        return '<Cycle %s>' % self.cycle_id
+
+
+class CycleSchema(marsh.Schema):
+    class Meta:
+        fields = ("cycle_id", "student_id", "certification_id", "certification_date", "cycle_start")
+        model = Cycle
+
+
+cycle_schema = CycleSchema()
+cycles_schema = CycleSchema(many=True)
+
+
+class CycleListResource(Resource):
+    @staticmethod
+    def get():
+        cycles = Cycle.query.all()
+        return cycles_schema.dump(cycles)
+
+    @staticmethod
+    def post():
+        if AuthChecker().check(request.authorization, ["admin", "student"]):
+            student = Student.query.filter_by(student_name=request.authorization['username']).first()
+            if all(s in request.json for s in ('certification_id', 'certification_date', 'cycle_start')):
+                new_cycle = Cycle(
+                    student_id=student.student_id,
+                    certification_id=int(escape(request.json['certification_id'])),
+                    certification_date=escape(request.json['certification_date']),
+                    cycle_start=escape(request.json['cycle_start'])
+                )
+                db.session.add(new_cycle)
+                db.session.commit()
+                return certification_schema.dump(new_cycle)
+            else:
+                return jsonify({'error': 'wrong JSON format'})
+        else:
+            return jsonify({'error': 'wrong credentials or permissions'})
+
+
+class CycleResource(Resource):
+    @staticmethod
+    def get(cycle_id):
+        cycle = Cycle.query.filter_by(cycle_id=cycle_id).first()
+        return cycle_schema.dump(cycle)
+
+    @staticmethod
+    def patch(cycle_id):
+        if AuthChecker().check(request.authorization, ["admin", "student"]):
+            student = Student.query.filter_by(student_name=request.authorization['username']).first()
+            cycle = Cycle.query.filter_by(student_id=student.student_id).\
+                filter_by(cycle_id=cycle_id).first()
+            if all(s in request.json for s in ('certification_date', 'cycle_start')):
+                cycle.certification_date = escape(request.json['certification_date']),
+                cycle.cycle_start = escape(request.json['cycle_start'])
+                db.session.commit()
+                return cycle_schema.dump(cycle)
+            else:
+                return jsonify({'error': 'wrong JSON format'})
+        else:
+            return jsonify({'error': 'wrong credentials or permissions'})
+
+    @staticmethod
+    def delete(cycle_id):
+        if AuthChecker().check(request.authorization, ["admin", "student"]):
+            student = Student.query.filter_by(student_name=request.authorization['username']).first()
+            cycle = Cycle.query.filter_by(student_id=student.student_id).\
+                filter_by(cycle_id=cycle_id).first()
+            db.session.delete(cycle)
+            db.session.commit()
+            return '', 204
+        else:
+            return jsonify({'error': 'wrong credentials or permissions'})
+
+
+api.add_resource(CycleListResource, APP_PREFIX + '/api/cycles')
+api.add_resource(CycleResource, APP_PREFIX + '/api/cycles/<int:cycle_id>')
+
+
 # --------------------------------------------------------------
 # Internal functions
 # --------------------------------------------------------------
