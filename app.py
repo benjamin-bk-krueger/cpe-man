@@ -649,6 +649,9 @@ def show_login():
             login_user(student, remember=remember)
             return redirect(url_for('show_index'))
     else:
+        form.student.default = form.student.data
+        form.remember.default = form.remember.data
+        form.process()
         return render_template('login.html', form=form)
 
 
