@@ -2,7 +2,8 @@ import re
 
 from flask_wtf import FlaskForm  # integration with WTForms, data validation and CSRF protection
 from flask_wtf.file import FileRequired, FileAllowed
-from wtforms import StringField, PasswordField, BooleanField, HiddenField, FileField, TextAreaField, SelectField, IntegerField, DateField
+from wtforms import StringField, PasswordField, BooleanField, HiddenField, FileField, TextAreaField, SelectField, \
+    IntegerField, DateField
 from wtforms.validators import ValidationError, InputRequired, NoneOf, EqualTo, Email, Length, NumberRange, DataRequired
 
 
@@ -13,12 +14,12 @@ def ascii_validator(form, field):
 
 
 def full_ascii_validator(form, field):
-    if not re.search(r"^[ -~]+$", field.data):
+    if not re.search(r"^[ -~]*$", field.data):
         raise ValidationError('Please use only ASCII letters and numbers.')
 
 
 def url_ascii_validator(form, field):
-    if not re.search(r"^[0-9A-Za-z-\\.@:%_\+~#=]+$", field.data):
+    if not re.search(r"^[0-9A-Za-z-\\\/.@:%_\+~#=]*$", field.data):
         raise ValidationError('Please use only valid URLs.')
 
 
@@ -100,8 +101,6 @@ class CertificationForm(FlaskForm):
     description = TextAreaField('Description', validators=[Length(max=1024), full_ascii_validator])
     image = SelectField('Image', choices=["none"], validate_choice=False)
     organization = SelectField('Select Organization', choices=["none"], validate_choice=False)
-    certification_date = DateField('Certification Date', format='%Y-%m-%d', validators=[DataRequired()])
     cycle_length = IntegerField('Cycle Length', validators=[InputRequired(), NumberRange(min=1, max=5)])
-    cycle_start = DateField('Certification Date', format='%Y-%m-%d', validators=[DataRequired()])
     requirement_year = IntegerField('Required each year', validators=[InputRequired(), NumberRange(min=1, max=50)])
     requirement_full = IntegerField('Required each cycle', validators=[InputRequired(), NumberRange(min=1, max=250)])

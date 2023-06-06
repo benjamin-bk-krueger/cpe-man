@@ -39,27 +39,27 @@
                 <label for="email">{{ form1.email.label }}</label>
                 {{ form1.email(size=20, class="form-control", style="max-width: 720px;", onkeypress="return event.charCode != 32") }}
             </div>
+            {% for error in form1.email.errors %}
+                <div class="alert alert-warning"><strong>Warning!</strong> {{ error }}</div>
+            {% endfor %}
             <div class="form-group mt-2 mb-2">
                 <label for="description">{{ form1.description.label }}</label>
                 {{ form1.description(size=40, class="form-control", style="max-width: 720px;") }}
             </div>
+            {% for error in form1.description.errors %}
+                <div class="alert alert-warning"><strong>Warning!</strong> {{ error }}</div>
+            {% endfor %}
             <div class="form-group mt-2 mb-2">
                 <label for="image">{{ form1.image.label }}</label>
                 {{ form1.image(class="form-select", style="max-width: 720px;") }}
             </div>
+            {% for error in form1.image.errors %}
+                <div class="alert alert-warning"><strong>Warning!</strong> {{ error }}</div>
+            {% endfor %}
             <div class="form-check mt-2 mb-2">
                 <label class="form-check-label" for="notification">{{ form1.notification.label }}</label>
                 {{ form1.notification(class="form-check-input") }}
             </div>
-            {% for error in form1.email.errors %}
-                <div class="alert alert-warning"><strong>Warning!</strong> {{ error }}</div>
-            {% endfor %}
-            {% for error in form1.description.errors %}
-                <div class="alert alert-warning"><strong>Warning!</strong> {{ error }}</div>
-            {% endfor %}
-            {% for error in form1.image.errors %}
-                <div class="alert alert-warning"><strong>Warning!</strong> {{ error }}</div>
-            {% endfor %}
             {% for error in form1.notification.errors %}
                 <div class="alert alert-warning"><strong>Warning!</strong> {{ error }}</div>
             {% endfor %}
@@ -76,13 +76,13 @@
                 <label for="password">{{ form2.password.label }}</label>
                 {{ form2.password(size=20, class="form-control", style="max-width: 720px;") }}
             </div>
+            {% for error in form2.password.errors %}
+                <div class="alert alert-warning"><strong>Warning!</strong> {{ error }}</div>
+            {% endfor %}
             <div class="form-group mt-2 mb-2">
                 <label for="password2">{{ form2.password2.label }}</label>
                 {{ form2.password2(size=20, class="form-control", style="max-width: 720px;") }}
             </div>
-            {% for error in form2.password.errors %}
-                <div class="alert alert-warning"><strong>Warning!</strong> {{ error }}</div>
-            {% endfor %}
             <button type="submit" class="btn btn-primary mt-4 mb-4">Set</button>
         </form>
 

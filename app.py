@@ -3,7 +3,6 @@ import re  # for regular expressions
 import random  # for captcha random numbers
 import string  # for string operations
 import logging  # enable logging
-import datetime  # for date conversion
 
 import boto3  # for S3 storage
 from flask import Flask, request, render_template, jsonify, send_file, escape, redirect, url_for, \
@@ -174,7 +173,8 @@ class Organization(db.Model):
 
 class OrganizationSchema(marsh.Schema):
     class Meta:
-        fields = ("organization_id", "student_id", "organization_name", "organization_desc", "organization_url", "organization_img")
+        fields = ("organization_id", "student_id", "organization_name", "organization_desc", "organization_url",
+                  "organization_img")
         model = Organization
 
 
@@ -185,18 +185,15 @@ organizations_schema = OrganizationSchema(many=True)
 class OrganizationListResource(Resource):
     @staticmethod
     def get():
-        if AuthChecker().check(request.authorization, ["student", "admin"]):
-            student = Student.query.filter_by(student_name=request.authorization['username']).first()
-            organizations = Organization.query.filter_by(student_id=student.student_id)
-            return organizations_schema.dump(organizations)
-        else:
-            return jsonify({'error': 'wrong credentials or permissions'})
+        organizations = Organization.query.all()
+        return organizations_schema.dump(organizations)
 
     @staticmethod
     def post():
         if AuthChecker().check(request.authorization, ["admin"]):
             student = Student.query.filter_by(student_name=request.authorization['username']).first()
-            if all(s in request.json for s in ('organization_name', 'organization_desc', 'organization_url', 'organization_img')):
+            if all(s in request.json for s in ('organization_name', 'organization_desc', 'organization_url',
+                                               'organization_img')):
                 new_organization = Organization(
                     student_id=student.student_id,
                     organization_name=escape(request.json['organization_name']),
@@ -216,13 +213,8 @@ class OrganizationListResource(Resource):
 class OrganizationResource(Resource):
     @staticmethod
     def get(organization_name):
-        if AuthChecker().check(request.authorization, ["student", "admin"]):
-            student = Student.query.filter_by(student_name=request.authorization['username']).first()
-            organization = Organization.query.filter_by(student_id=student.student_id).\
-                filter_by(organization_name=organization_name).first()
-            return organization_schema.dump(organization)
-        else:
-            return jsonify({'error': 'wrong credentials or permissions'})
+        organization = Organization.query.filter_by(organization_name=organization_name).first()
+        return organization_schema.dump(organization)
 
     @staticmethod
     def patch(organization_name):
@@ -230,7 +222,8 @@ class OrganizationResource(Resource):
             student = Student.query.filter_by(student_name=request.authorization['username']).first()
             organization = Organization.query.filter_by(student_id=student.student_id).\
                 filter_by(organization_name=organization_name).first()
-            if all(s in request.json for s in ('organization_name', 'organization_desc', 'organization_url', 'organization_img')):
+            if all(s in request.json for s in ('organization_name', 'organization_desc', 'organization_url',
+                                               'organization_img')):
                 organization.organization_name = escape(request.json['organization_name'])
                 organization.organization_desc = request.json['organization_desc']
                 organization.organization_url = clean_url(request.json['organization_url'])
@@ -278,7 +271,8 @@ class Certification(db.Model):
 
 class CertificationSchema(marsh.Schema):
     class Meta:
-        fields = ("certification_id", "student_id", "organization_id", "certification_name", "certification_desc", "certification_url", "certification_img", "cycle_length", "requirement_year", "requirement_full")
+        fields = ("certification_id", "student_id", "organization_id", "certification_name", "certification_desc",
+                  "certification_url", "certification_img", "cycle_length", "requirement_year", "requirement_full")
         model = Certification
 
 
@@ -289,18 +283,16 @@ certifications_schema = CertificationSchema(many=True)
 class CertificationListResource(Resource):
     @staticmethod
     def get():
-        if AuthChecker().check(request.authorization, ["student","admin"]):
-            student = Student.query.filter_by(student_name=request.authorization['username']).first()
-            certifications = Certification.query.filter_by(student_id=student.student_id)
-            return certifications_schema.dump(certifications)
-        else:
-            return jsonify({'error': 'wrong credentials or permissions'})
+        certifications = Certification.query.all()
+        return certifications_schema.dump(certifications)
 
     @staticmethod
     def post():
         if AuthChecker().check(request.authorization, ["admin"]):
             student = Student.query.filter_by(student_name=request.authorization['username']).first()
-            if all(s in request.json for s in ('organization_id', 'certification_name', 'certification_desc', 'certification_url', 'certification_img', 'cycle_length', 'requirement_year', 'requirement_full')):
+            if all(s in request.json for s in ('organization_id', 'certification_name', 'certification_desc',
+                                               'certification_url', 'certification_img', 'cycle_length',
+                                               'requirement_year', 'requirement_full')):
                 new_certification = Certification(
                     student_id=student.student_id,
                     organization_id=int(escape(request.json['organization_id'])),
@@ -324,13 +316,8 @@ class CertificationListResource(Resource):
 class CertificationResource(Resource):
     @staticmethod
     def get(certification_name):
-        if AuthChecker().check(request.authorization, ["student","admin"]):
-            student = Student.query.filter_by(student_name=request.authorization['username']).first()
-            certification = Certification.query.filter_by(student_id=student.student_id).\
-                filter_by(certification_name=certification_name).first()
-            return certification_schema.dump(certification)
-        else:
-            return jsonify({'error': 'wrong credentials or permissions'})
+        certification = Certification.query.filter_by(certification_name=certification_name).first()
+        return certification_schema.dump(certification)
 
     @staticmethod
     def patch(certification_name):
@@ -338,7 +325,9 @@ class CertificationResource(Resource):
             student = Student.query.filter_by(student_name=request.authorization['username']).first()
             certification = Certification.query.filter_by(student_id=student.student_id).\
                 filter_by(certification_name=certification_name).first()
-            if all(s in request.json for s in ('organization_id', 'certification_name', 'certification_desc', 'certification_url', 'certification_img', 'cycle_length', 'requirement_year', 'requirement_full')):
+            if all(s in request.json for s in ('organization_id', 'certification_name', 'certification_desc',
+                                               'certification_url', 'certification_img', 'cycle_length',
+                                               'requirement_year', 'requirement_full')):
                 certification.organization_id = int(escape(request.json['organization_id'])),
                 certification.certification_name = escape(request.json['certification_name']),
                 certification.certification_desc = request.json['certification_desc'],
@@ -640,10 +629,7 @@ def show_password_reset(random_hash):
 def show_storage():
     form = UploadForm()
     form2 = FileForm()
-    filename_new = form2.filename_new.data if form2.filename_new else "none"
-    filename_old = form2.filename_old.data if form2.filename_old else "none"
     s3_folder = S3_GLOBAL if current_user.student_role == "admin" else current_user.student_name
-
     space_used_in_mb = round((get_size(S3_BUCKET, f"{s3_folder}/") / 1024 / 1024), 2)
     space_used = int(space_used_in_mb / int(S3_QUOTA) * 100)
 
@@ -663,7 +649,7 @@ def show_storage():
         contents = list_files(S3_BUCKET, s3_folder)
         return render_template('storage.html',
                                contents=contents, space_used_in_mb=space_used_in_mb, space_used=space_used,
-                               form=form, form2=form2, filename_new=filename_new, filename_old=filename_old)
+                               form=form, form2=form2)
 
 
 # Change a filename
@@ -672,10 +658,7 @@ def show_storage():
 def do_rename():
     form = UploadForm()
     form2 = FileForm()
-    filename_new = form2.filename_new.data if form2.filename_new else "none"
-    filename_old = form2.filename_old.data if form2.filename_old else "none"
     s3_folder = S3_GLOBAL if current_user.student_role == "admin" else current_user.student_name
-
     space_used_in_mb = round((get_size(S3_BUCKET, f"{s3_folder}/") / 1024 / 1024), 2)
     space_used = int(space_used_in_mb / int(S3_QUOTA) * 100)
 
@@ -688,10 +671,13 @@ def do_rename():
 
         return redirect(url_for('show_storage'))
     else:
+        form2.filename_new.default = form2.filename_new.data if form2.filename_new else "none"
+        form2.filename_old.default = form2.filename_old.data if form2.filename_old else "none"
+        form2.process()
         contents = list_files(S3_BUCKET, s3_folder)
         return render_template('storage.html',
                                contents=contents, space_used_in_mb=space_used_in_mb, space_used=space_used,
-                               form=form, form2=form2, filename_new=filename_new, filename_old=filename_old)
+                               form=form, form2=form2)
 
 
 # Download a specific file from S3 storage
@@ -1049,12 +1035,11 @@ def show_approve_student(student_name):
 @app.route(APP_PREFIX + '/web/organizations', methods=['GET'])
 def show_organizations():
     form = OrganizationForm()
-
     form.image.choices = get_file_choices(S3_GLOBAL)
     form.image.default = "No Image"
     form.process()
-
     organizations = Organization.query.order_by(Organization.organization_name.asc())
+
     return render_template('organization.html', organizations=organizations, form=form)
 
 
@@ -1062,7 +1047,10 @@ def show_organizations():
 @app.route(APP_PREFIX + '/web/organizations', methods=['POST'])
 @login_required
 def show_organizations_p():
-    if current_user.student_role == "admin":
+    form = OrganizationForm()
+    organizations = Organization.query.order_by(Organization.organization_name.asc())
+
+    if current_user.student_role == "admin" and form.validate_on_submit():
         organization_name = escape(request.form["name"])
         organization = Organization.query.filter_by(organization_name=organization_name).first()
 
@@ -1077,7 +1065,13 @@ def show_organizations_p():
             db.session.commit()
         return redirect(url_for('show_organizations'))
     else:
-        return render_template('error.html', error_message="You are not allowed to perform that operation.")
+        form.name.default = form.name.data
+        form.url.default = form.url.data
+        form.description.default = form.description.data
+        form.image.choices = get_file_choices(S3_GLOBAL)
+        form.image.default = form.image.data
+        form.process()
+        return render_template('organization.html', organizations=organizations, form=form)
 
 
 # Shows information about a specific organization
@@ -1086,7 +1080,8 @@ def show_organization(organization_name):
     form = OrganizationForm()
     organization = Organization.query.filter_by(organization_name=organization_name).first()
     student = Student.query.filter_by(student_id=organization.student_id).first()
-    certifications = Certification.query.filter_by(organization_id=organization.organization_id).order_by(Certification.certification_name.asc())
+    certifications = Certification.query.filter_by(organization_id=organization.organization_id)\
+        .order_by(Certification.certification_name.asc())
 
     if organization:
         form.name.default = organization.organization_name
@@ -1095,18 +1090,23 @@ def show_organization(organization_name):
         form.image.choices = get_file_choices(S3_GLOBAL)
         form.image.default = organization.organization_img
         form.process()
-        return render_template('organization_detail.html', organization=organization, certifications=certifications, student=student, folder_name=S3_GLOBAL, form=form)
+        return render_template('organization_detail.html', organization=organization, certifications=certifications,
+                               student=student, folder_name=S3_GLOBAL, form=form)
     else:
         return render_template('error.html', error_message="That organization does not exist.")
 
 
-# Post a change in a organization's data
+# Post a change in an organization's data
 @app.route(APP_PREFIX + '/web/organization/<string:organization_name>', methods=['POST'])
 @login_required
 def show_organization_p(organization_name):
-    if current_user.student_role == "admin":
-        organization = Organization.query.filter_by(organization_name=organization_name).first()
+    form = OrganizationForm()
+    organization = Organization.query.filter_by(organization_name=organization_name).first()
+    student = Student.query.filter_by(student_id=organization.student_id).first()
+    certifications = Certification.query.filter_by(organization_id=organization.organization_id) \
+        .order_by(Certification.certification_name.asc())
 
+    if current_user.student_role == "admin" and form.validate_on_submit():
         if organization:
             organization.organization_name = clean_url(request.form["name"])
             organization.organization_url = clean_url(request.form["url"])
@@ -1117,7 +1117,14 @@ def show_organization_p(organization_name):
         else:
             return render_template('error.html', error_message="That organization does not exist.")
     else:
-        return render_template('error.html', error_message="You are not allowed to perform that operation.")
+        form.name.default = form.name.data
+        form.url.default = form.url.data
+        form.description.default = form.description.data
+        form.image.choices = get_file_choices(S3_GLOBAL)
+        form.image.default = form.image.data
+        form.process()
+        return render_template('organization_detail.html', organization=organization, certifications=certifications,
+                               student=student, folder_name=S3_GLOBAL, form=form)
 
 
 # Delete a specific organization - and all included elements!!!
@@ -1137,13 +1144,12 @@ def show_deleted_organization(organization_name):
 def show_certifications():
     form = CertificationForm()
     organizations = Organization.query.order_by(Organization.organization_name.asc())
-
     form.image.choices = get_file_choices(S3_GLOBAL)
     form.image.default = "No Image"
     form.organization.choices = get_organization_choices(organizations)
     form.process()
-
     certifications = Certification.query.order_by(Certification.certification_name.asc())
+
     return render_template('certification.html', certifications=certifications, form=form)
 
 
@@ -1151,7 +1157,11 @@ def show_certifications():
 @app.route(APP_PREFIX + '/web/certifications', methods=['POST'])
 @login_required
 def show_certifications_p():
-    if current_user.student_role == "admin":
+    form = CertificationForm()
+    organizations = Organization.query.order_by(Organization.organization_name.asc())
+    certifications = Certification.query.order_by(Certification.certification_name.asc())
+
+    if current_user.student_role == "admin" and form.validate_on_submit():
         certification_name = escape(request.form["name"])
         certification = Certification.query.filter_by(certification_name=certification_name).first()
 
@@ -1171,7 +1181,18 @@ def show_certifications_p():
             db.session.commit()
         return redirect(url_for('show_certifications'))
     else:
-        return render_template('error.html', error_message="You are not allowed to perform that operation.")
+        form.name.default = form.name.data
+        form.url.default = form.url.data
+        form.description.default = form.description.data
+        form.image.choices = get_file_choices(S3_GLOBAL)
+        form.image.default = form.image.data
+        form.organization.choices = get_organization_choices(organizations)
+        form.organization.default = form.organization.data
+        form.cycle_length.default = form.cycle_length.data
+        form.requirement_year.default = form.requirement_year.data
+        form.requirement_full.default = form.requirement_full.data
+        form.process()
+        return render_template('certification.html', certifications=certifications, form=form)
 
 
 # Shows information about a specific certification
@@ -1181,6 +1202,7 @@ def show_certification(certification_name):
     certification = Certification.query.filter_by(certification_name=certification_name).first()
     organization = Organization.query.filter_by(organization_id=certification.organization_id).first()
     student = Student.query.filter_by(student_id=organization.student_id).first()
+
     if certification:
         organizations = Organization.query.order_by(Organization.organization_name.asc())
 
@@ -1196,7 +1218,8 @@ def show_certification(certification_name):
         form.requirement_full.default = int(certification.requirement_full)
 
         form.process()
-        return render_template('certification_detail.html', certification=certification, student=student, organization=organization, folder_name=S3_GLOBAL, form=form)
+        return render_template('certification_detail.html', certification=certification, student=student,
+                               organization=organization, folder_name=S3_GLOBAL, form=form)
     else:
         return render_template('error.html', error_message="That certification does not exist.")
 
@@ -1205,7 +1228,13 @@ def show_certification(certification_name):
 @app.route(APP_PREFIX + '/web/certification/<string:certification_name>', methods=['POST'])
 @login_required
 def show_certification_p(certification_name):
-    if current_user.student_role == "admin":
+    form = CertificationForm()
+    certification = Certification.query.filter_by(certification_name=certification_name).first()
+    organization = Organization.query.filter_by(organization_id=certification.organization_id).first()
+    student = Student.query.filter_by(student_id=organization.student_id).first()
+    organizations = Organization.query.order_by(Organization.organization_name.asc())
+
+    if current_user.student_role == "admin" and form.validate_on_submit():
         certification = Certification.query.filter_by(certification_name=certification_name).first()
 
         if certification:
@@ -1222,7 +1251,19 @@ def show_certification_p(certification_name):
         else:
             return render_template('error.html', error_message="That certification does not exist.")
     else:
-        return render_template('error.html', error_message="You are not allowed to perform that operation.")
+        form.name.default = form.name.data
+        form.url.default = form.url.data
+        form.description.default = form.description.data
+        form.image.choices = get_file_choices(S3_GLOBAL)
+        form.image.default = form.image.data
+        form.organization.choices = get_organization_choices(organizations)
+        form.organization.default = form.organization.data
+        form.cycle_length.default = form.cycle_length.data
+        form.requirement_year.default = form.requirement_year.data
+        form.requirement_full.default = form.requirement_full.data
+        form.process()
+        return render_template('certification_detail.html', certification=certification, student=student,
+                               organization=organization, folder_name=S3_GLOBAL, form=form)
 
 
 # Delete a specific certification - and all included elements!!!
@@ -1235,4 +1276,3 @@ def show_deleted_certification(certification_name):
         return redirect(url_for('show_certifications'))
     else:
         return render_template('error.html', error_message="You are not allowed to perform that operation.")
-

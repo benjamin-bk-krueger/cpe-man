@@ -6,6 +6,35 @@
         <h2>{% block title %} {{ certification.certification_name }} {% endblock %}</h2>
     </div>
 
+    <script src="https://code.jquery.com/jquery-3.6.0.slim.min.js" integrity="sha256-u7e5khyithlIdTpu22PHhENmPcRdFiHRjhAuHcs05RI=" crossorigin="anonymous"></script>
+
+    {#  Enable modal window error handling #}
+    <script>
+        $(document).ready(function(){
+            {% for error in form.name.errors %}
+                $('#myModal').modal('show');
+            {%  endfor %}
+            {% for error in form.url.errors %}
+                $('#myModal').modal('show');
+            {%  endfor %}
+            {% for error in form.description.errors %}
+                $('#myModal').modal('show');
+            {%  endfor %}
+            {% for error in form.image.errors %}
+                $('#myModal').modal('show');
+            {%  endfor %}
+            {% for error in form.cycle_length.errors %}
+                $('#myModal').modal('show');
+            {%  endfor %}
+            {% for error in form.requirement_year.errors %}
+                $('#myModal').modal('show');
+            {%  endfor %}
+            {% for error in form.requirement_full.errors %}
+                $('#myModal').modal('show');
+            {%  endfor %}
+        });
+    </script>
+
     {#  Page content #}
     <div class="container-fluid pb-3 mt-2 mb-2">
 
@@ -62,18 +91,30 @@
                                     <label for="{{ form.name.name }}">{{ form.name.label }}</label>
                                     {{ form.name(size=20, class="form-control", onkeypress="return event.charCode != 32", readonly=true) }}
                                 </div>
+                                {% for error in form.name.errors %}
+                                    <div class="alert alert-warning"><strong>Warning!</strong> {{ error }}</div>
+                                {% endfor %}
                                 <div class="form-group mt-2 mb-2">
                                     <label for="{{ form.url.name }}">{{ form.url.label }}</label>
                                     {{ form.url(size=20, class="form-control", onkeypress="return event.charCode != 32") }}
                                 </div>
+                                {% for error in form.url.errors %}
+                                    <div class="alert alert-warning"><strong>Warning!</strong> {{ error }}</div>
+                                {% endfor %}
                                 <div class="form-group mt-2 mb-2">
                                     <label for="{{ form.description.name }}">{{ form.description.label }}</label>
                                     {{ form.description(size=40, class="form-control") }}
                                 </div>
+                                {% for error in form.description.errors %}
+                                    <div class="alert alert-warning"><strong>Warning!</strong> {{ error }}</div>
+                                {% endfor %}
                                 <div class="form-group mt-2 mb-2">
                                     <label for="{{ form.image.name }}">{{ form.image.label }}</label>
                                     {{ form.image(class="form-select") }}
                                 </div>
+                                {% for error in form.image.errors %}
+                                    <div class="alert alert-warning"><strong>Warning!</strong> {{ error }}</div>
+                                {% endfor %}
                                 <div class="form-group mt-2 mb-2">
                                     <label for="{{ form.organization.name }}">{{ form.organization.label }}</label>
                                     {{ form.organization(class="form-select") }}
@@ -82,14 +123,23 @@
                                     <label for="{{ form.cycle_length.name }}">{{ form.cycle_length.label }}</label>
                                     {{ form.cycle_length(class="form-select") }}
                                 </div>
+                                {% for error in form.cycle_length.errors %}
+                                    <div class="alert alert-warning"><strong>Warning!</strong> {{ error }}</div>
+                                {% endfor %}
                                <div class="form-group mt-2 mb-2">
                                     <label for="{{ form.requirement_year.name }}">{{ form.requirement_year.label }}</label>
                                     {{ form.requirement_year(class="form-select") }}
                                 </div>
+                                {% for error in form.requirement_year.errors %}
+                                    <div class="alert alert-warning"><strong>Warning!</strong> {{ error }}</div>
+                                {% endfor %}
                                <div class="form-group mt-2 mb-2">
                                     <label for="{{ form.requirement_full.name }}">{{ form.requirement_full.label }}</label>
                                     {{ form.requirement_full(class="form-select") }}
                                 </div>
+                                {% for error in form.requirement_full.errors %}
+                                    <div class="alert alert-warning"><strong>Warning!</strong> {{ error }}</div>
+                                {% endfor %}
                             </form>
                         </div>
                         <div class="modal-footer">

@@ -83,7 +83,7 @@
 
     <script src="https://code.jquery.com/jquery-3.6.0.slim.min.js" integrity="sha256-u7e5khyithlIdTpu22PHhENmPcRdFiHRjhAuHcs05RI=" crossorigin="anonymous"></script>
 
-    {#  More Javascript magic: enable list group filter #}
+    {#  More Javascript magic: enable list group filter and enable modal window error handling #}
     <script>
         $(document).ready(function(){
             $("#myInput").on("keyup", function() {
@@ -93,8 +93,6 @@
                 });
             });
             {% for error in form2.filename_new.errors %}
-                document.forms['filename_change']['filename_new'].value = "{{ filename_new }}";
-                document.forms['filename_change']['filename_old'].value = "{{ filename_old }}";
                 $('#myModal').modal('show');
             {%  endfor %}
         });
@@ -127,10 +125,10 @@
             <div class="form-group mt-2 mb-2">
                 {{ form.file }}
             </div>
-            <button type="submit" class="btn btn-primary mt-4 mb-4">Upload</button>
             {% for error in form.file.errors %}
                 <div class="alert alert-warning"><strong>Warning!</strong> {{ error }}</div>
             {% endfor %}
+            <button type="submit" class="btn btn-primary mt-4 mb-4">Upload</button>
         </form>
 
         <hr class="little mt-4 mb-4">
