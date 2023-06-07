@@ -50,9 +50,20 @@
                 </div>
                 <div class="col-md-8">
                     <div class="card-body">
-                        <h5 class="card-title">{{ certification.certification_name }}</h5>
+                        <h5 class="card-title">{{ certification.certification_url }}</h5>
                         <h6 class="card-subtitle mb-2 text-muted">Part of <a href="{{ url_for('show_organization', organization_name=organization.organization_name)}}">{{ organization.organization_name }}</a></h6>
-                        <p class="card-text">{{ certification.certification_desc }}</p>
+                        <p class="card-text">
+                            {{ certification.certification_desc }}
+                            <div class="progress mt-4 mb-4">
+                                <div class="progress-bar" role="progressbar" style="width: {{ certification.cycle_length / 3 * 100}}%" aria-valuenow="{{ certification.cycle_length / 3 * 100}}" aria-valuemin="0" aria-valuemax="100">{{ certification.cycle_length }} year cycle</div>
+                            </div>
+                            <div class="progress mt-4 mb-4">
+                                <div class="progress-bar" role="progressbar" style="width: {{ certification.requirement_year / 50 * 100}}%" aria-valuenow="{{ certification.requirement_year / 50 * 100}}" aria-valuemin="0" aria-valuemax="100">{{ certification.requirement_year }} CPE per year required</div>
+                            </div>
+                            <div class="progress mt-4 mb-4">
+                                <div class="progress-bar" role="progressbar" style="width: {{ certification.requirement_full / 150 * 100}}%" aria-valuenow="{{ certification.requirement_full / 150 * 100}}" aria-valuemin="0" aria-valuemax="100">{{ certification.requirement_full }} CPE per cycle required</div>
+                            </div>
+                        </p>
                     </div>
                 </div>
             </div>

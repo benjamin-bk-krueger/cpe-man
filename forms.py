@@ -101,6 +101,6 @@ class CertificationForm(FlaskForm):
     description = TextAreaField('Description', validators=[Length(max=1024), full_ascii_validator])
     image = SelectField('Image', choices=["none"], validate_choice=False)
     organization = SelectField('Select Organization', choices=["none"], validate_choice=False)
-    cycle_length = IntegerRangeField('Cycle Length', validators=[NumberRange(min=1, max=5)])
+    cycle_length = IntegerRangeField('Cycle Length', validators=[NumberRange(min=1, max=3)])
     requirement_year = IntegerRangeField('Required each year', validators=[NumberRange(min=10, max=50)])
-    requirement_full = IntegerRangeField('Required each cycle', validators=[NumberRange(min=10, max=200)])
+    requirement_full = IntegerRangeField('Required each cycle', validators=[NumberRange(min=10, max=150)])
