@@ -3,7 +3,7 @@ import re
 from flask_wtf import FlaskForm  # integration with WTForms, data validation and CSRF protection
 from flask_wtf.file import FileRequired, FileAllowed
 from wtforms import StringField, PasswordField, BooleanField, HiddenField, FileField, TextAreaField, SelectField, \
-    IntegerField, DateField
+    IntegerRangeField, DateField
 from wtforms.validators import ValidationError, InputRequired, NoneOf, EqualTo, Email, Length, NumberRange, DataRequired
 
 
@@ -101,6 +101,6 @@ class CertificationForm(FlaskForm):
     description = TextAreaField('Description', validators=[Length(max=1024), full_ascii_validator])
     image = SelectField('Image', choices=["none"], validate_choice=False)
     organization = SelectField('Select Organization', choices=["none"], validate_choice=False)
-    cycle_length = IntegerField('Cycle Length', validators=[InputRequired(), NumberRange(min=1, max=5)])
-    requirement_year = IntegerField('Required each year', validators=[InputRequired(), NumberRange(min=1, max=50)])
-    requirement_full = IntegerField('Required each cycle', validators=[InputRequired(), NumberRange(min=1, max=250)])
+    cycle_length = IntegerRangeField('Cycle Length', validators=[NumberRange(min=1, max=5)])
+    requirement_year = IntegerRangeField('Required each year', validators=[NumberRange(min=10, max=50)])
+    requirement_full = IntegerRangeField('Required each cycle', validators=[NumberRange(min=10, max=200)])
