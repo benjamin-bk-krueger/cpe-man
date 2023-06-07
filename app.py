@@ -385,8 +385,12 @@ cycles_schema = CycleSchema(many=True)
 class CycleListResource(Resource):
     @staticmethod
     def get():
-        cycles = Cycle.query.all()
-        return cycles_schema.dump(cycles)
+        if AuthChecker().check(request.authorization, ["admin", "student"]):
+            student = Student.query.filter_by(student_name=request.authorization['username']).first()
+            cycles = Cycle.query.filter_by(student_id=student.student_id).all()
+            return cycles_schema.dump(cycles)
+        else:
+            return jsonify({'error': 'wrong credentials or permissions'})
 
     @staticmethod
     def post():
@@ -411,8 +415,13 @@ class CycleListResource(Resource):
 class CycleResource(Resource):
     @staticmethod
     def get(cycle_id):
-        cycle = Cycle.query.filter_by(cycle_id=cycle_id).first()
-        return cycle_schema.dump(cycle)
+        if AuthChecker().check(request.authorization, ["admin", "student"]):
+            student = Student.query.filter_by(student_name=request.authorization['username']).first()
+            cycle = Cycle.query.filter_by(student_id=student.student_id).\
+                filter_by(cycle_id=cycle_id).first()
+            return cycle_schema.dump(cycle)
+        else:
+            return jsonify({'error': 'wrong credentials or permissions'})
 
     @staticmethod
     def patch(cycle_id):
@@ -445,6 +454,209 @@ class CycleResource(Resource):
 
 api.add_resource(CycleListResource, APP_PREFIX + '/api/cycles')
 api.add_resource(CycleResource, APP_PREFIX + '/api/cycles/<int:cycle_id>')
+
+
+class Cpe(db.Model):
+    __tablename__ = "cpe"
+    cpe_id = db.Column(db.INTEGER, primary_key=True)
+    student_id = db.Column(db.INTEGER, db.ForeignKey("student.student_id"))
+    cpe_name = db.Column(db.VARCHAR(100))
+    activity_start = db.Column(db.TIMESTAMP)
+    activity_end = db.Column(db.TIMESTAMP)
+    credits = db.Column(db.DECIMAL(asdecimal=False), default=1.00)
+    sponsor = db.Column(db.VARCHAR(100))
+    attachment = db.Column(db.VARCHAR(384))
+
+    def __repr__(self):
+        return '<CPE %s>' % self.cpe_name
+
+
+class CpeSchema(marsh.Schema):
+    class Meta:
+        fields = ("cpe_id", "student_id", "cpe_name", "activity_start", "activity_end", "credits",
+                  "sponsor", "attachment")
+        model = Cpe
+
+
+cpe_schema = CpeSchema()
+cpes_schema = CpeSchema(many=True)
+
+
+class CpeListResource(Resource):
+    @staticmethod
+    def get():
+        if AuthChecker().check(request.authorization, ["admin", "student"]):
+            student = Student.query.filter_by(student_name=request.authorization['username']).first()
+            cpes = Cpe.query.filter_by(student_id=student.student_id).all()
+            return cpes_schema.dump(cpes)
+        else:
+            return jsonify({'error': 'wrong credentials or permissions'})
+
+    @staticmethod
+    def post():
+        if AuthChecker().check(request.authorization, ["admin", "student"]):
+            student = Student.query.filter_by(student_name=request.authorization['username']).first()
+            if all(s in request.json for s in ('cpe_name', 'activity_start',
+                                               'activity_end', 'credits', 'sponsor', 'attachment')):
+                new_cpe = Cpe(
+                    student_id=student.student_id,
+                    cpe_name=escape(request.json['cpe_name']),
+                    activity_start=escape(request.json['activity_start']),
+                    activity_end=escape(request.json['activity_end']),
+                    credits=float(escape(request.json['credits'])),
+                    sponsor=escape(request.json['sponsor']),
+                    attachment=escape(request.json['attachment'])
+                )
+                db.session.add(new_cpe)
+                db.session.commit()
+                return cpe_schema.dump(new_cpe)
+            else:
+                return jsonify({'error': 'wrong JSON format'})
+        else:
+            return jsonify({'error': 'wrong credentials or permissions'})
+
+
+class CpeResource(Resource):
+    @staticmethod
+    def get(cpe_id):
+        if AuthChecker().check(request.authorization, ["admin", "student"]):
+            student = Student.query.filter_by(student_name=request.authorization['username']).first()
+            cpe = Cpe.query.filter_by(student_id=student.student_id). \
+                filter_by(cpe_id=cpe_id).first()
+            return cpe_schema.dump(cpe)
+        else:
+            return jsonify({'error': 'wrong credentials or permissions'})
+
+    @staticmethod
+    def patch(cpe_id):
+        if AuthChecker().check(request.authorization, ["admin", "student"]):
+            student = Student.query.filter_by(student_name=request.authorization['username']).first()
+            cpe = Cpe.query.filter_by(student_id=student.student_id). \
+                filter_by(cpe_id=cpe_id).first()
+            if all(s in request.json for s in ('cpe_name', 'activity_start',
+                                               'activity_end', 'credits', 'sponsor', 'attachment')):
+                cpe.cpe_name = escape(request.json['cpe_name']),
+                cpe.activity_start = escape(request.json['activity_start']),
+                cpe.activity_end = escape(request.json['activity_end']),
+                cpe.credits = float(escape(request.json['credits'])),
+                cpe.sponsor = escape(request.json['sponsor']),
+                cpe.attachment = escape(request.json['attachment'])
+                db.session.commit()
+                return cpe_schema.dump(cpe)
+            else:
+                return jsonify({'error': 'wrong JSON format'})
+        else:
+            return jsonify({'error': 'wrong credentials or permissions'})
+
+    @staticmethod
+    def delete(cpe_id):
+        if AuthChecker().check(request.authorization, ["admin", "student"]):
+            student = Student.query.filter_by(student_name=request.authorization['username']).first()
+            cpe = Cpe.query.filter_by(student_id=student.student_id). \
+                filter_by(cpe_id=cpe_id).first()
+            db.session.delete(cpe)
+            db.session.commit()
+            return '', 204
+        else:
+            return jsonify({'error': 'wrong credentials or permissions'})
+
+
+api.add_resource(CpeListResource, APP_PREFIX + '/api/cpes')
+api.add_resource(CpeResource, APP_PREFIX + '/api/cpes/<int:cpe_id>')
+
+
+class Cpelink(db.Model):
+    __tablename__ = "cpelink"
+    cpelink_id = db.Column(db.INTEGER, primary_key=True)
+    student_id = db.Column(db.INTEGER, db.ForeignKey("student.student_id"))
+    cpe_id = db.Column(db.INTEGER, db.ForeignKey("cpe.cpe_id"))
+    cycle_id = db.Column(db.INTEGER, db.ForeignKey("cycle.cycle_id"))
+
+    def __repr__(self):
+        return '<CPElink %s>' % self.cpelink_id
+
+
+class CpelinkSchema(marsh.Schema):
+    class Meta:
+        fields = ("cpelink_id", "student_id", "cpe_id", "cycle_id")
+        model = Cpelink
+
+
+cpelink_schema = CpelinkSchema()
+cpelinks_schema = CpelinkSchema(many=True)
+
+
+class CpelinkListResource(Resource):
+    @staticmethod
+    def get():
+        if AuthChecker().check(request.authorization, ["admin", "student"]):
+            student = Student.query.filter_by(student_name=request.authorization['username']).first()
+            cpelinks = Cpelink.query.filter_by(student_id=student.student_id).all()
+            return cpelinks_schema.dump(cpelinks)
+        else:
+            return jsonify({'error': 'wrong credentials or permissions'})
+
+    @staticmethod
+    def post():
+        if AuthChecker().check(request.authorization, ["admin", "student"]):
+            student = Student.query.filter_by(student_name=request.authorization['username']).first()
+            if all(s in request.json for s in ('cpe_id', 'cycle_id')):
+                new_cpelink = Cpelink(
+                    student_id=student.student_id,
+                    cpe_id=int(escape(request.json['cpe_id'])),
+                    cycle_id=int(escape(request.json['cycle_id']))
+                )
+                db.session.add(new_cpelink)
+                db.session.commit()
+                return cpe_schema.dump(new_cpelink)
+            else:
+                return jsonify({'error': 'wrong JSON format'})
+        else:
+            return jsonify({'error': 'wrong credentials or permissions'})
+
+
+class CpelinkResource(Resource):
+    @staticmethod
+    def get(cpelink_id):
+        if AuthChecker().check(request.authorization, ["admin", "student"]):
+            student = Student.query.filter_by(student_name=request.authorization['username']).first()
+            cpelink = Cpelink.query.filter_by(student_id=student.student_id). \
+                filter_by(cpelink_id=cpelink_id).first()
+            return cpelink_schema.dump(cpelink)
+        else:
+            return jsonify({'error': 'wrong credentials or permissions'})
+
+    @staticmethod
+    def patch(cpelink_id):
+        if AuthChecker().check(request.authorization, ["admin", "student"]):
+            student = Student.query.filter_by(student_name=request.authorization['username']).first()
+            cpelink = Cpelink.query.filter_by(student_id=student.student_id). \
+                filter_by(cpelink_id=cpelink_id).first()
+            if all(s in request.json for s in ('cpe_id', 'cycle_id')):
+                cpelink.cpe_id = int(escape(request.json['cpe_id'])),
+                cpelink.cycle_id = int(escape(request.json['cycle_id']))
+                db.session.commit()
+                return cpelink_schema.dump(cpelink)
+            else:
+                return jsonify({'error': 'wrong JSON format'})
+        else:
+            return jsonify({'error': 'wrong credentials or permissions'})
+
+    @staticmethod
+    def delete(cpelink_id):
+        if AuthChecker().check(request.authorization, ["admin", "student"]):
+            student = Student.query.filter_by(student_name=request.authorization['username']).first()
+            cpelink = Cpelink.query.filter_by(student_id=student.student_id). \
+                filter_by(cpelink_id=cpelink_id).first()
+            db.session.delete(cpelink)
+            db.session.commit()
+            return '', 204
+        else:
+            return jsonify({'error': 'wrong credentials or permissions'})
+
+
+api.add_resource(CpelinkListResource, APP_PREFIX + '/api/cpelinks')
+api.add_resource(CpelinkResource, APP_PREFIX + '/api/cpelinks/<int:cpelink_id>')
 
 
 # --------------------------------------------------------------
@@ -1456,13 +1668,12 @@ def show_cycle(cycle_id):
 def show_cycle_p(cycle_id):
     form = CycleForm()
     cycle = Cycle.query.filter_by(student_id=current_user.student_id).filter_by(cycle_id=cycle_id).first()
+    student = Student.query.filter_by(student_id=cycle.student_id).first() if cycle else None
     certifications = Certification.query.order_by(Certification.certification_name.asc())
     cert_dict = get_certification_dict(certifications)
 
     if current_user.student_role in ["admin", "student"] and form.validate_on_submit():
         if cycle:
-            student = Student.query.filter_by(student_id=cycle.student_id).first()
-
             cycle.certification_id = int(escape(request.form["certification"]))
             cycle.certification_date = escape(request.form["certification_date"])
             cycle.cycle_start = escape(request.form["cycle_start"])
