@@ -1,0 +1,137 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    {#  Page header #}
+    <div class="container-fluid pb-2 mt-4 mb-2">
+        <h2>{% block title %} {{ cert_dict[cycle.certification_id] }} Certification {% endblock %}</h2>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.slim.min.js" integrity="sha256-u7e5khyithlIdTpu22PHhENmPcRdFiHRjhAuHcs05RI=" crossorigin="anonymous"></script>
+
+    {#  Enable modal window error handling #}
+    <script>
+        $(document).ready(function(){
+            {% for error in form.certification_date.errors %}
+                $('#myModal').modal('show');
+            {%  endfor %}
+            {% for error in form.cycle_start.errors %}
+                $('#myModal').modal('show');
+            {%  endfor %}
+        });
+    </script>
+
+    {#  Page content #}
+    <div class="container-fluid pb-3 mt-2 mb-2">
+
+        {#  Show detailed information regarding the selected cycle #}
+        <div class="card mb-3" style="max-width: 720px;">
+            <div class="row g-0">
+                <div class="col-md-12">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ cert_dict[cycle.certification_id] }}</h5>
+                        <h6 class="card-subtitle mb-2 text-muted">Created by <a href="{{ url_for('show_student', student_name=student.student_name)}}">{{ student.student_name }}</a></h6>
+                        <p class="card-text">
+                            <div class="mt-4 mb-4">
+                                You have been certified at {{ cycle.certification_date.strftime('%Y-%m-%d') }}.
+                            </div>
+                            <div class="mt-4 mb-4">
+                                Your reporting cycle starts at {{ cycle.cycle_start.strftime('%Y-%m-%d') }}.
+                            </div>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% if current_user.student_role in ["admin", "student"] %}
+            {# Modal dialog window - delete currently selected cycle #}
+            <div id="myModal_del" class="modal fade" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h4 class="modal-title">Delete Cycle</h4>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <form action="{{ url_for('show_deleted_cycle', cycle_id=cycle.cycle_id) }}" id="form_deletion">
+                                Are you sure?
+                            </form>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="submit" class="btn btn-danger mt-4 mb-4 btn-space" form="form_deletion">Confirm</button>
+                            <button type="button" class="btn btn-secondary mt-4 mb-4" data-bs-dismiss="modal">Cancel</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {# Modal dialog window - edit currently selected cycle #}
+            <div id="myModal" class="modal fade" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h4 class="modal-title">Edit Cycle</h4>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <form action="{{ url_for('show_cycle_p', cycle_id=cycle.cycle_id) }}" method="POST" id="form_edit">
+                                {{ form.csrf_token }}
+                                <div class="form-group mt-2 mb-2">
+                                    <label for="{{ form.certification.name }}">{{ form.certification.label }}</label>
+                                    {{ form.certification(class="form-select") }}
+                                </div>
+                               <div class="form-group mt-2 mb-2">
+                                    <label for="{{ form.certification_date.name }}">{{ form.certification_date.label }}</label>
+                                    {{ form.certification_date(class="form-control") }}
+                                </div>
+                                {% for error in form.certification_date.errors %}
+                                    <div class="alert alert-warning"><strong>Warning!</strong> {{ error }}</div>
+                                {% endfor %}
+                                <div class="form-group mt-2 mb-2">
+                                    <label for="{{ form.cycle_start.name }}">{{ form.cycle_start.label }}</label>
+                                    {{ form.cycle_start(class="form-control") }}
+                                </div>
+                                {% for error in form.cycle_start.errors %}
+                                    <div class="alert alert-warning"><strong>Warning!</strong> {{ error }}</div>
+                                {% endfor %}
+                            </form>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="submit" class="btn btn-primary mt-4 mb-4 btn-space" form="form_edit">Update</button>
+                            <button type="button" class="btn btn-secondary mt-4 mb-4" data-bs-dismiss="modal">Cancel</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+
+        {#  Display action buttons regarding the selected cycle #}
+        <div class="btn-toolbar" role="toolbar" aria-label="Toolbar with button groups">
+
+            {#  Text-based links #}
+            <div class="btn-group me-2" role="group" aria-label="Button group with nested dropdown">
+                <div class="btn-group" role="group">
+                    <button id="btnGroupDrop1" type="button" class="btn btn-primary dropdown-toggle mt-4 mb-4" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="bi bi-activity"></i> Actions
+                    </button>
+                    <ul class="dropdown-menu" aria-labelledby="btnGroupDrop1">
+                        <li><a class="dropdown-item" href="{{ url_for('show_cycles') }}">All Cycles</a></li>
+                        <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#myModal">Edit Cycle</a></li>
+                        <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#myModal_del">Delete Cycle</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            {#  Same links implemented using small buttons #}
+            <div class="btn-group me-2" role="group" aria-label="Second group">
+                <a href="{{ url_for('show_cycles') }}" data-toggle="tooltip" title="All Cycles" class="btn btn-primary mt-4 mb-4"><i class="bi bi-list-ul"></i></a>
+            </div>
+            <div class="btn-group me-2" role="group" aria-label="Third group">
+                <a href="#" class="btn btn-primary mt-4 mb-4" data-toggle="tooltip" title="Edit Cycle" data-bs-toggle="modal" data-bs-target="#myModal"><i class="bi bi-pencil"></i></a>
+            </div>
+            <div class="btn-group me-2" role="group" aria-label="Fourth group">
+                <a href="#" class="btn btn-danger mt-4 mb-4" data-toggle="tooltip" title="Delete Cycle" data-bs-toggle="modal" data-bs-target="#myModal_del"><i class="bi bi-trash"></i></a>
+            </div>
+        </div>
+    </div>
+{% endblock %}

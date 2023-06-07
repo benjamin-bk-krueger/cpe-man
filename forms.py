@@ -4,7 +4,7 @@ from flask_wtf import FlaskForm  # integration with WTForms, data validation and
 from flask_wtf.file import FileRequired, FileAllowed
 from wtforms import StringField, PasswordField, BooleanField, HiddenField, FileField, TextAreaField, SelectField, \
     IntegerRangeField, DateField
-from wtforms.validators import ValidationError, InputRequired, NoneOf, EqualTo, Email, Length, NumberRange, DataRequired
+from wtforms.validators import ValidationError, InputRequired, NoneOf, EqualTo, Email, Length, NumberRange
 
 
 # Custom validator for standard ASCII characters
@@ -104,3 +104,9 @@ class CertificationForm(FlaskForm):
     cycle_length = IntegerRangeField('Cycle Length', validators=[NumberRange(min=1, max=3)])
     requirement_year = IntegerRangeField('Required each year', validators=[NumberRange(min=10, max=50)])
     requirement_full = IntegerRangeField('Required each cycle', validators=[NumberRange(min=10, max=150)])
+
+
+class CycleForm(FlaskForm):
+    certification = SelectField('Select Certification', choices=["none"], validate_choice=False)
+    certification_date = DateField('Certification Date', validators=[InputRequired()])
+    cycle_start = DateField('Cycle Start', validators=[InputRequired()])

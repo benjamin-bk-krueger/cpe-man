@@ -21,7 +21,7 @@ from logging.handlers import SMTPHandler  # get crashes via mail
 
 from forms import LoginForm, AccountForm, MailStudentForm, PassStudentForm, DelStudentForm, \
     PasswordForm, PasswordResetForm, ContactForm, FileForm, UploadForm, \
-    OrganizationForm, CertificationForm  # Flask/Jinja template forms
+    OrganizationForm, CertificationForm, CycleForm  # Flask/Jinja template forms
 
 
 # the app configuration is done via environmental variables
@@ -598,6 +598,20 @@ def get_organization_choices(organizations):
     for organization in organizations:
         organizations_choices.append((organization.organization_id, organization.organization_name))
     return organizations_choices
+
+
+def get_certification_choices(certifications):
+    certifications_choices = list()
+    for certification in certifications:
+        certifications_choices.append((certification.certification_id, certification.certification_name))
+    return certifications_choices
+
+
+def get_certification_dict(certifications):
+    certifications_dict = dict()
+    for certification in certifications:
+        certifications_dict[certification.certification_id] = certification.certification_name
+    return certifications_dict
 
 
 # Internal helpers - style manager
@@ -1364,5 +1378,114 @@ def show_deleted_certification(certification_name):
         Certification.query.filter_by(certification_name=certification_name).delete()
         db.session.commit()
         return redirect(url_for('show_certifications'))
+    else:
+        return render_template('error.html', error_message="You are not allowed to perform that operation.")
+
+
+# Displays all my cycles
+@app.route(APP_PREFIX + '/web/cycles', methods=['GET'])
+@login_required
+def show_cycles():
+    form = CycleForm()
+    certifications = Certification.query.order_by(Certification.certification_name.asc())
+    cert_dict = get_certification_dict(certifications)
+    form.certification.choices = get_certification_choices(certifications)
+    form.process()
+    cycles = Cycle.query.filter_by(student_id=current_user.student_id).order_by(Cycle.cycle_id.asc())
+
+    return render_template('cycle.html', cycles=cycles, cert_dict=cert_dict, form=form)
+
+
+# Post a new cycle - if it doesn't already exist
+@app.route(APP_PREFIX + '/web/cycles', methods=['POST'])
+@login_required
+def show_cycles_p():
+    form = CycleForm()
+    certifications = Certification.query.order_by(Certification.certification_name.asc())
+    cert_dict = get_certification_dict(certifications)
+    cycles = Cycle.query.filter_by(student_id=current_user.student_id).order_by(Cycle.cycle_id.asc())
+
+    if current_user.student_role in ["admin", "student"] and form.validate_on_submit():
+        certification_id = int(escape(request.form["certification"]))
+        cycle = Cycle.query.filter_by(student_id=current_user.student_id).filter_by(certification_id=certification_id).\
+            first()
+
+        if not cycle:
+            cycle = Cycle()
+            cycle.student_id = current_user.student_id
+            cycle.certification_id = int(escape(request.form["certification"]))
+            cycle.certification_date = escape(request.form["certification_date"])
+            cycle.cycle_start = escape(request.form["cycle_start"])
+            db.session.add(cycle)
+            db.session.commit()
+        return redirect(url_for('show_cycles'))
+    else:
+        form.certification.choices = get_certification_choices(certifications)
+        form.certification.default = form.certification.data
+        form.certification_date.default = form.certification_date.data
+        form.cycle_start.default = form.cycle_start.data
+        form.process()
+        return render_template('cycle.html', cycles=cycles, cert_dict=cert_dict, form=form)
+
+
+# Shows information about a specific cycle
+@app.route(APP_PREFIX + '/web/cycle/<int:cycle_id>', methods=['GET'])
+@login_required
+def show_cycle(cycle_id):
+    form = CycleForm()
+    cycle = Cycle.query.filter_by(student_id=current_user.student_id).filter_by(cycle_id=cycle_id).first()
+    certifications = Certification.query.order_by(Certification.certification_name.asc())
+    cert_dict = get_certification_dict(certifications)
+
+    if cycle:
+        student = Student.query.filter_by(student_id=cycle.student_id).first()
+
+        form.certification.choices = get_certification_choices(certifications)
+        form.certification.default = cycle.certification_id
+        form.certification_date.default = cycle.certification_date
+        form.cycle_start.default = cycle.cycle_start
+        form.process()
+        return render_template('cycle_detail.html', cycle=cycle, cert_dict=cert_dict, student=student, form=form)
+    else:
+        return render_template('error.html', error_message="That cycle does not exist.")
+
+
+# Post a change in a cycle's data
+@app.route(APP_PREFIX + '/web/cycle/<int:cycle_id>', methods=['POST'])
+@login_required
+def show_cycle_p(cycle_id):
+    form = CycleForm()
+    cycle = Cycle.query.filter_by(student_id=current_user.student_id).filter_by(cycle_id=cycle_id).first()
+    certifications = Certification.query.order_by(Certification.certification_name.asc())
+    cert_dict = get_certification_dict(certifications)
+
+    if current_user.student_role in ["admin", "student"] and form.validate_on_submit():
+        if cycle:
+            student = Student.query.filter_by(student_id=cycle.student_id).first()
+
+            cycle.certification_id = int(escape(request.form["certification"]))
+            cycle.certification_date = escape(request.form["certification_date"])
+            cycle.cycle_start = escape(request.form["cycle_start"])
+            db.session.commit()
+            return redirect(url_for('show_cycle', cycle_id=cycle.cycle_id))
+        else:
+            return render_template('error.html', error_message="That cycle does not exist.")
+    else:
+        form.certification.choices = get_certification_choices(certifications)
+        form.certification.default = form.certification.data
+        form.certification_date.default = form.certification_date.data
+        form.cycle_start.default = form.cycle_start.data
+        form.process()
+        return render_template('cycle_detail.html', cycle=cycle, cert_dict=cert_dict, student=student, form=form)
+
+
+# Delete a specific cycle
+@app.route(APP_PREFIX + '/web/deleted_cycle/<int:cycle_id>', methods=['GET'])
+@login_required
+def show_deleted_cycle(cycle_id):
+    if current_user.student_role in ["admin", "student"]:
+        Cycle.query.filter_by(student_id=current_user.student_id).filter_by(cycle_id=cycle_id).delete()
+        db.session.commit()
+        return redirect(url_for('show_cycles'))
     else:
         return render_template('error.html', error_message="You are not allowed to perform that operation.")
