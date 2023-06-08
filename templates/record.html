@@ -26,7 +26,7 @@
         {% else %}
             <div class="list-group">
                 {% for record in records %}
-                    <a href="{{ url_for('show_record', record_id=record.record_id)}}" class="list-group-item">CPE Record {{ record.record_id }}</a>
+                    <a href="{{ url_for('show_record', record_id=record.record_id)}}" class="list-group-item">CPE Record {{ record.record_name }}</a>
                 {% endfor %}
             </div>
         {% endif %}

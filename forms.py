@@ -9,7 +9,12 @@ from wtforms.validators import ValidationError, InputRequired, NoneOf, EqualTo, 
 
 # Custom validator for standard ASCII characters
 def ascii_validator(form, field):
-    if not re.search(r"^[A-Za-z0-9_.-]*$", field.data):
+    if not re.search(r"^[A-Za-z0-9_.-]+$", field.data):
+        raise ValidationError('Please use only letters, numbers or the characters -_.')
+
+
+def space_ascii_validator(form, field):
+    if not re.search(r"^[A-Za-z0-9_. -]*$", field.data):
         raise ValidationError('Please use only letters, numbers or the characters -_.')
 
 
@@ -115,8 +120,8 @@ class CycleForm(FlaskForm):
 
 
 class RecordForm(FlaskForm):
-    name = StringField('Name', validators=[InputRequired(), ascii_validator])
-    sponsor = StringField('Sponsor', validators=[ascii_validator])
+    name = StringField('Name', validators=[InputRequired(), space_ascii_validator])
+    sponsor = StringField('Sponsor', validators=[space_ascii_validator])
     activity_start = DateField('Activity Start', validators=[InputRequired()])
     activity_end = DateField('Activity End', validators=[InputRequired()])
     credits = DecimalRangeField('Credits', validators=[NumberRange(min=0.25, max=20)])
