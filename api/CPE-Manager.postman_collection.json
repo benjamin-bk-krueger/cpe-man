@@ -391,28 +391,28 @@
 			]
 		},
 		{
-			"name": "Cpe",
+			"name": "Records",
 			"item": [
 				{
-					"name": "All Cpes",
+					"name": "All Records",
 					"request": {
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{baseurl}}/api/cpes",
+							"raw": "{{baseurl}}/api/records",
 							"host": [
 								"{{baseurl}}"
 							],
 							"path": [
 								"api",
-								"cpes"
+								"records"
 							]
 						}
 					},
 					"response": []
 				},
 				{
-					"name": "Single Cpe",
+					"name": "Single Record",
 					"request": {
 						"method": "POST",
 						"header": [
@@ -424,34 +424,34 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"cpe_name\": \"Name\",\n    \"activity_start\": \"2020-01-20\",\n    \"activity_end\": \"2020-01-20\",\n    \"credits\": \"1.00\",\n    \"sponsor\": \"Sponsor\",\n    \"attachment\": \"None\"\n}"
+							"raw": "{\n    \"record_name\": \"Name\",\n    \"activity_start\": \"2020-01-20\",\n    \"activity_end\": \"2020-01-20\",\n    \"credits\": \"1.00\",\n    \"sponsor\": \"Sponsor\",\n    \"attachment\": \"None\"\n}"
 						},
 						"url": {
-							"raw": "{{baseurl}}/api/cpes",
+							"raw": "{{baseurl}}/api/records",
 							"host": [
 								"{{baseurl}}"
 							],
 							"path": [
 								"api",
-								"cpes"
+								"records"
 							]
 						}
 					},
 					"response": []
 				},
 				{
-					"name": "Single Cpe",
+					"name": "Single Record",
 					"request": {
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{baseurl}}/api/cpes/{{id}}",
+							"raw": "{{baseurl}}/api/records/{{id}}",
 							"host": [
 								"{{baseurl}}"
 							],
 							"path": [
 								"api",
-								"cpes",
+								"records",
 								"{{id}}"
 							]
 						}
@@ -459,7 +459,7 @@
 					"response": []
 				},
 				{
-					"name": "Single Cpe",
+					"name": "Single Record",
 					"request": {
 						"method": "PATCH",
 						"header": [
@@ -471,16 +471,16 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"cpe_name\": \"Name\",\n    \"activity_start\": \"2020-01-20\",\n    \"activity_end\": \"2020-01-20\",\n    \"credits\": \"1.00\",\n    \"sponsor\": \"Sponsor\",\n    \"attachment\": \"None\"\n}"
+							"raw": "{\n    \"record_name\": \"Name\",\n    \"activity_start\": \"2020-01-20\",\n    \"activity_end\": \"2020-01-20\",\n    \"credits\": \"1.00\",\n    \"sponsor\": \"Sponsor\",\n    \"attachment\": \"None\"\n}"
 						},
 						"url": {
-							"raw": "{{baseurl}}/api/cpes/{{id}}",
+							"raw": "{{baseurl}}/api/records/{{id}}",
 							"host": [
 								"{{baseurl}}"
 							],
 							"path": [
 								"api",
-								"cpes",
+								"records",
 								"{{id}}"
 							]
 						}
@@ -488,7 +488,7 @@
 					"response": []
 				},
 				{
-					"name": "Single Cpe",
+					"name": "Single Record",
 					"request": {
 						"method": "DELETE",
 						"header": [
@@ -503,13 +503,13 @@
 							"raw": ""
 						},
 						"url": {
-							"raw": "{{baseurl}}/api/cpes/{{id}}",
+							"raw": "{{baseurl}}/api/records/{{id}}",
 							"host": [
 								"{{baseurl}}"
 							],
 							"path": [
 								"api",
-								"cpes",
+								"records",
 								"{{id}}"
 							]
 						}
@@ -519,28 +519,28 @@
 			]
 		},
 		{
-			"name": "Cpelink",
+			"name": "Record Links",
 			"item": [
 				{
-					"name": "All Cpelinks",
+					"name": "All Record Links",
 					"request": {
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{baseurl}}/api/cpelinks",
+							"raw": "{{baseurl}}/api/record_links",
 							"host": [
 								"{{baseurl}}"
 							],
 							"path": [
 								"api",
-								"cpelinks"
+								"record_links"
 							]
 						}
 					},
 					"response": []
 				},
 				{
-					"name": "Single Cpelink",
+					"name": "Single Record Link",
 					"request": {
 						"method": "POST",
 						"header": [
@@ -552,34 +552,34 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"cpe_id\": \"1\",\n    \"cycle_id\": \"1\"\n}"
+							"raw": "{\n    \"record_id\": \"1\",\n    \"cycle_id\": \"1\"\n}"
 						},
 						"url": {
-							"raw": "{{baseurl}}/api/cpelinks",
+							"raw": "{{baseurl}}/api/record_links",
 							"host": [
 								"{{baseurl}}"
 							],
 							"path": [
 								"api",
-								"cpelinks"
+								"record_links"
 							]
 						}
 					},
 					"response": []
 				},
 				{
-					"name": "Single Cpelink",
+					"name": "Single Record Link",
 					"request": {
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{baseurl}}/api/cpelinks/{{id}}",
+							"raw": "{{baseurl}}/api/record_links/{{id}}",
 							"host": [
 								"{{baseurl}}"
 							],
 							"path": [
 								"api",
-								"cpelinks",
+								"record_links",
 								"{{id}}"
 							]
 						}
@@ -587,7 +587,7 @@
 					"response": []
 				},
 				{
-					"name": "Single Cpelink",
+					"name": "Single Record Link",
 					"request": {
 						"method": "PATCH",
 						"header": [
@@ -599,16 +599,16 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"cpe_id\": \"1\",\n    \"cycle_id\": \"1\"\n}"
+							"raw": "{\n    \"record_id\": \"1\",\n    \"cycle_id\": \"1\"\n}"
 						},
 						"url": {
-							"raw": "{{baseurl}}/api/cpelinks/{{id}}",
+							"raw": "{{baseurl}}/api/record_links/{{id}}",
 							"host": [
 								"{{baseurl}}"
 							],
 							"path": [
 								"api",
-								"cpelinks",
+								"record_links",
 								"{{id}}"
 							]
 						}
@@ -616,7 +616,7 @@
 					"response": []
 				},
 				{
-					"name": "Single Cpelink",
+					"name": "Single Record Link",
 					"request": {
 						"method": "DELETE",
 						"header": [
@@ -631,13 +631,13 @@
 							"raw": ""
 						},
 						"url": {
-							"raw": "{{baseurl}}/api/cpelinks/{{id}}",
+							"raw": "{{baseurl}}/api/record_links/{{id}}",
 							"host": [
 								"{{baseurl}}"
 							],
 							"path": [
 								"api",
-								"cpelinks",
+								"record_links",
 								"{{id}}"
 							]
 						}

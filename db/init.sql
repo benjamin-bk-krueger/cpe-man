@@ -65,33 +65,33 @@ CREATE TABLE cycle (
 CREATE UNIQUE INDEX idx_cycle_id
 ON cycle ( certification_id, student_id );
 
-CREATE TABLE cpe (
-    cpe_id SERIAL PRIMARY KEY,
+CREATE TABLE record (
+    record_id SERIAL PRIMARY KEY,
     student_id INT REFERENCES  student ( student_id ),
-    cpe_name VARCHAR ( 100 ) NOT NULL,
-    activity_start TIMESTAMP,
+    record_name VARCHAR ( 100 ) NOT NULL,
+    sponsor VARCHAR ( 100 ),
+    activity_start TIMESTAMP NOT NULL,
     activity_end TIMESTAMP NOT NULL,
     credits DECIMAL DEFAULT 1.00 NOT NULL,
-    sponsor VARCHAR ( 100 ),
     attachment VARCHAR ( 384),
     created timestamp default current_timestamp,
     modified timestamp default current_timestamp
 );
 
-CREATE UNIQUE INDEX idx_cpe_name
-ON cpe ( cpe_name, activity_end );
+CREATE UNIQUE INDEX idx_record_name
+ON record ( record_name, activity_end );
 
-CREATE TABLE cpelink (
-    cpelink_id SERIAL PRIMARY KEY,
+CREATE TABLE record_link (
+    record_link_id SERIAL PRIMARY KEY,
     student_id INT REFERENCES  student ( student_id ),
-    cpe_id INT REFERENCES  cpe ( cpe_id ),
+    record_id INT REFERENCES  record ( record_id ),
     cycle_id INT REFERENCES  cycle ( cycle_id ),
     created timestamp default current_timestamp,
     modified timestamp default current_timestamp
 );
 
-CREATE UNIQUE INDEX idx_cpelink_id
-ON cpelink ( cpe_id, cycle_id );
+CREATE UNIQUE INDEX idx_record_link_id
+ON record_link ( record_id, cycle_id );
 
 CREATE OR REPLACE FUNCTION update_modified_column()   
 RETURNS TRIGGER AS $$
@@ -106,8 +106,8 @@ CREATE TRIGGER update_invitation_modtime BEFORE UPDATE ON invitation FOR EACH RO
 CREATE TRIGGER update_organization_modtime BEFORE UPDATE ON organization FOR EACH ROW EXECUTE PROCEDURE  update_modified_column();
 CREATE TRIGGER update_certification_modtime BEFORE UPDATE ON certification FOR EACH ROW EXECUTE PROCEDURE  update_modified_column();
 CREATE TRIGGER update_cycle_modtime BEFORE UPDATE ON cycle FOR EACH ROW EXECUTE PROCEDURE  update_modified_column();
-CREATE TRIGGER update_cpe_modtime BEFORE UPDATE ON cpe FOR EACH ROW EXECUTE PROCEDURE  update_modified_column();
-CREATE TRIGGER update_cpelink_modtime BEFORE UPDATE ON cpelink FOR EACH ROW EXECUTE PROCEDURE  update_modified_column();
+CREATE TRIGGER update_record_modtime BEFORE UPDATE ON record FOR EACH ROW EXECUTE PROCEDURE  update_modified_column();
+CREATE TRIGGER update_record_link_modtime BEFORE UPDATE ON record_link FOR EACH ROW EXECUTE PROCEDURE  update_modified_column();
 
 -- Default credentials, need to be changed on production stage
 INSERT INTO invitation(invitation_code, invitation_role, invitation_forever) VALUES ('heureka', 'student', 1);

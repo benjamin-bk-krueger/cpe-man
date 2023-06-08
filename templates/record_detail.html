@@ -3,7 +3,7 @@
 {% block content %}
     {#  Page header #}
     <div class="container-fluid pb-2 mt-4 mb-2">
-        <h2>{% block title %} My {{ cert_dict[cycle.certification_id] }} Cycle {% endblock %}</h2>
+        <h2>{% block title %} CPE Record {{ record.record_id }} {% endblock %}</h2>
     </div>
 
     <script src="https://code.jquery.com/jquery-3.6.0.slim.min.js" integrity="sha256-u7e5khyithlIdTpu22PHhENmPcRdFiHRjhAuHcs05RI=" crossorigin="anonymous"></script>
@@ -20,18 +20,20 @@
     {#  Page content #}
     <div class="container-fluid pb-3 mt-2 mb-2">
 
-        {#  Show detailed information regarding the selected cycle #}
+        {#  Show detailed information regarding the selected record #}
         <div class="card mb-3" style="max-width: 720px;">
             <div class="row g-0">
                 <div class="col-md-12">
                     <div class="card-body">
-                        <h5 class="card-title">Details</h5>
-                        <h6 class="card-subtitle mb-2 text-muted">Applied to <a href="{{ url_for('show_certification', certification_name=cert_dict[cycle.certification_id])}}">{{ cert_dict[cycle.certification_id] }}</a> certification</h6>
+                        <h5 class="card-title">{{ record.record_name }}</h5>
+                        <h6 class="card-subtitle mb-2 text-muted">Provided by {{ record.sponsor }}</a></h6>
                         <h6 class="card-subtitle mb-2 text-muted">Created by <a href="{{ url_for('show_student', student_name=student.student_name)}}">{{ student.student_name }}</a></h6>
                         <p class="card-text">
+                            <div class="progress mt-4 mb-4">
+                                <div class="progress-bar" role="progressbar" style="width: {{ record.credits / 20 * 100}}%" aria-valuenow="{{ record.credits / 20 * 100}}" aria-valuemin="0" aria-valuemax="100">{{ record.credits }} CPE awarded</div>
+                            </div>
                             <div class="mt-4 mb-4">
-                                You have been certified at <i>{{ cycle.certification_date.strftime('%Y-%m-%d') }}</i>.<br>
-                                Your reporting cycle starts at <i>{{ cycle.cycle_start.strftime('%Y-%m-%d') }}</i>.
+                                Participating from <i>{{ record.activity_start.strftime('%Y-%m-%d') }}</i> to <i>{{ record.activity_end.strftime('%Y-%m-%d') }}</i>
                             </div>
                         </p>
                     </div>
@@ -40,16 +42,16 @@
         </div>
 
         {% if current_user.student_role in ["admin", "student"] %}
-            {# Modal dialog window - delete currently selected cycle #}
+            {# Modal dialog window - delete currently selected record #}
             <div id="myModal_del" class="modal fade" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
                 <div class="modal-dialog">
                     <div class="modal-content">
                         <div class="modal-header">
-                            <h4 class="modal-title">Delete Cycle</h4>
+                            <h4 class="modal-title">Delete Record</h4>
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div class="modal-body">
-                            <form action="{{ url_for('show_deleted_cycle', cycle_id=cycle.cycle_id) }}" id="form_deletion">
+                            <form action="{{ url_for('show_deleted_record', record_id=record.record_id) }}" id="form_deletion">
                                 Are you sure?
                             </form>
                         </div>
@@ -61,33 +63,50 @@
                 </div>
             </div>
 
-            {# Modal dialog window - edit currently selected cycle #}
+            {# Modal dialog window - edit currently selected record #}
             <div id="myModal" class="modal fade" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
                 <div class="modal-dialog">
                     <div class="modal-content">
                         <div class="modal-header">
-                            <h4 class="modal-title">Edit Cycle</h4>
+                            <h4 class="modal-title">Edit Record</h4>
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div class="modal-body">
-                            <form action="{{ url_for('show_cycle_p', cycle_id=cycle.cycle_id) }}" method="POST" id="form_edit">
-                                {{ cycle_form.csrf_token }}
+                            <form action="{{ url_for('show_record_p', record_id=record.record_id) }}" method="POST" id="form_edit">
+                                {{ record_form.csrf_token }}
                                 <div class="form-group mt-2 mb-2">
-                                    <label for="{{ cycle_form.certification.name }}">{{ cycle_form.certification.label }}</label>
-                                    {{ cycle_form.certification(class="form-select") }}
+                                    <label for="{{ record_form.name.name }}">{{ record_form.name.label }}</label>
+                                    {{ record_form.name(size=20, class="form-control") }}
                                 </div>
-                               <div class="form-group mt-2 mb-2">
-                                    <label for="{{ cycle_form.certification_date.name }}">{{ cycle_form.certification_date.label }}</label>
-                                    {{ cycle_form.certification_date(class="form-control") }}
-                                </div>
-                                {% for error in cycle_form.certification_date.errors %}
+                                {% for error in record_form.name.errors %}
                                     <div class="alert alert-warning"><strong>Warning!</strong> {{ error }}</div>
                                 {% endfor %}
                                 <div class="form-group mt-2 mb-2">
-                                    <label for="{{ cycle_form.cycle_start.name }}">{{ cycle_form.cycle_start.label }}</label>
-                                    {{ cycle_form.cycle_start(class="form-control") }}
+                                    <label for="{{ record_form.sponsor.name }}">{{ record_form.sponsor.label }}</label>
+                                    {{ record_form.sponsor(size=20, class="form-control") }}
                                 </div>
-                                {% for error in cycle_form.cycle_start.errors %}
+                                {% for error in record_form.sponsor.errors %}
+                                    <div class="alert alert-warning"><strong>Warning!</strong> {{ error }}</div>
+                                {% endfor %}
+                                <div class="form-group mt-2 mb-2">
+                                    <label for="{{ record_form.activity_start.name }}">{{ record_form.activity_start.label }}</label>
+                                    {{ record_form.activity_start(class="form-control") }}
+                                </div>
+                                {% for error in record_form.activity_start.errors %}
+                                    <div class="alert alert-warning"><strong>Warning!</strong> {{ error }}</div>
+                                {% endfor %}
+                                <div class="form-group mt-2 mb-2">
+                                    <label for="{{ record_form.activity_end.name }}">{{ record_form.activity_end.label }}</label>
+                                    {{ record_form.activity_end(class="form-control") }}
+                                </div>
+                                {% for error in record_form.activity_end.errors %}
+                                    <div class="alert alert-warning"><strong>Warning!</strong> {{ error }}</div>
+                                {% endfor %}
+                                <div class="form-group mt-2 mb-2">
+                                    <label for="{{ record_form.credits.name }}">{{ record_form.credits.label }}</label>: <label id="cpe_number">x</label> CPE
+                                    {{ record_form.credits(class="form-control", step="0.25", oninput="document.getElementById('cpe_number').innerHTML  = document.getElementById('credits').value ") }}
+                                </div>
+                                {% for error in record_form.credits.errors %}
                                     <div class="alert alert-warning"><strong>Warning!</strong> {{ error }}</div>
                                 {% endfor %}
                             </form>
@@ -101,7 +120,7 @@
             </div>
         {% endif %}
 
-        {#  Display action buttons regarding the selected cycle #}
+        {#  Display action buttons regarding the selected record #}
         <div class="btn-toolbar" role="toolbar" aria-label="Toolbar with button groups">
 
             {#  Text-based links #}
@@ -111,22 +130,22 @@
                         <i class="bi bi-activity"></i> Actions
                     </button>
                     <ul class="dropdown-menu" aria-labelledby="btnGroupDrop1">
-                        <li><a class="dropdown-item" href="{{ url_for('show_cycles') }}">All Cycles</a></li>
-                        <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#myModal">Edit Cycle</a></li>
-                        <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#myModal_del">Delete Cycle</a></li>
+                        <li><a class="dropdown-item" href="{{ url_for('show_records') }}">All Records</a></li>
+                        <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#myModal">Edit Record</a></li>
+                        <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#myModal_del">Delete Record</a></li>
                     </ul>
                 </div>
             </div>
 
             {#  Same links implemented using small buttons #}
             <div class="btn-group me-2" role="group" aria-label="Second group">
-                <a href="{{ url_for('show_cycles') }}" data-toggle="tooltip" title="All Cycles" class="btn btn-primary mt-4 mb-4"><i class="bi bi-list-ul"></i></a>
+                <a href="{{ url_for('show_records') }}" data-toggle="tooltip" title="All Records" class="btn btn-primary mt-4 mb-4"><i class="bi bi-list-ul"></i></a>
             </div>
             <div class="btn-group me-2" role="group" aria-label="Third group">
-                <a href="#" class="btn btn-primary mt-4 mb-4" data-toggle="tooltip" title="Edit Cycle" data-bs-toggle="modal" data-bs-target="#myModal"><i class="bi bi-pencil"></i></a>
+                <a href="#" class="btn btn-primary mt-4 mb-4" data-toggle="tooltip" title="Edit Record" data-bs-toggle="modal" data-bs-target="#myModal"><i class="bi bi-pencil"></i></a>
             </div>
             <div class="btn-group me-2" role="group" aria-label="Fourth group">
-                <a href="#" class="btn btn-danger mt-4 mb-4" data-toggle="tooltip" title="Delete Cycle" data-bs-toggle="modal" data-bs-target="#myModal_del"><i class="bi bi-trash"></i></a>
+                <a href="#" class="btn btn-danger mt-4 mb-4" data-toggle="tooltip" title="Delete Record" data-bs-toggle="modal" data-bs-target="#myModal_del"><i class="bi bi-trash"></i></a>
             </div>
         </div>
     </div>

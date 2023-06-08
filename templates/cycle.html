@@ -11,12 +11,9 @@
     {#  Enable modal window error handling #}
     <script>
         $(document).ready(function(){
-            {% for error in form.certification_date.errors %}
+            {%  if page_mode == "modal"  %}
                 $('#myModal').modal('show');
-            {%  endfor %}
-            {% for error in form.cycle_start.errors %}
-                $('#myModal').modal('show');
-            {%  endfor %}
+            {%  endif %}
         });
     </script>
 
@@ -45,23 +42,23 @@
                         </div>
                         <div class="modal-body">
                            <form action="{{ url_for('show_cycles_p') }}" method="POST" id="form_new">
-                                {{ form.csrf_token }}
+                                {{ cycle_form.csrf_token }}
                                 <div class="form-group mt-2 mb-2">
-                                    <label for="{{ form.certification.name }}">{{ form.certification.label }}</label>
-                                    {{ form.certification(class="form-select") }}
+                                    <label for="{{ cycle_form.certification.name }}">{{ cycle_form.certification.label }}</label>
+                                    {{ cycle_form.certification(class="form-select") }}
                                 </div>
                                <div class="form-group mt-2 mb-2">
-                                    <label for="{{ form.certification_date.name }}">{{ form.certification_date.label }}</label>
-                                    {{ form.certification_date(class="form-control") }}
+                                    <label for="{{ cycle_form.certification_date.name }}">{{ cycle_form.certification_date.label }}</label>
+                                    {{ cycle_form.certification_date(class="form-control") }}
                                 </div>
-                                {% for error in form.certification_date.errors %}
+                                {% for error in cycle_form.certification_date.errors %}
                                     <div class="alert alert-warning"><strong>Warning!</strong> {{ error }}</div>
                                 {% endfor %}
                                 <div class="form-group mt-2 mb-2">
-                                    <label for="{{ form.cycle_start.name }}">{{ form.cycle_start.label }}</label>
-                                    {{ form.cycle_start(class="form-control") }}
+                                    <label for="{{ cycle_form.cycle_start.name }}">{{ cycle_form.cycle_start.label }}</label>
+                                    {{ cycle_form.cycle_start(class="form-control") }}
                                 </div>
-                                {% for error in form.cycle_start.errors %}
+                                {% for error in cycle_form.cycle_start.errors %}
                                     <div class="alert alert-warning"><strong>Warning!</strong> {{ error }}</div>
                                 {% endfor %}
                             </form>

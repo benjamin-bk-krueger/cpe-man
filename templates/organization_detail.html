@@ -11,18 +11,9 @@
     {#  Enable modal window error handling #}
     <script>
         $(document).ready(function(){
-            {% for error in form.name.errors %}
+            {%  if page_mode == "modal"  %}
                 $('#myModal').modal('show');
-            {%  endfor %}
-            {% for error in form.url.errors %}
-                $('#myModal').modal('show');
-            {%  endfor %}
-            {% for error in form.description.errors %}
-                $('#myModal').modal('show');
-            {%  endfor %}
-            {% for error in form.image.errors %}
-                $('#myModal').modal('show');
-            {%  endfor %}
+            {%  endif %}
         });
     </script>
 
@@ -37,8 +28,8 @@
                 </div>
                 <div class="col-md-8">
                     <div class="card-body">
-                        <h5 class="card-title">{{ organization.organization_url }}</h5>
-                        <h6 class="card-subtitle mb-2 text-muted">Created by <a href="{{ url_for('show_student', student_name=student.student_name)}}">{{ student.student_name }}</a></h6>
+                        <h5 class="card-title"><a href="{{ organization.organization_url }}" target="_blank" rel="noopener noreferrer">{{ organization.organization_url }}</a></h5>
+                        <h6 class="card-subtitle mb-2 text-muted">Entry created by <a href="{{ url_for('show_student', student_name=student.student_name)}}">{{ student.student_name }}</a></h6>
                         <p class="card-text">{{ organization.organization_desc }}</p>
                     </div>
                 </div>
@@ -77,33 +68,33 @@
                         </div>
                         <div class="modal-body">
                             <form action="{{ url_for('show_organization_p', organization_name=organization.organization_name) }}" method="POST" id="form_edit">
-                                {{ form.csrf_token }}
+                                {{ organization_form.csrf_token }}
                                 <div class="form-group mt-2 mb-2">
-                                    <label for="{{ form.name.name }}">{{ form.name.label }}</label>
-                                    {{ form.name(size=20, class="form-control", onkeypress="return event.charCode != 32", readonly=true) }}
+                                    <label for="{{ organization_form.name.name }}">{{ organization_form.name.label }}</label>
+                                    {{ organization_form.name(size=20, class="form-control", onkeypress="return event.charCode != 32", readonly=true) }}
                                 </div>
-                                {% for error in form.name.errors %}
+                                {% for error in organization_form.name.errors %}
                                     <div class="alert alert-warning"><strong>Warning!</strong> {{ error }}</div>
                                 {% endfor %}
                                 <div class="form-group mt-2 mb-2">
-                                    <label for="{{ form.url.name }}">{{ form.url.label }}</label>
-                                    {{ form.url(size=20, class="form-control", onkeypress="return event.charCode != 32") }}
+                                    <label for="{{ organization_form.url.name }}">{{ organization_form.url.label }}</label>
+                                    {{ organization_form.url(size=20, class="form-control", onkeypress="return event.charCode != 32") }}
                                 </div>
-                                {% for error in form.url.errors %}
+                                {% for error in organization_form.url.errors %}
                                     <div class="alert alert-warning"><strong>Warning!</strong> {{ error }}</div>
                                 {% endfor %}
                                 <div class="form-group mt-2 mb-2">
-                                    <label for="{{ form.description.name }}">{{ form.description.label }}</label>
-                                    {{ form.description(size=40, class="form-control") }}
+                                    <label for="{{ organization_form.description.name }}">{{ organization_form.description.label }}</label>
+                                    {{ organization_form.description(size=40, class="form-control") }}
                                 </div>
-                                {% for error in form.description.errors %}
+                                {% for error in organization_form.description.errors %}
                                     <div class="alert alert-warning"><strong>Warning!</strong> {{ error }}</div>
                                 {% endfor %}
                                 <div class="form-group mt-2 mb-2">
-                                    <label for="{{ form.image.name }}">{{ form.image.label }}</label>
-                                    {{ form.image(class="form-select") }}
+                                    <label for="{{ organization_form.image.name }}">{{ organization_form.image.label }}</label>
+                                    {{ organization_form.image(class="form-select") }}
                                 </div>
-                                {% for error in form.image.errors %}
+                                {% for error in organization_form.image.errors %}
                                     <div class="alert alert-warning"><strong>Warning!</strong> {{ error }}</div>
                                 {% endfor %}
                             </form>

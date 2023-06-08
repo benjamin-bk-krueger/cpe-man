@@ -3,7 +3,7 @@
 {% block content %}
     {#  Page header #}
     <div class="container-fluid pb-2 mt-4 mb-2">
-        <h2>{% block title %} All Organizations {% endblock %}</h2>
+        <h2>{% block title %} My CPE Records {% endblock %}</h2>
     </div>
 
     <script src="https://code.jquery.com/jquery-3.6.0.slim.min.js" integrity="sha256-u7e5khyithlIdTpu22PHhENmPcRdFiHRjhAuHcs05RI=" crossorigin="anonymous"></script>
@@ -20,55 +20,62 @@
     {#  Page content #}
     <div class="container-fluid pb-3 mt-2 mb-2">
 
-        {#  Show list of all organizations #}
-        {% if organizations.count() == 0 %}
+        {#  Show list of all CPE Records #}
+        {% if records.count() == 0 %}
             No entries found.<br>
         {% else %}
             <div class="list-group">
-                {% for organization in organizations %}
-                    <a href="{{ url_for('show_organization', organization_name=organization.organization_name)}}" class="list-group-item">{{ organization.organization_name }}</a>
+                {% for record in records %}
+                    <a href="{{ url_for('show_record', record_id=record.record_id)}}" class="list-group-item">CPE Record {{ record.record_id }}</a>
                 {% endfor %}
             </div>
         {% endif %}
 
-        {% if current_user.student_role == "admin" %}
-            {# Modal dialog window - create a new organization #}
+        {% if current_user.student_role in ["admin","student"] %}
+            {# Modal dialog window - create a new record #}
             <div id="myModal" class="modal fade" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
                 <div class="modal-dialog">
                     <div class="modal-content">
                         <div class="modal-header">
-                            <h4 class="modal-title">Create Organization</h4>
+                            <h4 class="modal-title">Create CPE Record</h4>
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div class="modal-body">
-                           <form action="{{ url_for('show_organizations_p') }}" method="POST" id="form_new">
-                                {{ organization_form.csrf_token }}
+                            <form action="{{ url_for('show_records_p') }}" method="POST" id="form_new">
+                                {{ record_form.csrf_token }}
                                 <div class="form-group mt-2 mb-2">
-                                    <label for="{{ organization_form.name.name }}">{{ organization_form.name.label }}</label>
-                                    {{ organization_form.name(size=20, class="form-control", onkeypress="return event.charCode != 32") }}
+                                    <label for="{{ record_form.name.name }}">{{ record_form.name.label }}</label>
+                                    {{ record_form.name(size=20, class="form-control") }}
                                 </div>
-                               {% for error in organization_form.name.errors %}
-                                    <div class="alert alert-warning"><strong>Warning!</strong> {{ error }}</div>
-                               {% endfor %}
-                               <div class="form-group mt-2 mb-2">
-                                    <label for="{{ organization_form.url.name }}">{{ organization_form.url.label }}</label>
-                                    {{ organization_form.url(size=20, class="form-control", onkeypress="return event.charCode != 32") }}
-                               </div>
-                               {% for error in organization_form.url.errors %}
-                                    <div class="alert alert-warning"><strong>Warning!</strong> {{ error }}</div>
-                               {% endfor %}
-                                <div class="form-group mt-2 mb-2">
-                                    <label for="{{ organization_form.description.name }}">{{ organization_form.description.label }}</label>
-                                    {{ organization_form.description(size=40, class="form-control") }}
-                                </div>
-                                {% for error in organization_form.description.errors %}
+                                {% for error in record_form.name.errors %}
                                     <div class="alert alert-warning"><strong>Warning!</strong> {{ error }}</div>
                                 {% endfor %}
                                 <div class="form-group mt-2 mb-2">
-                                    <label for="{{ organization_form.image.name }}">{{ organization_form.image.label }}</label>
-                                    {{ organization_form.image(class="form-select") }}
+                                    <label for="{{ record_form.sponsor.name }}">{{ record_form.sponsor.label }}</label>
+                                    {{ record_form.sponsor(size=20, class="form-control") }}
                                 </div>
-                                {% for error in organization_form.image.errors %}
+                                {% for error in record_form.sponsor.errors %}
+                                    <div class="alert alert-warning"><strong>Warning!</strong> {{ error }}</div>
+                                {% endfor %}
+                                <div class="form-group mt-2 mb-2">
+                                    <label for="{{ record_form.activity_start.name }}">{{ record_form.activity_start.label }}</label>
+                                    {{ record_form.activity_start(class="form-control") }}
+                                </div>
+                                {% for error in record_form.activity_start.errors %}
+                                    <div class="alert alert-warning"><strong>Warning!</strong> {{ error }}</div>
+                                {% endfor %}
+                                <div class="form-group mt-2 mb-2">
+                                    <label for="{{ record_form.activity_end.name }}">{{ record_form.activity_end.label }}</label>
+                                    {{ record_form.activity_end(class="form-control") }}
+                                </div>
+                                {% for error in record_form.activity_end.errors %}
+                                    <div class="alert alert-warning"><strong>Warning!</strong> {{ error }}</div>
+                                {% endfor %}
+                                <div class="form-group mt-2 mb-2">
+                                    <label for="{{ record_form.credits.name }}">{{ record_form.credits.label }}</label>: <label id="cpe_number">x</label> CPE
+                                    {{ record_form.credits(class="form-control", step="0.25", oninput="document.getElementById('cpe_number').innerHTML  = document.getElementById('credits').value ") }}
+                                </div>
+                                {% for error in record_form.credits.errors %}
                                     <div class="alert alert-warning"><strong>Warning!</strong> {{ error }}</div>
                                 {% endfor %}
                             </form>
@@ -91,14 +98,14 @@
                             <i class="bi bi-activity"></i> Actions
                         </button>
                         <ul class="dropdown-menu" aria-labelledby="btnGroupDrop1">
-                            <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#myModal">Create Organization</a></li>
+                            <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#myModal">Create CPE Record</a></li>
                         </ul>
                     </div>
                 </div>
 
                 {#  Same links implemented using small buttons #}
                 <div class="btn-group me-2" role="group" aria-label="Second group">
-                    <a href="#" class="btn btn-primary mt-4 mb-4" data-toggle="tooltip" title="Create Organization" data-bs-toggle="modal" data-bs-target="#myModal"><i class="bi bi-plus-square"></i></a>
+                    <a href="#" class="btn btn-primary mt-4 mb-4" data-toggle="tooltip" title="Create CPE Record" data-bs-toggle="modal" data-bs-target="#myModal"><i class="bi bi-plus-square"></i></a>
                 </div>
             </div>
         {% endif %}

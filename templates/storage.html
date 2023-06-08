@@ -92,9 +92,9 @@
                     $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
                 });
             });
-            {% for error in form2.filename_new.errors %}
+            {%  if page_mode == "rename"  %}
                 $('#myModal').modal('show');
-            {%  endfor %}
+            {%  endif %}
         });
     </script>
 
@@ -121,13 +121,17 @@
 
         {#  Traditional upload via file selection form #}
         <form action="{{ url_for('show_storage') }}" method="POST" enctype=multipart/form-data>
-            {{ form.csrf_token }}
+            {{ file_upload_form.csrf_token }}
             <div class="form-group mt-2 mb-2">
-                {{ form.file }}
+                {{ file_upload_form.file }}
             </div>
-            {% for error in form.file.errors %}
-                <div class="alert alert-warning"><strong>Warning!</strong> {{ error }}</div>
-            {% endfor %}
+            {%  if page_mode == "upload"  %}
+                {% for error in file_upload_form.file.errors %}
+                    <div class="alert alert-warning"><strong>Warning!</strong> {{ error }}</div>
+                {% endfor %}
+            {%  endif %}
+            {{ file_upload_form.page_mode(value="upload") }}
+
             <button type="submit" class="btn btn-primary mt-4 mb-4">Upload</button>
         </form>
 
@@ -153,16 +157,19 @@
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        <form action="{{ url_for('do_rename') }}" id="filename_change" method="POST">
-                            {{ form2.csrf_token }}
+                        <form action="{{ url_for('show_storage') }}" id="filename_change" method="POST">
+                            {{ file_rename_form.csrf_token }}
                             <div class="form-group mt-2 mb-2">
-                                <label for="{{ form2.filename_new.name }}">{{ form2.filename_new.label }}</label>
-                                {{ form2.filename_new(size=20, class="form-control", onkeypress="return event.charCode != 32") }}
+                                <label for="{{ file_rename_form.filename_new.name }}">{{ file_rename_form.filename_new.label }}</label>
+                                {{ file_rename_form.filename_new(size=20, class="form-control", onkeypress="return event.charCode != 32") }}
                             </div>
-                            {{ form2.filename_old }}
-                            {% for error in form2.filename_new.errors %}
-                                <div class="alert alert-warning"><strong>Warning!</strong> {{ error }}</div>
-                            {% endfor %}
+                            {{ file_rename_form.filename_old }}
+                            {%  if page_mode == "rename"  %}
+                                {% for error in file_rename_form.filename_new.errors %}
+                                    <div class="alert alert-warning"><strong>Warning!</strong> {{ error }}</div>
+                                {% endfor %}
+                            {%  endif %}
+                            {{ file_rename_form.page_mode(value="rename") }}
                         </form>
                     </div>
                     <div class="modal-footer">

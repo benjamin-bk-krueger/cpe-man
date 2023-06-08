@@ -3,18 +3,18 @@ import re
 from flask_wtf import FlaskForm  # integration with WTForms, data validation and CSRF protection
 from flask_wtf.file import FileRequired, FileAllowed
 from wtforms import StringField, PasswordField, BooleanField, HiddenField, FileField, TextAreaField, SelectField, \
-    IntegerRangeField, DateField
+    IntegerRangeField, DateField, DecimalRangeField
 from wtforms.validators import ValidationError, InputRequired, NoneOf, EqualTo, Email, Length, NumberRange
 
 
 # Custom validator for standard ASCII characters
 def ascii_validator(form, field):
-    if not re.search(r"^[A-Za-z0-9_.-]+$", field.data):
+    if not re.search(r"^[A-Za-z0-9_.-]*$", field.data):
         raise ValidationError('Please use only letters, numbers or the characters -_.')
 
 
 def full_ascii_validator(form, field):
-    if not re.search(r"^[ -~]*$", field.data):
+    if not re.search(r"^[\S\n\r\t\v ]*$", field.data):
         raise ValidationError('Please use only ASCII letters and numbers.')
 
 
@@ -52,26 +52,34 @@ class AccountForm(FlaskForm):
     invitation = StringField('Invitation Code', validators=[InputRequired(), Length(min=5, max=20)], default='guest')
 
 
-class MailStudentForm(FlaskForm):
+class StudentMailForm(FlaskForm):
     email = StringField('E-Mail', validators=[InputRequired(), Email()])
     description = TextAreaField('Description', validators=[Length(max=1024), full_ascii_validator])
     image = SelectField('Image', choices=["none"], validate_choice=False)
     notification = BooleanField('Send notifications', default='checked')
+    page_mode = HiddenField(default='init')
 
 
-class PassStudentForm(FlaskForm):
+class StudentPasswordForm(FlaskForm):
     password = PasswordField('Password', validators=[InputRequired(), Length(min=8, max=20),
                                                      EqualTo('password2', message='Passwords must match')])
     password2 = PasswordField('Password Verification', validators=[InputRequired(), Length(min=8, max=20)])
-    operation = HiddenField(default='pass')
+    page_mode = HiddenField(default='init')
 
 
-class DelStudentForm(FlaskForm):
-    operation = HiddenField(default='delete')
+class StudentDeletionForm(FlaskForm):
+    page_mode = HiddenField(default='init')
 
 
-class UploadForm(FlaskForm):
+class FileUploadForm(FlaskForm):
     file = FileField(validators=[FileRequired(), FileAllowed(['jpg', 'png', 'gif'], 'Images only!')])
+    page_mode = HiddenField(default='init')
+
+
+class FileRenameForm(FlaskForm):
+    filename_new = StringField('File Name', validators=[InputRequired(), ascii_validator])
+    filename_old = HiddenField(default='filename')
+    page_mode = HiddenField(default='init')
 
 
 class ContactForm(FlaskForm):
@@ -81,12 +89,6 @@ class ContactForm(FlaskForm):
     check_captcha = HiddenField(default='0')
     captcha = StringField('Captcha', validators=[InputRequired(), EqualTo('check_captcha', message='Captcha does not '
                                                                                                    'match')])
-
-
-class FileForm(FlaskForm):
-    filename_new = StringField('File Name', validators=[InputRequired(), ascii_validator])
-    filename_old = HiddenField(default='filename')
-
 
 class OrganizationForm(FlaskForm):
     name = StringField('Name', validators=[InputRequired(), ascii_validator])
@@ -110,3 +112,11 @@ class CycleForm(FlaskForm):
     certification = SelectField('Select Certification', choices=["none"], validate_choice=False)
     certification_date = DateField('Certification Date', validators=[InputRequired()])
     cycle_start = DateField('Cycle Start', validators=[InputRequired()])
+
+
+class RecordForm(FlaskForm):
+    name = StringField('Name', validators=[InputRequired(), ascii_validator])
+    sponsor = StringField('Sponsor', validators=[ascii_validator])
+    activity_start = DateField('Activity Start', validators=[InputRequired()])
+    activity_end = DateField('Activity End', validators=[InputRequired()])
+    credits = DecimalRangeField('Credits', validators=[NumberRange(min=0.25, max=20)])

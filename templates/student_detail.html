@@ -34,7 +34,7 @@
                     </button>
                     <ul class="dropdown-menu" aria-labelledby="btnGroupDrop1">
                         <li><a class="dropdown-item" href="{{ url_for('show_students') }}">All Students</a></li>
-                        {%  if current_user.student_role == "admin" %}
+                        {%  if current_user.student_role == "admin" and student.active == 0 %}
                             <li><a class="dropdown-item" href="{{ url_for('show_approve_student', student_name=student.student_name) }}">Approve Student</a></li>
                         {%  endif %}
                     </ul>

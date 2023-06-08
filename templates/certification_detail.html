@@ -15,27 +15,9 @@
             document.getElementById('year_number').innerHTML  = document.getElementById('requirement_year').value;
             document.getElementById('full_number').innerHTML  = document.getElementById('requirement_full').value;
 
-            {% for error in form.name.errors %}
+            {%  if page_mode == "modal"  %}
                 $('#myModal').modal('show');
-            {%  endfor %}
-            {% for error in form.url.errors %}
-                $('#myModal').modal('show');
-            {%  endfor %}
-            {% for error in form.description.errors %}
-                $('#myModal').modal('show');
-            {%  endfor %}
-            {% for error in form.image.errors %}
-                $('#myModal').modal('show');
-            {%  endfor %}
-            {% for error in form.cycle_length.errors %}
-                $('#myModal').modal('show');
-            {%  endfor %}
-            {% for error in form.requirement_year.errors %}
-                $('#myModal').modal('show');
-            {%  endfor %}
-            {% for error in form.requirement_full.errors %}
-                $('#myModal').modal('show');
-            {%  endfor %}
+            {%  endif %}
         });
     </script>
 
@@ -50,8 +32,9 @@
                 </div>
                 <div class="col-md-8">
                     <div class="card-body">
-                        <h5 class="card-title">{{ certification.certification_url }}</h5>
-                        <h6 class="card-subtitle mb-2 text-muted">Part of <a href="{{ url_for('show_organization', organization_name=organization.organization_name)}}">{{ organization.organization_name }}</a></h6>
+                        <h5 class="card-title"><a href="{{ certification.certification_url }}" target="_blank" rel="noopener noreferrer">{{ certification.certification_url }}</a></h5>
+                        <h6 class="card-subtitle mb-2 text-muted">Issued by <a href="{{ url_for('show_organization', organization_name=organization.organization_name)}}">{{ organization.organization_name }}</a></h6>
+                        <h6 class="card-subtitle mb-2 text-muted">Entry created by <a href="{{ url_for('show_student', student_name=student.student_name)}}">{{ student.student_name }}</a></h6>
                         <p class="card-text">
                             {{ certification.certification_desc }}
                             <div class="progress mt-4 mb-4">
@@ -101,58 +84,58 @@
                         </div>
                         <div class="modal-body">
                             <form action="{{ url_for('show_certification_p', certification_name=certification.certification_name) }}" method="POST" id="form_edit">
-                                {{ form.csrf_token }}
+                                {{ certification_form.csrf_token }}
                                 <div class="form-group mt-2 mb-2">
-                                    <label for="{{ form.name.name }}">{{ form.name.label }}</label>
-                                    {{ form.name(size=20, class="form-control", onkeypress="return event.charCode != 32", readonly=true) }}
+                                    <label for="{{ certification_form.name.name }}">{{ certification_form.name.label }}</label>
+                                    {{ certification_form.name(size=20, class="form-control", onkeypress="return event.charCode != 32", readonly=true) }}
                                 </div>
-                                {% for error in form.name.errors %}
+                                {% for error in certification_form.name.errors %}
                                     <div class="alert alert-warning"><strong>Warning!</strong> {{ error }}</div>
                                 {% endfor %}
                                 <div class="form-group mt-2 mb-2">
-                                    <label for="{{ form.url.name }}">{{ form.url.label }}</label>
-                                    {{ form.url(size=20, class="form-control", onkeypress="return event.charCode != 32") }}
+                                    <label for="{{ certification_form.url.name }}">{{ certification_form.url.label }}</label>
+                                    {{ certification_form.url(size=20, class="form-control", onkeypress="return event.charCode != 32") }}
                                 </div>
-                                {% for error in form.url.errors %}
+                                {% for error in certification_form.url.errors %}
                                     <div class="alert alert-warning"><strong>Warning!</strong> {{ error }}</div>
                                 {% endfor %}
                                 <div class="form-group mt-2 mb-2">
-                                    <label for="{{ form.description.name }}">{{ form.description.label }}</label>
-                                    {{ form.description(size=40, class="form-control") }}
+                                    <label for="{{ certification_form.description.name }}">{{ certification_form.description.label }}</label>
+                                    {{ certification_form.description(size=40, class="form-control") }}
                                 </div>
-                                {% for error in form.description.errors %}
+                                {% for error in certification_form.description.errors %}
                                     <div class="alert alert-warning"><strong>Warning!</strong> {{ error }}</div>
                                 {% endfor %}
                                 <div class="form-group mt-2 mb-2">
-                                    <label for="{{ form.image.name }}">{{ form.image.label }}</label>
-                                    {{ form.image(class="form-select") }}
+                                    <label for="{{ certification_form.image.name }}">{{ certification_form.image.label }}</label>
+                                    {{ certification_form.image(class="form-select") }}
                                 </div>
-                                {% for error in form.image.errors %}
+                                {% for error in certification_form.image.errors %}
                                     <div class="alert alert-warning"><strong>Warning!</strong> {{ error }}</div>
                                 {% endfor %}
                                 <div class="form-group mt-2 mb-2">
-                                    <label for="{{ form.organization.name }}">{{ form.organization.label }}</label>
-                                    {{ form.organization(class="form-select") }}
+                                    <label for="{{ certification_form.organization.name }}">{{ certification_form.organization.label }}</label>
+                                    {{ certification_form.organization(class="form-select") }}
                                 </div>
                                <div class="form-group mt-2 mb-2">
-                                    <label for="{{ form.cycle_length.name }}">{{ form.cycle_length.label }}</label>: <label id="cycle_number">x</label> CPE
-                                    {{ form.cycle_length(class="form-control", oninput="document.getElementById('cycle_number').innerHTML  = document.getElementById('cycle_length').value ") }}
+                                    <label for="{{ certification_form.cycle_length.name }}">{{ certification_form.cycle_length.label }}</label>: <label id="cycle_number">x</label> CPE
+                                    {{ certification_form.cycle_length(class="form-control", oninput="document.getElementById('cycle_number').innerHTML  = document.getElementById('cycle_length').value ") }}
                                 </div>
-                                {% for error in form.cycle_length.errors %}
+                                {% for error in certification_form.cycle_length.errors %}
                                     <div class="alert alert-warning"><strong>Warning!</strong> {{ error }}</div>
                                 {% endfor %}
                                <div class="form-group mt-2 mb-2">
-                                    <label for="{{ form.requirement_year.name }}">{{ form.requirement_year.label }}</label>: <label id="year_number">x</label> CPE
-                                    {{ form.requirement_year(class="form-control", step="10", oninput="document.getElementById('year_number').innerHTML  = document.getElementById('requirement_year').value ") }}
+                                    <label for="{{ certification_form.requirement_year.name }}">{{ certification_form.requirement_year.label }}</label>: <label id="year_number">x</label> CPE
+                                    {{ certification_form.requirement_year(class="form-control", step="10", oninput="document.getElementById('year_number').innerHTML  = document.getElementById('requirement_year').value ") }}
                                 </div>
-                                {% for error in form.requirement_year.errors %}
+                                {% for error in certification_form.requirement_year.errors %}
                                     <div class="alert alert-warning"><strong>Warning!</strong> {{ error }}</div>
                                {% endfor %}
                                <div class="form-group mt-2 mb-2">
-                                    <label for="{{ form.requirement_full.name }}">{{ form.requirement_full.label }}</label>: <label id="full_number">x</label> CPE
-                                    {{ form.requirement_full(class="form-control", step="10", oninput="document.getElementById('full_number').innerHTML  = document.getElementById('requirement_full').value ") }}
+                                    <label for="{{ certification_form.requirement_full.name }}">{{ certification_form.requirement_full.label }}</label>: <label id="full_number">x</label> CPE
+                                    {{ certification_form.requirement_full(class="form-control", step="10", oninput="document.getElementById('full_number').innerHTML  = document.getElementById('requirement_full').value ") }}
                                 </div>
-                                {% for error in form.requirement_full.errors %}
+                                {% for error in certification_form.requirement_full.errors %}
                                     <div class="alert alert-warning"><strong>Warning!</strong> {{ error }}</div>
                                 {% endfor %}
                             </form>

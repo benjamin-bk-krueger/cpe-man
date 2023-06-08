@@ -18,8 +18,9 @@
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        <form action="{{ url_for('show_my_del_student') }}" method="POST" id="form_deletion">
-                            {{ form3.csrf_token }}
+                        <form action="{{ url_for('show_my_student') }}" method="POST" id="form_deletion">
+                            {{ student_deletion_form.csrf_token }}
+                            {{ student_deletion_form.page_mode(value="delete") }}
                             Are you sure?
                         </form>
                     </div>
@@ -33,36 +34,45 @@
 
         {# Display form and possible error message - change user data #}
         <h4 class="mb-3">Please enter data</h4>
-        <form action="{{ url_for('show_my_mail_student') }}" method="POST">
-            {{ form1.csrf_token }}
+        <form action="{{ url_for('show_my_student') }}" method="POST">
+            {{ student_mail_form.csrf_token }}
             <div class="form-group mt-2 mb-2">
-                <label for="email">{{ form1.email.label }}</label>
-                {{ form1.email(size=20, class="form-control", style="max-width: 720px;", onkeypress="return event.charCode != 32") }}
+                <label for="email">{{ student_mail_form.email.label }}</label>
+                {{ student_mail_form.email(size=20, class="form-control", style="max-width: 720px;", onkeypress="return event.charCode != 32") }}
             </div>
-            {% for error in form1.email.errors %}
-                <div class="alert alert-warning"><strong>Warning!</strong> {{ error }}</div>
-            {% endfor %}
+            {%  if page_mode == "mail"  %}
+                {% for error in student_mail_form.email.errors %}
+                    <div class="alert alert-warning"><strong>Warning!</strong> {{ error }}</div>
+                {% endfor %}
+            {%  endif %}
             <div class="form-group mt-2 mb-2">
-                <label for="description">{{ form1.description.label }}</label>
-                {{ form1.description(size=40, class="form-control", style="max-width: 720px;") }}
+                <label for="description">{{ student_mail_form.description.label }}</label>
+                {{ student_mail_form.description(size=40, class="form-control", style="max-width: 720px;") }}
             </div>
-            {% for error in form1.description.errors %}
-                <div class="alert alert-warning"><strong>Warning!</strong> {{ error }}</div>
-            {% endfor %}
+            {%  if page_mode == "mail"  %}
+                {% for error in student_mail_form.description.errors %}
+                    <div class="alert alert-warning"><strong>Warning!</strong> {{ error }}</div>
+                {% endfor %}
+            {%  endif %}
             <div class="form-group mt-2 mb-2">
-                <label for="image">{{ form1.image.label }}</label>
-                {{ form1.image(class="form-select", style="max-width: 720px;") }}
+                <label for="image">{{ student_mail_form.image.label }}</label>
+                {{ student_mail_form.image(class="form-select", style="max-width: 720px;") }}
             </div>
-            {% for error in form1.image.errors %}
-                <div class="alert alert-warning"><strong>Warning!</strong> {{ error }}</div>
-            {% endfor %}
+            {%  if page_mode == "mail"  %}
+                {% for error in student_mail_form.image.errors %}
+                    <div class="alert alert-warning"><strong>Warning!</strong> {{ error }}</div>
+                {% endfor %}
+            {%  endif %}
             <div class="form-check mt-2 mb-2">
-                <label class="form-check-label" for="notification">{{ form1.notification.label }}</label>
-                {{ form1.notification(class="form-check-input") }}
+                <label class="form-check-label" for="notification">{{ student_mail_form.notification.label }}</label>
+                {{ student_mail_form.notification(class="form-check-input") }}
             </div>
-            {% for error in form1.notification.errors %}
-                <div class="alert alert-warning"><strong>Warning!</strong> {{ error }}</div>
-            {% endfor %}
+            {%  if page_mode == "mail"  %}
+                {% for error in student_mail_form.notification.errors %}
+                    <div class="alert alert-warning"><strong>Warning!</strong> {{ error }}</div>
+                {% endfor %}
+            {%  endif %}
+            {{ student_mail_form.page_mode(value="mail") }}
             <button type="submit" class="btn btn-primary mt-4 mb-4">Update</button>
         </form>
 
@@ -70,19 +80,22 @@
 
         {# Display form and possible error message - set a password for currently logged in user #}
         <h4 class="mb-3">Set new password</h4>
-        <form action="{{ url_for('show_my_pass_student') }}" method="POST">
-            {{ form2.csrf_token }}
+        <form action="{{ url_for('show_my_student') }}" method="POST">
+            {{ student_password_form.csrf_token }}
             <div class="form-group mt-2 mb-2">
-                <label for="password">{{ form2.password.label }}</label>
-                {{ form2.password(size=20, class="form-control", style="max-width: 720px;") }}
+                <label for="password">{{ student_password_form.password.label }}</label>
+                {{ student_password_form.password(size=20, class="form-control", style="max-width: 720px;") }}
             </div>
-            {% for error in form2.password.errors %}
-                <div class="alert alert-warning"><strong>Warning!</strong> {{ error }}</div>
-            {% endfor %}
+            {%  if page_mode == "password"  %}
+                {% for error in student_password_form.password.errors %}
+                    <div class="alert alert-warning"><strong>Warning!</strong> {{ error }}</div>
+                {% endfor %}
+            {%  endif %}
             <div class="form-group mt-2 mb-2">
-                <label for="password2">{{ form2.password2.label }}</label>
-                {{ form2.password2(size=20, class="form-control", style="max-width: 720px;") }}
+                <label for="password2">{{ student_password_form.password2.label }}</label>
+                {{ student_password_form.password2(size=20, class="form-control", style="max-width: 720px;") }}
             </div>
+            {{ student_password_form.page_mode(value="password") }}
             <button type="submit" class="btn btn-primary mt-4 mb-4">Set</button>
         </form>
 
