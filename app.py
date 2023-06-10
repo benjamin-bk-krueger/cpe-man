@@ -1762,8 +1762,7 @@ def show_record(record_id):
         for record_link in record_links:
             cycle = Cycle.query.filter_by(student_id=current_user.student_id).filter_by(
                 cycle_id=record_link.cycle_id).first()
-            certification = Certification.query.filter_by(student_id=current_user.student_id).filter_by(
-                certification_id=cycle.certification_id).first()
+            certification = Certification.query.filter_by(certification_id=cycle.certification_id).first()
             certification_names.append(certification.certification_name)
 
         return render_template('record_detail.html', record=record, certification_names=certification_names,
