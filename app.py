@@ -865,8 +865,7 @@ def get_certification_choices(certifications):
 def get_cycle_choices(cycles):
     cycles_choices = list()
     for cycle in cycles:
-        certification = Certification.query.filter_by(student_id=current_user.student_id).filter_by(
-            certification_id=cycle.certification_id).first()
+        certification = Certification.query.filter_by(certification_id=cycle.certification_id).first()
         cycles_choices.append((cycle.cycle_id, certification.certification_name))
     return cycles_choices
 
