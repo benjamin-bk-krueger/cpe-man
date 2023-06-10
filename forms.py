@@ -122,3 +122,5 @@ class RecordForm(FlaskForm):
     activity_end = DateField('Activity End', validators=[InputRequired()])
     credits = DecimalRangeField('Credits', validators=[NumberRange(min=0.25, max=20)])
     cycles = SelectMultipleField('Assigned Cycles', choices=["none"], validate_choice=False)
+    attachment = SelectField('Image', choices=["none"], validate_choice=False)
+    file = FileField(validators=[FileAllowed(['jpg', 'png', 'gif'], 'Images only!')])

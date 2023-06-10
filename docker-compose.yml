@@ -20,7 +20,7 @@ services:
       - MAIL_SERVER=localhost
       - MAIL_SENDER=mail@localhost
       - MAIL_ADMIN=admin@localhost
-      - APP_VERSION=0.1
+      - APP_VERSION=0.2
       - APP_PREFIX=
       - LOG_ENABLE=2
       - LOG_FILE=cpeman.log

@@ -30,6 +30,12 @@
                                     ☑ {{ certification_name }}<br>
                                 {% endfor %}
                             </div>
+                            <div class="mt-4 mb-4">
+                                {% if record.attachment %}
+                                    Evidence<br>
+                                    <a href="{{ url_for('do_download', filename=record.attachment) }}" title="Download image">Click here to download</a>
+                                {% endif %}
+                            </div>
                         </p>
                     </div>
                 </div>

@@ -8,7 +8,7 @@
 
     {#  Page content #}
     <div class="container-fluid pb-3 mt-2 mb-2">
-        <form action="{{ url_for('edit_record', record_id=record_id)}}" method="POST" id="form_edit">
+        <form action="{{ url_for('edit_record', record_id=record_id)}}" method="POST" id="form_edit"  enctype=multipart/form-data>
             {{ record_form.csrf_token }}
             <div class="form-group mt-2 mb-2">
                 <label for="{{ record_form.name.name }}">{{ record_form.name.label }}</label>
@@ -52,6 +52,23 @@
             {% for error in record_form.cycles.errors %}
                 <div class="alert alert-warning"><strong>Warning!</strong> {{ error }}</div>
             {% endfor %}
+            {%  if page_mode == "upload"  %}
+                <div class="form-group mt-2 mb-2">
+                    {{ record_form.file }}
+                </div>
+                {% for error in record_form.file.errors %}
+                    <div class="alert alert-warning"><strong>Warning!</strong> {{ error }}</div>
+                {% endfor %}
+            {%  endif %}
+            {%  if page_mode == "rename"  %}
+                <div class="form-group mt-2 mb-2">
+                    <label for="{{ record_form.attachment.name }}">{{ record_form.attachment.label }}</label>
+                    {{ record_form.attachment(class="form-select") }}
+                </div>
+                {% for error in record_form.attachment.errors %}
+                    <div class="alert alert-warning"><strong>Warning!</strong> {{ error }}</div>
+                {% endfor %}
+            {%  endif %}
 
             <button type="submit" class="btn btn-primary mt-4 mb-4 btn-space" form="form_edit">{{ "Create" if record_id == 0 else "Update" }}</button>
         </form>

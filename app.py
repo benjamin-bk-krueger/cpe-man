@@ -39,7 +39,7 @@ S3_ENDPOINT = os.environ['S3_ENDPOINT']  # where S3 buckets are located
 S3_QUOTA = os.environ['S3_QUOTA']
 S3_BUCKET = os.environ['S3_BUCKET']
 S3_GLOBAL = os.environ['S3_GLOBAL']
-UPLOAD_FOLDER = os.environ['HOME'] + "/uploads"  # directory for game data
+UPLOAD_FOLDER = os.environ['HOME'] + "/uploads"  # directory for program data
 DOWNLOAD_FOLDER = os.environ['HOME'] + "/downloads"
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 APP_VERSION = os.environ['APP_VERSION']
@@ -149,7 +149,6 @@ def json_error_syntax():
 
 def json_error_permissions():
     return jsonify({'error': "wrong credentials or permissions"})
-
 
 
 class Student(UserMixin, db.Model):
@@ -763,6 +762,18 @@ def get_all_size(bucket):
     return top_level_folders
 
 
+# File upload helper
+def upload_helper(s3_folder, space_used, filename, file):
+    if allowed_file(filename) and space_used < 100:
+        local_folder_name = f"{UPLOAD_FOLDER}/{s3_folder}"
+        local_file = os.path.join(local_folder_name, filename)
+        remote_file = f"{s3_folder}/{filename}"
+        if not os.path.exists(local_folder_name):
+            os.makedirs(local_folder_name)
+        file.data.save(local_file)
+        upload_file(S3_BUCKET, remote_file, local_file)
+
+
 # URL sanitization
 def clean_url(url):
     return re.sub('[^-A-Za-z0-9+&@#/%?=~_|!:,.;()]', '', url)
@@ -889,6 +900,7 @@ def map_form_to_record(record, record_form):
     record.activity_start = escape(record_form.activity_start.data)
     record.activity_end = escape(record_form.activity_end.data)
     record.credits = float(escape(record_form.credits.data))
+    record.attachment = escape(record_form.attachment.data)
 
 
 def map_record_to_form(record, record_form):
@@ -897,6 +909,7 @@ def map_record_to_form(record, record_form):
     record_form.activity_start.default = record.activity_start
     record_form.activity_end.default = record.activity_end
     record_form.credits.default = record.credits
+    record_form.attachment.default = record.attachment
 
 
 def map_record_defaults(record_form):
@@ -905,6 +918,7 @@ def map_record_defaults(record_form):
     record_form.activity_start.default = record_form.activity_start.data
     record_form.activity_end.default = record_form.activity_end.data
     record_form.credits.default = record_form.credits.data
+    record_form.attachment.default = record_form.attachment.data
 
 
 def map_form_to_cycle(cycle, cycle_form):
@@ -1101,15 +1115,7 @@ def show_storage():
     if request.method == 'POST' and file_upload_form.page_mode.data == PAGE_UPLOAD and \
             file_upload_form.validate_on_submit():
         filename = secure_filename(file_upload_form.file.data.filename)
-
-        if allowed_file(filename) and space_used < 100:
-            local_folder_name = f"{UPLOAD_FOLDER}/{s3_folder}"
-            local_file = os.path.join(local_folder_name, filename)
-            remote_file = f"{s3_folder}/{filename}"
-            if not os.path.exists(local_folder_name):
-                os.makedirs(local_folder_name)
-            file_upload_form.file.data.save(local_file)
-            upload_file(S3_BUCKET, remote_file, local_file)
+        upload_helper(s3_folder, space_used, filename, file_upload_form.file)
 
         return redirect(url_for('show_storage'))
     elif request.method == 'POST' and file_rename_form.page_mode.data == PAGE_RENAME and \
@@ -1188,7 +1194,7 @@ def do_delete(filename):
 
 
 # --------------------------------------------------------------
-# Flask HTML views to read and modify the database contents
+# Flask side views
 # --------------------------------------------------------------
 
 # Show statistics regarding available elements stored in the database and on S3 storage
@@ -1269,6 +1275,10 @@ def show_contact():
         return render_template('contact.html', contact_form=contact_form, random1=random1, random2=random2,
                                check_captcha=check_captcha)
 
+
+# --------------------------------------------------------------
+# Flask HTML views to read and modify the database contents
+# --------------------------------------------------------------
 
 # Displays all available students
 @app.route(APP_PREFIX + '/web/students', methods=['GET'])
@@ -1777,12 +1787,15 @@ def show_record(record_id):
 def edit_record(record_id):
     record_form = RecordForm()
     cycles = Cycle.query.filter_by(student_id=current_user.student_id).order_by(Cycle.cycle_id.asc())
+    s3_folder = S3_GLOBAL if current_user.student_role == ROLE_ADMIN else current_user.student_name
+    space_used_in_mb = round((get_size(S3_BUCKET, f"{s3_folder}/") / 1024 / 1024), 2)
+    space_used = int(space_used_in_mb / int(S3_QUOTA) * 100)
 
     if request.method == 'GET' and record_id == 0:
         record_form.cycles.choices = get_cycle_choices(cycles)
         record_form.process()
 
-        return render_template('record_edit.html', record_id=record_id, record_form=record_form)
+        return render_template('record_edit.html', record_id=record_id, page_mode=PAGE_UPLOAD, record_form=record_form)
     elif request.method == 'GET' and record_id > 0:
         record = Record.query.filter_by(student_id=current_user.student_id).filter_by(record_id=record_id).first()
 
@@ -1795,10 +1808,13 @@ def edit_record(record_id):
                 record_links_list.append(record_link.cycle_id)
             record_form.cycles.default = record_links_list
 
+            record_form.attachment.choices = get_file_choices(S3_GLOBAL)
+
             map_record_to_form(record, record_form)
             record_form.process()
 
-            return render_template('record_edit.html', record_id=record_id, record_form=record_form)
+            return render_template('record_edit.html', record_id=record_id, page_mode=PAGE_RENAME,
+                                   record_form=record_form)
         else:
             return render_template('error.html', error_message=ERR_NOT_EXIST)
     elif request.method == 'POST':
@@ -1824,10 +1840,16 @@ def edit_record(record_id):
                     db.session.add(record_link)
                     db.session.commit()
 
+                filename = secure_filename(record_form.file.data.filename)
+                upload_helper(s3_folder, space_used, filename, record_form.file)
+                record.attachment = filename
+                db.session.commit()
+
                 return redirect(url_for('show_records'))
             else:
                 return render_template('error.html', error_message=ERR_ALREADY_EXIST)
-        elif record_form.validate_on_submit() and current_user.student_role in [ROLE_ADMIN, ROLE_USER] and record_id > 0:
+        elif record_form.validate_on_submit() and current_user.student_role in [ROLE_ADMIN, ROLE_USER] and \
+                record_id > 0:
             record = Record.query.filter_by(student_id=current_user.student_id).filter_by(record_id=record_id).first()
 
             if record:
@@ -1850,10 +1872,12 @@ def edit_record(record_id):
             else:
                 return render_template('error.html', error_message=ERR_NOT_EXIST)
         else:
+            record_form.attachment.choices = get_file_choices(S3_GLOBAL)
             map_record_defaults(record_form)
             record_form.process()
 
-            return render_template('record_edit.html', record_id=record_id, record_form=record_form)
+            return render_template('record_edit.html', record_id=record_id, page_mode=PAGE_RENAME,
+                                   record_form=record_form)
     else:
         return render_template('error.html')
 
