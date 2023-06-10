@@ -62,7 +62,7 @@
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div class="modal-body">
-                            <form action="{{ url_for('show_deleted_certification', certification_name=certification.certification_name) }}" id="form_deletion">
+                            <form action="{{ url_for('delete_certification', certification_name=certification.certification_name) }}" id="form_deletion">
                                 Are you sure?
                             </form>
                         </div>

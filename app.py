@@ -47,6 +47,24 @@ APP_PREFIX = os.environ['APP_PREFIX']
 LOG_ENABLE = int(os.environ['LOG_ENABLE'])
 LOG_FILE = os.environ['LOG_FILE']
 
+# internal error messages
+ERR_NOT_EXIST = "That entry does not exist."
+ERR_ALREADY_EXIST = "That entry does already exist."
+ERR_AUTH = "You are not authorized to perform that action or to view that page."
+
+# internal page modes
+PAGE_INIT = "init"
+PAGE_MODAL = "modal"
+PAGE_MAIL = "mail"
+PAGE_PASS = "pass"
+PAGE_DELETE = "delete"
+PAGE_UPLOAD = "upload"
+PAGE_RENAME = "rename"
+
+# internal roles
+ROLE_ADMIN = "admin"
+ROLE_USER = "student"
+
 # Flask app configuration containing static (css, img) path and template directory
 app = Flask(__name__,
             static_url_path=APP_PREFIX + '/static',
@@ -125,6 +143,15 @@ def load_user(student_id):
 # ORM model classes, Student table is used for the Login Manager
 # for each REST-enabled element, we add marshmallow schemas
 # enable a REST API to modify the database contents
+def json_error_syntax():
+    return jsonify({'error': "wrong JSON format"})
+
+
+def json_error_permissions():
+    return jsonify({'error': "wrong credentials or permissions"})
+
+
+
 class Student(UserMixin, db.Model):
     __tablename__ = "student"
     student_id = db.Column(db.INTEGER, primary_key=True)
@@ -190,7 +217,7 @@ class OrganizationListResource(Resource):
 
     @staticmethod
     def post():
-        if AuthChecker().check(request.authorization, ["admin"]):
+        if AuthChecker().check(request.authorization, [ROLE_ADMIN]):
             student = Student.query.filter_by(student_name=request.authorization['username']).first()
             if all(s in request.json for s in ('organization_name', 'organization_desc', 'organization_url',
                                                'organization_img')):
@@ -205,9 +232,9 @@ class OrganizationListResource(Resource):
                 db.session.commit()
                 return organization_schema.dump(new_organization)
             else:
-                return jsonify({'error': 'wrong JSON format'})
+                return json_error_syntax()
         else:
-            return jsonify({'error': 'wrong credentials or permissions'})
+            return json_error_permissions()
 
 
 class OrganizationResource(Resource):
@@ -218,7 +245,7 @@ class OrganizationResource(Resource):
 
     @staticmethod
     def patch(organization_name):
-        if AuthChecker().check(request.authorization, ["admin"]):
+        if AuthChecker().check(request.authorization, [ROLE_ADMIN]):
             student = Student.query.filter_by(student_name=request.authorization['username']).first()
             organization = Organization.query.filter_by(student_id=student.student_id).\
                 filter_by(organization_name=organization_name).first()
@@ -231,13 +258,13 @@ class OrganizationResource(Resource):
                 db.session.commit()
                 return organization_schema.dump(organization)
             else:
-                return jsonify({'error': 'wrong JSON format'})
+                return json_error_syntax()
         else:
-            return jsonify({'error': 'wrong credentials or permissions'})
+            return json_error_permissions()
 
     @staticmethod
     def delete(organization_name):
-        if AuthChecker().check(request.authorization, ["admin"]):
+        if AuthChecker().check(request.authorization, [ROLE_ADMIN]):
             student = Student.query.filter_by(student_name=request.authorization['username']).first()
             organization = Organization.query.filter_by(student_id=student.student_id).\
                 filter_by(organization_name=organization_name).first()
@@ -246,9 +273,9 @@ class OrganizationResource(Resource):
                 db.session.commit()
                 return '', 204
             else:
-                return jsonify({'error': 'wrong JSON format'})
+                return json_error_syntax()
         else:
-            return jsonify({'error': 'wrong credentials or permissions'})
+            return json_error_permissions()
 
 
 api.add_resource(OrganizationListResource, APP_PREFIX + '/api/organizations')
@@ -291,7 +318,7 @@ class CertificationListResource(Resource):
 
     @staticmethod
     def post():
-        if AuthChecker().check(request.authorization, ["admin"]):
+        if AuthChecker().check(request.authorization, [ROLE_ADMIN]):
             student = Student.query.filter_by(student_name=request.authorization['username']).first()
             if all(s in request.json for s in ('organization_id', 'certification_name', 'certification_desc',
                                                'certification_url', 'certification_img', 'cycle_length',
@@ -311,9 +338,9 @@ class CertificationListResource(Resource):
                 db.session.commit()
                 return certification_schema.dump(new_certification)
             else:
-                return jsonify({'error': 'wrong JSON format'})
+                return json_error_syntax()
         else:
-            return jsonify({'error': 'wrong credentials or permissions'})
+            return json_error_permissions()
 
 
 class CertificationResource(Resource):
@@ -324,7 +351,7 @@ class CertificationResource(Resource):
 
     @staticmethod
     def patch(certification_name):
-        if AuthChecker().check(request.authorization, ["admin"]):
+        if AuthChecker().check(request.authorization, [ROLE_ADMIN]):
             student = Student.query.filter_by(student_name=request.authorization['username']).first()
             certification = Certification.query.filter_by(student_id=student.student_id).\
                 filter_by(certification_name=certification_name).first()
@@ -343,13 +370,13 @@ class CertificationResource(Resource):
                 db.session.commit()
                 return certification_schema.dump(certification)
             else:
-                return jsonify({'error': 'wrong JSON format'})
+                return json_error_syntax()
         else:
-            return jsonify({'error': 'wrong credentials or permissions'})
+            return json_error_permissions()
 
     @staticmethod
     def delete(certification_name):
-        if AuthChecker().check(request.authorization, ["admin"]):
+        if AuthChecker().check(request.authorization, [ROLE_ADMIN]):
             student = Student.query.filter_by(student_name=request.authorization['username']).first()
             certification = Certification.query.filter_by(student_id=student.student_id).\
                 filter_by(certification_name=certification_name).first()
@@ -358,9 +385,9 @@ class CertificationResource(Resource):
                 db.session.commit()
                 return '', 204
             else:
-                return jsonify({'error': 'wrong JSON format'})
+                return json_error_syntax()
         else:
-            return jsonify({'error': 'wrong credentials or permissions'})
+            return json_error_permissions()
 
 
 api.add_resource(CertificationListResource, APP_PREFIX + '/api/certifications')
@@ -392,16 +419,16 @@ cycles_schema = CycleSchema(many=True)
 class CycleListResource(Resource):
     @staticmethod
     def get():
-        if AuthChecker().check(request.authorization, ["admin", "student"]):
+        if AuthChecker().check(request.authorization, [ROLE_ADMIN, ROLE_USER]):
             student = Student.query.filter_by(student_name=request.authorization['username']).first()
             cycles = Cycle.query.filter_by(student_id=student.student_id).all()
             return cycles_schema.dump(cycles)
         else:
-            return jsonify({'error': 'wrong credentials or permissions'})
+            return json_error_permissions()
 
     @staticmethod
     def post():
-        if AuthChecker().check(request.authorization, ["admin", "student"]):
+        if AuthChecker().check(request.authorization, [ROLE_ADMIN, ROLE_USER]):
             student = Student.query.filter_by(student_name=request.authorization['username']).first()
             if all(s in request.json for s in ('certification_id', 'certification_date', 'cycle_start')):
                 new_cycle = Cycle(
@@ -414,25 +441,25 @@ class CycleListResource(Resource):
                 db.session.commit()
                 return certification_schema.dump(new_cycle)
             else:
-                return jsonify({'error': 'wrong JSON format'})
+                return json_error_syntax()
         else:
-            return jsonify({'error': 'wrong credentials or permissions'})
+            return json_error_permissions()
 
 
 class CycleResource(Resource):
     @staticmethod
     def get(cycle_id):
-        if AuthChecker().check(request.authorization, ["admin", "student"]):
+        if AuthChecker().check(request.authorization, [ROLE_ADMIN, ROLE_USER]):
             student = Student.query.filter_by(student_name=request.authorization['username']).first()
             cycle = Cycle.query.filter_by(student_id=student.student_id).\
                 filter_by(cycle_id=cycle_id).first()
             return cycle_schema.dump(cycle)
         else:
-            return jsonify({'error': 'wrong credentials or permissions'})
+            return json_error_permissions()
 
     @staticmethod
     def patch(cycle_id):
-        if AuthChecker().check(request.authorization, ["admin", "student"]):
+        if AuthChecker().check(request.authorization, [ROLE_ADMIN, ROLE_USER]):
             student = Student.query.filter_by(student_name=request.authorization['username']).first()
             cycle = Cycle.query.filter_by(student_id=student.student_id).\
                 filter_by(cycle_id=cycle_id).first()
@@ -442,13 +469,13 @@ class CycleResource(Resource):
                 db.session.commit()
                 return cycle_schema.dump(cycle)
             else:
-                return jsonify({'error': 'wrong JSON format'})
+                return json_error_syntax()
         else:
-            return jsonify({'error': 'wrong credentials or permissions'})
+            return json_error_permissions()
 
     @staticmethod
     def delete(cycle_id):
-        if AuthChecker().check(request.authorization, ["admin", "student"]):
+        if AuthChecker().check(request.authorization, [ROLE_ADMIN, ROLE_USER]):
             student = Student.query.filter_by(student_name=request.authorization['username']).first()
             cycle = Cycle.query.filter_by(student_id=student.student_id).\
                 filter_by(cycle_id=cycle_id).first()
@@ -457,9 +484,9 @@ class CycleResource(Resource):
                 db.session.commit()
                 return '', 204
             else:
-                return jsonify({'error': 'wrong JSON format'})
+                return json_error_syntax()
         else:
-            return jsonify({'error': 'wrong credentials or permissions'})
+            return json_error_permissions()
 
 
 api.add_resource(CycleListResource, APP_PREFIX + '/api/cycles')
@@ -495,16 +522,16 @@ records_schema = RecordSchema(many=True)
 class RecordListResource(Resource):
     @staticmethod
     def get():
-        if AuthChecker().check(request.authorization, ["admin", "student"]):
+        if AuthChecker().check(request.authorization, [ROLE_ADMIN, ROLE_USER]):
             student = Student.query.filter_by(student_name=request.authorization['username']).first()
             records = Record.query.filter_by(student_id=student.student_id).all()
             return records_schema.dump(records)
         else:
-            return jsonify({'error': 'wrong credentials or permissions'})
+            return json_error_permissions()
 
     @staticmethod
     def post():
-        if AuthChecker().check(request.authorization, ["admin", "student"]):
+        if AuthChecker().check(request.authorization, [ROLE_ADMIN, ROLE_USER]):
             student = Student.query.filter_by(student_name=request.authorization['username']).first()
             if all(s in request.json for s in ('record_name', 'sponsor', 'activity_start',
                                                'activity_end', 'credits', 'attachment')):
@@ -521,25 +548,25 @@ class RecordListResource(Resource):
                 db.session.commit()
                 return record_schema.dump(new_record)
             else:
-                return jsonify({'error': 'wrong JSON format'})
+                return json_error_syntax()
         else:
-            return jsonify({'error': 'wrong credentials or permissions'})
+            return json_error_permissions()
 
 
 class RecordResource(Resource):
     @staticmethod
     def get(record_id):
-        if AuthChecker().check(request.authorization, ["admin", "student"]):
+        if AuthChecker().check(request.authorization, [ROLE_ADMIN, ROLE_USER]):
             student = Student.query.filter_by(student_name=request.authorization['username']).first()
             record = Record.query.filter_by(student_id=student.student_id). \
                 filter_by(record_id=record_id).first()
             return record_schema.dump(record)
         else:
-            return jsonify({'error': 'wrong credentials or permissions'})
+            return json_error_permissions()
 
     @staticmethod
     def patch(record_id):
-        if AuthChecker().check(request.authorization, ["admin", "student"]):
+        if AuthChecker().check(request.authorization, [ROLE_ADMIN, ROLE_USER]):
             student = Student.query.filter_by(student_name=request.authorization['username']).first()
             record = Record.query.filter_by(student_id=student.student_id). \
                 filter_by(record_id=record_id).first()
@@ -554,13 +581,13 @@ class RecordResource(Resource):
                 db.session.commit()
                 return record_schema.dump(record)
             else:
-                return jsonify({'error': 'wrong JSON format'})
+                return json_error_syntax()
         else:
-            return jsonify({'error': 'wrong credentials or permissions'})
+            return json_error_permissions()
 
     @staticmethod
     def delete(record_id):
-        if AuthChecker().check(request.authorization, ["admin", "student"]):
+        if AuthChecker().check(request.authorization, [ROLE_ADMIN, ROLE_USER]):
             student = Student.query.filter_by(student_name=request.authorization['username']).first()
             record = Record.query.filter_by(student_id=student.student_id). \
                 filter_by(record_id=record_id).first()
@@ -569,9 +596,9 @@ class RecordResource(Resource):
                 db.session.commit()
                 return '', 204
             else:
-                return jsonify({'error': 'wrong JSON format'})
+                return json_error_syntax()
         else:
-            return jsonify({'error': 'wrong credentials or permissions'})
+            return json_error_permissions()
 
 
 api.add_resource(RecordListResource, APP_PREFIX + '/api/records')
@@ -602,16 +629,16 @@ record_links_schema = RecordLinkSchema(many=True)
 class RecordLinkListResource(Resource):
     @staticmethod
     def get():
-        if AuthChecker().check(request.authorization, ["admin", "student"]):
+        if AuthChecker().check(request.authorization, [ROLE_ADMIN, ROLE_USER]):
             student = Student.query.filter_by(student_name=request.authorization['username']).first()
             record_links = RecordLink.query.filter_by(student_id=student.student_id).all()
             return record_links_schema.dump(record_links)
         else:
-            return jsonify({'error': 'wrong credentials or permissions'})
+            return json_error_permissions()
 
     @staticmethod
     def post():
-        if AuthChecker().check(request.authorization, ["admin", "student"]):
+        if AuthChecker().check(request.authorization, [ROLE_ADMIN, ROLE_USER]):
             student = Student.query.filter_by(student_name=request.authorization['username']).first()
             if all(s in request.json for s in ('record_id', 'cycle_id')):
                 new_record_link = RecordLink(
@@ -623,25 +650,25 @@ class RecordLinkListResource(Resource):
                 db.session.commit()
                 return record_schema.dump(new_record_link)
             else:
-                return jsonify({'error': 'wrong JSON format'})
+                return json_error_syntax()
         else:
-            return jsonify({'error': 'wrong credentials or permissions'})
+            return json_error_permissions()
 
 
 class RecordLinkResource(Resource):
     @staticmethod
     def get(record_link_id):
-        if AuthChecker().check(request.authorization, ["admin", "student"]):
+        if AuthChecker().check(request.authorization, [ROLE_ADMIN, ROLE_USER]):
             student = Student.query.filter_by(student_name=request.authorization['username']).first()
             record_link = RecordLink.query.filter_by(student_id=student.student_id). \
                 filter_by(record_link_id=record_link_id).first()
             return record_link_schema.dump(record_link)
         else:
-            return jsonify({'error': 'wrong credentials or permissions'})
+            return json_error_permissions()
 
     @staticmethod
     def patch(record_link_id):
-        if AuthChecker().check(request.authorization, ["admin", "student"]):
+        if AuthChecker().check(request.authorization, [ROLE_ADMIN, ROLE_USER]):
             student = Student.query.filter_by(student_name=request.authorization['username']).first()
             record_link = RecordLink.query.filter_by(student_id=student.student_id). \
                 filter_by(record_link_id=record_link_id).first()
@@ -651,13 +678,13 @@ class RecordLinkResource(Resource):
                 db.session.commit()
                 return record_link_schema.dump(record_link)
             else:
-                return jsonify({'error': 'wrong JSON format'})
+                return json_error_syntax()
         else:
-            return jsonify({'error': 'wrong credentials or permissions'})
+            return json_error_permissions()
 
     @staticmethod
     def delete(record_link_id):
-        if AuthChecker().check(request.authorization, ["admin", "student"]):
+        if AuthChecker().check(request.authorization, [ROLE_ADMIN, ROLE_USER]):
             student = Student.query.filter_by(student_name=request.authorization['username']).first()
             record_link = RecordLink.query.filter_by(student_id=student.student_id). \
                 filter_by(record_link_id=record_link_id).first()
@@ -666,9 +693,9 @@ class RecordLinkResource(Resource):
                 db.session.commit()
                 return '', 204
             else:
-                return jsonify({'error': 'wrong JSON format'})
+                return json_error_syntax()
         else:
-            return jsonify({'error': 'wrong credentials or permissions'})
+            return json_error_permissions()
 
 
 api.add_resource(RecordLinkListResource, APP_PREFIX + '/api/record_links')
@@ -847,6 +874,104 @@ def update_style(style):
     session['style'] = style
 
 
+# Internal helper - map form data to
+def map_form_to_record(record, record_form):
+    record.record_name = escape(record_form.name.data)
+    record.sponsor = escape(record_form.sponsor.data)
+    record.activity_start = escape(record_form.activity_start.data)
+    record.activity_end = escape(record_form.activity_end.data)
+    record.credits = float(escape(record_form.credits.data))
+
+
+def map_record_to_form(record, record_form):
+    record_form.name.default = record.record_name
+    record_form.sponsor.default = record.sponsor
+    record_form.activity_start.default = record.activity_start
+    record_form.activity_end.default = record.activity_end
+    record_form.credits.default = record.credits
+
+
+def map_record_defaults(record_form):
+    record_form.name.default = record_form.name.data
+    record_form.sponsor.default = record_form.sponsor.data
+    record_form.activity_start.default = record_form.activity_start.data
+    record_form.activity_end.default = record_form.activity_end.data
+    record_form.credits.default = record_form.credits.data
+
+
+def map_form_to_cycle(cycle, cycle_form):
+    cycle.certification_id = int(cycle_form.certification.data)
+    cycle.certification_date = escape(cycle_form.certification_date.data)
+    cycle.cycle_start = escape(cycle_form.cycle_start.data)
+
+
+def map_cycle_to_form(cycle, cycle_form):
+    cycle_form.certification.default = cycle.certification_id
+    cycle_form.certification_date.default = cycle.certification_date
+    cycle_form.cycle_start.default = cycle.cycle_start
+
+
+def map_cycle_defaults(cycle_form):
+    cycle_form.certification.default = cycle_form.certification.data
+    cycle_form.certification_date.default = cycle_form.certification_date.data
+    cycle_form.cycle_start.default = cycle_form.cycle_start.data
+
+
+def map_form_to_certification(certification, certification_form):
+    certification.certification_name = escape(certification_form.name.data)
+    certification.certification_url = clean_url(certification_form.url.data)
+    certification.certification_desc = certification_form.description.data
+    certification.certification_img = clean_url(certification_form.image.data)
+    certification.student_id = current_user.student_id
+    certification.organization_id = int(escape(certification_form.organization.data))
+    certification.cycle_length = int(escape(certification_form.cycle_length.data))
+    certification.requirement_year = int(escape(certification_form.requirement_year.data))
+    certification.requirement_full = int(escape(certification_form.requirement_full.data))
+
+
+def map_certification_to_form(certification, certification_form):
+    certification_form.name.default = certification.certification_name
+    certification_form.url.default = certification.certification_url
+    certification_form.description.default = certification.certification_desc
+    certification_form.image.default = certification.certification_img
+    certification_form.organization.default = certification.organization_id
+    certification_form.cycle_length.default = int(certification.cycle_length)
+    certification_form.requirement_year.default = int(certification.requirement_year)
+    certification_form.requirement_full.default = int(certification.requirement_full)
+
+
+def map_certification_defaults(certification_form):
+    certification_form.name.default = certification_form.name.data
+    certification_form.url.default = certification_form.url.data
+    certification_form.description.default = certification_form.description.data
+    certification_form.image.default = certification_form.image.data
+    certification_form.organization.default = certification_form.organization.data
+    certification_form.cycle_length.default = certification_form.cycle_length.data
+    certification_form.requirement_year.default = certification_form.requirement_year.data
+    certification_form.requirement_full.default = certification_form.requirement_full.data
+
+
+def map_form_to_organization(organization, organization_form):
+    organization.organization_name = escape(organization_form.name.data)
+    organization.organization_url = clean_url(organization_form.url.data)
+    organization.organization_desc = organization_form.description.data
+    organization.organization_img = clean_url(organization_form.image.data)
+
+
+def map_organization_to_form(organization, organization_form):
+    organization_form.name.default = organization.organization_name
+    organization_form.url.default = organization.organization_url
+    organization_form.description.default = organization.organization_desc
+    organization_form.image.default = organization.organization_img
+
+
+def map_organization_defaults(organization_form):
+    organization_form.name.default = organization_form.name.data
+    organization_form.url.default = organization_form.url.data
+    organization_form.description.default = organization_form.description.data
+    organization_form.image.default = organization_form.image.data
+
+
 # --------------------------------------------------------------
 # Flask entry pages
 # --------------------------------------------------------------
@@ -883,7 +1008,7 @@ def show_login():
         if not student or not check_password_hash(student.student_pass, student_pass):
             return redirect(url_for('show_login'))
         else:
-            if student.student_role == "admin":
+            if student.student_role == ROLE_ADMIN:
                 update_style("main_admin.css")
             else:
                 update_style("main.css")
@@ -961,11 +1086,11 @@ def show_password_reset(random_hash):
 def show_storage():
     file_upload_form = FileUploadForm()
     file_rename_form = FileRenameForm()
-    s3_folder = S3_GLOBAL if current_user.student_role == "admin" else current_user.student_name
+    s3_folder = S3_GLOBAL if current_user.student_role == ROLE_ADMIN else current_user.student_name
     space_used_in_mb = round((get_size(S3_BUCKET, f"{s3_folder}/") / 1024 / 1024), 2)
     space_used = int(space_used_in_mb / int(S3_QUOTA) * 100)
 
-    if request.method == 'POST' and file_upload_form.page_mode.data == "upload" and \
+    if request.method == 'POST' and file_upload_form.page_mode.data == PAGE_UPLOAD and \
             file_upload_form.validate_on_submit():
         filename = secure_filename(file_upload_form.file.data.filename)
 
@@ -979,7 +1104,7 @@ def show_storage():
             upload_file(S3_BUCKET, remote_file, local_file)
 
         return redirect(url_for('show_storage'))
-    elif request.method == 'POST' and file_rename_form.page_mode.data == "rename" and \
+    elif request.method == 'POST' and file_rename_form.page_mode.data == PAGE_RENAME and \
             file_rename_form.validate_on_submit():
         remote_file_new = f"{secure_filename(s3_folder)}/{secure_filename(file_rename_form.filename_new.data)}"
         remote_file_old = f"{secure_filename(s3_folder)}/{secure_filename(file_rename_form.filename_old.data)}"
@@ -989,15 +1114,15 @@ def show_storage():
 
         return redirect(url_for('show_storage'))
     else:
-        if file_upload_form.page_mode.data == "upload":
-            page_mode = "upload"
-        elif file_rename_form.page_mode.data == "rename":
-            page_mode = "rename"
+        if file_upload_form.page_mode.data == PAGE_UPLOAD:
+            page_mode = PAGE_UPLOAD
+        elif file_rename_form.page_mode.data == PAGE_RENAME:
+            page_mode = PAGE_RENAME
             file_rename_form.filename_new.default = file_rename_form.filename_new.data
             file_rename_form.filename_old.default = file_rename_form.filename_old.data
             file_rename_form.process()
         else:
-            page_mode = "init"
+            page_mode = PAGE_INIT
         contents = list_files(S3_BUCKET, s3_folder)
         return render_template('storage.html',
                                contents=contents, space_used_in_mb=space_used_in_mb, space_used=space_used,
@@ -1009,7 +1134,7 @@ def show_storage():
 @app.route(APP_PREFIX + "/web/download/<string:filename>", methods=['GET'])
 @login_required
 def do_download(filename):
-    s3_folder = S3_GLOBAL if current_user.student_role == "admin" else current_user.student_name
+    s3_folder = S3_GLOBAL if current_user.student_role == ROLE_ADMIN else current_user.student_name
     local_folder_name = f"{DOWNLOAD_FOLDER}/{s3_folder}"
     local_filename = os.path.join(local_folder_name, secure_filename(filename))
     remote_file = f"{secure_filename(s3_folder)}/{secure_filename(filename)}"
@@ -1031,7 +1156,7 @@ def do_display(username, filename):
         if student and (student.student_img == filename or current_user.student_name == username):
             s3_folder = student.student_name
         else:
-            return render_template('error.html', error_message="You are not allowed to view that file.")
+            return render_template('error.html', error_message=ERR_AUTH)
 
     local_folder_name = f"{DOWNLOAD_FOLDER}/{s3_folder}"
     local_filename = os.path.join(local_folder_name, secure_filename(filename))
@@ -1048,7 +1173,7 @@ def do_display(username, filename):
 @app.route(APP_PREFIX + "/web/delete/<string:filename>", methods=['GET'])
 @login_required
 def do_delete(filename):
-    s3_folder = S3_GLOBAL if current_user.student_role == "admin" else current_user.student_name
+    s3_folder = S3_GLOBAL if current_user.student_role == ROLE_ADMIN else current_user.student_name
     remote_file = f"{secure_filename(s3_folder)}/{secure_filename(filename)}"
     delete_file(S3_BUCKET, remote_file)
     return redirect(url_for('show_storage'))
@@ -1066,9 +1191,9 @@ def show_stats():
     counts['organization'] = Organization.query.count()
     counts['certification'] = Certification.query.count()
 
-    if current_user.is_authenticated and current_user.student_role == "admin":
+    if current_user.is_authenticated and current_user.student_role == ROLE_ADMIN:
         bucket_all = get_all_size(S3_BUCKET)
-    elif current_user.is_authenticated and current_user.student_role == "student":
+    elif current_user.is_authenticated and current_user.student_role == ROLE_USER:
         bucket_all = dict()
         bucket_all[current_user.student_name] = get_size(S3_BUCKET, current_user.student_name)
     else:
@@ -1093,7 +1218,7 @@ def show_privacy():
 @app.route(APP_PREFIX + '/web/image/<string:filename>', methods=['GET'])
 @login_required
 def show_image(filename):
-    s3_folder = S3_GLOBAL if current_user.student_role == "admin" else current_user.student_name
+    s3_folder = S3_GLOBAL if current_user.student_role == ROLE_ADMIN else current_user.student_name
     return render_template('image.html', username=s3_folder, filename=secure_filename(filename))
 
 
@@ -1140,7 +1265,7 @@ def show_contact():
 # Displays all available students
 @app.route(APP_PREFIX + '/web/students', methods=['GET'])
 def show_students():
-    if current_user.is_authenticated and current_user.student_role == "admin":
+    if current_user.is_authenticated and current_user.student_role == ROLE_ADMIN:
         students = Student.query.order_by(Student.student_name.asc())
     else:
         students = Student.query.filter_by(active=1).order_by(Student.student_name.asc())
@@ -1150,19 +1275,19 @@ def show_students():
 # Shows information about a specific student
 @app.route(APP_PREFIX + '/web/student/<string:student_name>', methods=['GET'])
 def show_student(student_name):
-    if current_user.is_authenticated and current_user.student_role == "admin":
+    if current_user.is_authenticated and current_user.student_role == ROLE_ADMIN:
         student = Student.query.filter_by(student_name=student_name).first()
     else:
         student = Student.query.filter_by(active=1).filter_by(student_name=student_name).first()
 
     if student:
-        if student.student_role == "admin":
+        if student.student_role == ROLE_ADMIN:
             folder_name = S3_GLOBAL
         else:
             folder_name = student.student_name
         return render_template('student_detail.html', folder_name=folder_name, student=student)
     else:
-        return render_template('error.html', error_message="That student does not exist.")
+        return render_template('error.html', error_message=ERR_NOT_EXIST)
 
 
 # Displays a form to create a new user (aka student)
@@ -1202,7 +1327,7 @@ def show_new_student():
                 student.student_desc = ""
                 student.student_pass = generate_password_hash(account_form.password.data, method='pbkdf2:sha256',
                                                               salt_length=16)
-                student.student_role = "student"
+                student.student_role = ROLE_USER
                 student.student_img = ""
                 student.active = 0
                 db.session.add(student)
@@ -1229,7 +1354,7 @@ def show_my_student():
     student_deletion_form = StudentDeletionForm()
     student = Student.query.filter_by(student_id=current_user.student_id).first()
 
-    if request.method == 'POST' and student_mail_form.page_mode.data == "mail" and \
+    if request.method == 'POST' and student_mail_form.page_mode.data == PAGE_MAIL and \
             student_mail_form.validate_on_submit():
         old_mail = student.student_mail
         student.student_mail = escape(student_mail_form.email.data)
@@ -1242,31 +1367,31 @@ def show_my_student():
                   f"You have changed you e-mail address from {old_mail} to {student.student_mail}.")
 
         return redirect(url_for('show_my_student'))
-    elif request.method == 'POST' and student_password_form.page_mode.data == "password" and \
+    elif request.method == 'POST' and student_password_form.page_mode.data == PAGE_PASS and \
             student_password_form.validate_on_submit():
         student.student_pass = generate_password_hash(student_password_form.password.data, method='pbkdf2:sha256',
                                                       salt_length=16)
         db.session.commit()
         return redirect(url_for('show_my_student'))
-    elif request.method == 'POST' and student_deletion_form.page_mode.data == "delete" and \
+    elif request.method == 'POST' and student_deletion_form.page_mode.data == PAGE_DELETE and \
             student_deletion_form.validate_on_submit():
         Student.query.filter_by(student_id=current_user.student_id).delete()
         db.session.commit()
         logout_user()
         return redirect(url_for('show_index'))
     else:
-        if student_mail_form.page_mode.data == "mail":
-            page_mode = "mail"
-        elif student_password_form.page_mode.data == "password":
-            page_mode = "password"
-        elif student_deletion_form.page_mode.data == "delete":
-            page_mode = "delete"
+        if student_mail_form.page_mode.data == PAGE_MAIL:
+            page_mode = PAGE_MAIL
+        elif student_password_form.page_mode.data == PAGE_PASS:
+            page_mode = PAGE_PASS
+        elif student_deletion_form.page_mode.data == PAGE_DELETE:
+            page_mode = PAGE_DELETE
         else:
-            page_mode = "init"
+            page_mode = PAGE_INIT
 
         student_mail_form.email.default = student.student_mail
         student_mail_form.description.default = student.student_desc
-        if current_user.student_role == "admin":
+        if current_user.student_role == ROLE_ADMIN:
             student_mail_form.image.choices = get_file_choices(S3_GLOBAL)
             student_mail_form.image.default = student.student_img
         else:
@@ -1283,7 +1408,7 @@ def show_my_student():
 @app.route(APP_PREFIX + '/web/approve_student/<string:student_name>', methods=['GET'])
 @login_required
 def show_approve_student(student_name):
-    if current_user.student_role == "admin":
+    if current_user.student_role == ROLE_ADMIN:
         student = Student.query.filter_by(student_name=student_name).first()
         student.active = 1
         db.session.commit()
@@ -1293,7 +1418,7 @@ def show_approve_student(student_name):
 
         return redirect(url_for('show_students'))
     else:
-        return render_template('error.html')
+        return render_template('error.html', error_message=ERR_AUTH)
 
 
 # Displays all available organizations
@@ -1305,7 +1430,7 @@ def show_organizations():
     organization_form.process()
     organizations = Organization.query.order_by(Organization.organization_name.asc())
 
-    return render_template('organization.html', organizations=organizations, page_mode="init",
+    return render_template('organization.html', organizations=organizations, page_mode=PAGE_INIT,
                            organization_form=organization_form)
 
 
@@ -1316,28 +1441,22 @@ def show_organizations_p():
     organization_form = OrganizationForm()
     organizations = Organization.query.order_by(Organization.organization_name.asc())
 
-    if current_user.student_role == "admin" and organization_form.validate_on_submit():
+    if current_user.student_role == ROLE_ADMIN and organization_form.validate_on_submit():
         organization_name = escape(organization_form.name.data)
         organization = Organization.query.filter_by(organization_name=organization_name).first()
 
         if not organization:
             organization = Organization()
-            organization.organization_name = organization_name
-            organization.organization_url = clean_url(organization_form.url.data)
-            organization.organization_desc = organization_form.description.data
-            organization.organization_img = clean_url(organization_form.image.data)
             organization.student_id = current_user.student_id
+            map_form_to_organization(organization, organization_form)
             db.session.add(organization)
             db.session.commit()
         return redirect(url_for('show_organizations'))
     else:
-        organization_form.name.default = organization_form.name.data
-        organization_form.url.default = organization_form.url.data
-        organization_form.description.default = organization_form.description.data
         organization_form.image.choices = get_file_choices(S3_GLOBAL)
-        organization_form.image.default = organization_form.image.data
+        map_organization_defaults(organization_form)
         organization_form.process()
-        return render_template('organization.html', organizations=organizations, page_mode="modal",
+        return render_template('organization.html', organizations=organizations, page_mode=PAGE_MODAL,
                                organization_form=organization_form)
 
 
@@ -1351,17 +1470,14 @@ def show_organization(organization_name):
         .order_by(Certification.certification_name.asc())
 
     if organization:
-        organization_form.name.default = organization.organization_name
-        organization_form.url.default = organization.organization_url
-        organization_form.description.default = organization.organization_desc
         organization_form.image.choices = get_file_choices(S3_GLOBAL)
-        organization_form.image.default = organization.organization_img
+        map_organization_to_form(organization, organization_form)
         organization_form.process()
         return render_template('organization_detail.html', organization=organization, certifications=certifications,
-                               student=student, folder_name=S3_GLOBAL, page_mode="init",
+                               student=student, folder_name=S3_GLOBAL, page_mode=PAGE_INIT,
                                organization_form=organization_form)
     else:
-        return render_template('error.html', error_message="That organization does not exist.")
+        return render_template('error.html', error_message=ERR_NOT_EXIST)
 
 
 # Post a change in an organization's data
@@ -1374,38 +1490,34 @@ def show_organization_p(organization_name):
     certifications = Certification.query.filter_by(organization_id=organization.organization_id) \
         .order_by(Certification.certification_name.asc())
 
-    if current_user.student_role == "admin" and organization_form.validate_on_submit():
+    if current_user.student_role == ROLE_ADMIN and organization_form.validate_on_submit():
         if organization:
-            organization.organization_name = clean_url(organization_form.name.data)
-            organization.organization_url = clean_url(organization_form.url.data)
-            organization.organization_desc = organization_form.description.data
-            organization.organization_img = clean_url(organization_form.image.data)
+            map_form_to_organization(organization, organization_form)
             db.session.commit()
             return redirect(url_for('show_organization', organization_name=organization.organization_name))
         else:
-            return render_template('error.html', error_message="That organization does not exist.")
+            return render_template('error.html', error_message=ERR_NOT_EXIST)
     else:
-        organization_form.name.default = organization_form.name.data
-        organization_form.url.default = organization_form.url.data
-        organization_form.description.default = organization_form.description.data
         organization_form.image.choices = get_file_choices(S3_GLOBAL)
-        organization_form.image.default = organization_form.image.data
+        map_organization_defaults(organization_form)
         organization_form.process()
         return render_template('organization_detail.html', organization=organization, certifications=certifications,
-                               student=student, folder_name=S3_GLOBAL, page_mode="modal",
+                               student=student, folder_name=S3_GLOBAL, page_mode=PAGE_MODAL,
                                organization_form=organization_form)
 
 
 # Delete a specific organization - and all included elements!!!
-@app.route(APP_PREFIX + '/web/deleted_organization/<string:organization_name>', methods=['GET'])
+@app.route(APP_PREFIX + '/web/delete_organization/<string:organization_name>', methods=['GET'])
 @login_required
-def show_deleted_organization(organization_name):
-    if current_user.student_role == "admin":
+def delete_organization(organization_name):
+    organization = Organization.query.filter_by(organization_name=organization_name).first()
+
+    if organization:
         Organization.query.filter_by(organization_name=organization_name).delete()
         db.session.commit()
         return redirect(url_for('show_organizations'))
     else:
-        return render_template('error.html', error_message="You are not allowed to perform that operation.")
+        return render_template('error.html', error_message=ERR_NOT_EXIST)
 
 
 # Displays all available certifications
@@ -1419,7 +1531,7 @@ def show_certifications():
     certification_form.process()
     certifications = Certification.query.order_by(Certification.certification_name.asc())
 
-    return render_template('certification.html', certifications=certifications, page_mode="init",
+    return render_template('certification.html', certifications=certifications, page_mode=PAGE_INIT,
                            certification_form=certification_form)
 
 
@@ -1431,38 +1543,23 @@ def show_certifications_p():
     organizations = Organization.query.order_by(Organization.organization_name.asc())
     certifications = Certification.query.order_by(Certification.certification_name.asc())
 
-    if current_user.student_role == "admin" and certification_form.validate_on_submit():
+    if current_user.student_role == ROLE_ADMIN and certification_form.validate_on_submit():
         certification_name = escape(certification_form.name.data)
         certification = Certification.query.filter_by(certification_name=certification_name).first()
 
         if not certification:
             certification = Certification()
-            certification.certification_name = certification_name
-            certification.certification_url = clean_url(certification_form.url.data)
-            certification.certification_desc = certification_form.description.data
-            certification.certification_img = clean_url(certification_form.image.data)
             certification.student_id = current_user.student_id
-            certification.organization_id = int(escape(certification_form.organization.data))
-            certification.cycle_length = int(escape(certification_form.cycle_length.data))
-            certification.requirement_year = int(escape(certification_form.requirement_year.data))
-            certification.requirement_full = int(escape(certification_form.requirement_full.data))
-
+            map_form_to_certification(certification, certification_form)
             db.session.add(certification)
             db.session.commit()
         return redirect(url_for('show_certifications'))
     else:
-        certification_form.name.default = certification_form.name.data
-        certification_form.url.default = certification_form.url.data
-        certification_form.description.default = certification_form.description.data
         certification_form.image.choices = get_file_choices(S3_GLOBAL)
-        certification_form.image.default = certification_form.image.data
         certification_form.organization.choices = get_organization_choices(organizations)
-        certification_form.organization.default = certification_form.organization.data
-        certification_form.cycle_length.default = certification_form.cycle_length.data
-        certification_form.requirement_year.default = certification_form.requirement_year.data
-        certification_form.requirement_full.default = certification_form.requirement_full.data
+        map_certification_defaults(certification_form)
         certification_form.process()
-        return render_template('certification.html', certifications=certifications, page_mode="modal",
+        return render_template('certification.html', certifications=certifications, page_mode=PAGE_MODAL,
                                certification_form=certification_form)
 
 
@@ -1476,24 +1573,15 @@ def show_certification(certification_name):
 
     if certification:
         organizations = Organization.query.order_by(Organization.organization_name.asc())
-
-        certification_form.name.default = certification.certification_name
-        certification_form.url.default = certification.certification_url
-        certification_form.description.default = certification.certification_desc
         certification_form.image.choices = get_file_choices(S3_GLOBAL)
-        certification_form.image.default = certification.certification_img
         certification_form.organization.choices = get_organization_choices(organizations)
-        certification_form.organization.default = certification.organization_id
-        certification_form.cycle_length.default = int(certification.cycle_length)
-        certification_form.requirement_year.default = int(certification.requirement_year)
-        certification_form.requirement_full.default = int(certification.requirement_full)
-
+        map_certification_to_form(certification, certification_form)
         certification_form.process()
         return render_template('certification_detail.html', certification=certification, student=student,
-                               organization=organization, folder_name=S3_GLOBAL, page_mode="init",
+                               organization=organization, folder_name=S3_GLOBAL, page_mode=PAGE_INIT,
                                certification_form=certification_form)
     else:
-        return render_template('error.html', error_message="That certification does not exist.")
+        return render_template('error.html', error_message=ERR_NOT_EXIST)
 
 
 # Post a change in a certification's data
@@ -1506,49 +1594,37 @@ def show_certification_p(certification_name):
     student = Student.query.filter_by(student_id=organization.student_id).first()
     organizations = Organization.query.order_by(Organization.organization_name.asc())
 
-    if current_user.student_role == "admin" and certification_form.validate_on_submit():
+    if current_user.student_role == ROLE_ADMIN and certification_form.validate_on_submit():
         certification = Certification.query.filter_by(certification_name=certification_name).first()
 
         if certification:
-            certification.certification_name = clean_url(certification_form.name.data)
-            certification.certification_url = clean_url(certification_form.url.data)
-            certification.certification_desc = certification_form.description.data
-            certification.certification_img = clean_url(certification_form.image.data)
-            certification.organization_id = int(escape(certification_form.organization.data))
-            certification.cycle_length = int(escape(certification_form.cycle_length.data))
-            certification.requirement_year = int(escape(certification_form.requirement_year.data))
-            certification.requirement_full = int(escape(certification_form.requirement_full.data))
+            map_form_to_certification(certification, certification_form)
             db.session.commit()
             return redirect(url_for('show_certification', certification_name=certification.certification_name))
         else:
-            return render_template('error.html', error_message="That certification does not exist.")
+            return render_template('error.html', error_message=ERR_NOT_EXIST)
     else:
-        certification_form.name.default = certification_form.name.data
-        certification_form.url.default = certification_form.url.data
-        certification_form.description.default = certification_form.description.data
         certification_form.image.choices = get_file_choices(S3_GLOBAL)
-        certification_form.image.default = certification_form.image.data
         certification_form.organization.choices = get_organization_choices(organizations)
-        certification_form.organization.default = certification_form.organization.data
-        certification_form.cycle_length.default = certification_form.cycle_length.data
-        certification_form.requirement_year.default = certification_form.requirement_year.data
-        certification_form.requirement_full.default = certification_form.requirement_full.data
+        map_certification_defaults(certification_form)
         certification_form.process()
         return render_template('certification_detail.html', certification=certification, student=student,
-                               organization=organization, folder_name=S3_GLOBAL, page_mode="modal",
+                               organization=organization, folder_name=S3_GLOBAL, page_mode=PAGE_MODAL,
                                certification_form=certification_form)
 
 
 # Delete a specific certification - and all included elements!!!
-@app.route(APP_PREFIX + '/web/deleted_certification/<string:certification_name>', methods=['GET'])
+@app.route(APP_PREFIX + '/web/delete_certification/<string:certification_name>', methods=['GET'])
 @login_required
-def show_deleted_certification(certification_name):
-    if current_user.student_role == "admin":
+def delete_certification(certification_name):
+    certification = Certification.query.filter_by(certification_name=certification_name).first()
+
+    if certification:
         Certification.query.filter_by(certification_name=certification_name).delete()
         db.session.commit()
         return redirect(url_for('show_certifications'))
     else:
-        return render_template('error.html', error_message="You are not allowed to perform that operation.")
+        return render_template('error.html', error_message=ERR_NOT_EXIST)
 
 
 # Displays all my cycles
@@ -1562,7 +1638,7 @@ def show_cycles():
     cycle_form.process()
     cycles = Cycle.query.filter_by(student_id=current_user.student_id).order_by(Cycle.cycle_id.asc())
 
-    return render_template('cycle.html', cycles=cycles, cert_dict=cert_dict, page_mode="init", cycle_form=cycle_form)
+    return render_template('cycle.html', cycles=cycles, cert_dict=cert_dict, page_mode=PAGE_INIT, cycle_form=cycle_form)
 
 
 # Post a new cycle - if it doesn't already exist
@@ -1574,7 +1650,7 @@ def show_cycles_p():
     cert_dict = get_certification_dict(certifications)
     cycles = Cycle.query.filter_by(student_id=current_user.student_id).order_by(Cycle.cycle_id.asc())
 
-    if current_user.student_role in ["admin", "student"] and cycle_form.validate_on_submit():
+    if current_user.student_role in [ROLE_ADMIN, ROLE_USER] and cycle_form.validate_on_submit():
         certification_id = int(escape(cycle_form.certification.data))
         cycle = Cycle.query.filter_by(student_id=current_user.student_id).filter_by(certification_id=certification_id).\
             first()
@@ -1582,19 +1658,15 @@ def show_cycles_p():
         if not cycle:
             cycle = Cycle()
             cycle.student_id = current_user.student_id
-            cycle.certification_id = int(cycle_form.certification.data)
-            cycle.certification_date = escape(cycle_form.certification_date.data)
-            cycle.cycle_start = escape(cycle_form.cycle_start.data)
+            map_form_to_cycle(cycle, cycle_form)
             db.session.add(cycle)
             db.session.commit()
         return redirect(url_for('show_cycles'))
     else:
         cycle_form.certification.choices = get_certification_choices(certifications)
-        cycle_form.certification.default = cycle_form.certification.data
-        cycle_form.certification_date.default = cycle_form.certification_date.data
-        cycle_form.cycle_start.default = cycle_form.cycle_start.data
+        map_cycle_defaults(cycle_form)
         cycle_form.process()
-        return render_template('cycle.html', cycles=cycles, cert_dict=cert_dict, page_mode="modal",
+        return render_template('cycle.html', cycles=cycles, cert_dict=cert_dict, page_mode=PAGE_MODAL,
                                cycle_form=cycle_form)
 
 
@@ -1611,14 +1683,12 @@ def show_cycle(cycle_id):
         student = Student.query.filter_by(student_id=cycle.student_id).first()
 
         cycle_form.certification.choices = get_certification_choices(certifications)
-        cycle_form.certification.default = cycle.certification_id
-        cycle_form.certification_date.default = cycle.certification_date
-        cycle_form.cycle_start.default = cycle.cycle_start
+        map_cycle_to_form(cycle, cycle_form)
         cycle_form.process()
         return render_template('cycle_detail.html', cycle=cycle, cert_dict=cert_dict, student=student,
-                               page_mode="init", cycle_form=cycle_form)
+                               page_mode=PAGE_INIT, cycle_form=cycle_form)
     else:
-        return render_template('error.html', error_message="That cycle does not exist.")
+        return render_template('error.html', error_message=ERR_NOT_EXIST)
 
 
 # Post a change in a cycle's data
@@ -1631,141 +1701,116 @@ def show_cycle_p(cycle_id):
     certifications = Certification.query.order_by(Certification.certification_name.asc())
     cert_dict = get_certification_dict(certifications)
 
-    if current_user.student_role in ["admin", "student"] and cycle_form.validate_on_submit():
+    if current_user.student_role in [ROLE_ADMIN, ROLE_USER] and cycle_form.validate_on_submit():
         if cycle:
-            cycle.certification_id = int(escape(cycle_form.certification.data))
-            cycle.certification_date = escape(cycle_form.certification_date.data)
-            cycle.cycle_start = escape(cycle_form.cycle_start.data)
+            map_form_to_cycle(cycle, cycle_form)
             db.session.commit()
             return redirect(url_for('show_cycle', cycle_id=cycle.cycle_id))
         else:
-            return render_template('error.html', error_message="That cycle does not exist.")
+            return render_template('error.html', error_message=ERR_NOT_EXIST)
     else:
         cycle_form.certification.choices = get_certification_choices(certifications)
-        cycle_form.certification.default = cycle_form.certification.data
-        cycle_form.certification_date.default = cycle_form.certification_date.data
-        cycle_form.cycle_start.default = cycle_form.cycle_start.data
+        map_cycle_defaults(cycle_form)
         cycle_form.process()
         return render_template('cycle_detail.html', cycle=cycle, cert_dict=cert_dict, student=student,
-                               page_mode="modal", cycle_form=cycle_form)
+                               page_mode=PAGE_MODAL, cycle_form=cycle_form)
 
 
 # Delete a specific cycle
-@app.route(APP_PREFIX + '/web/deleted_cycle/<int:cycle_id>', methods=['GET'])
+@app.route(APP_PREFIX + '/web/delete_cycle/<int:cycle_id>', methods=['GET'])
 @login_required
-def show_deleted_cycle(cycle_id):
-    if current_user.student_role in ["admin", "student"]:
+def delete_cycle(cycle_id):
+    cycle = Cycle.query.filter_by(student_id=current_user.student_id).filter_by(cycle_id=cycle_id).first()
+
+    if cycle:
         Cycle.query.filter_by(student_id=current_user.student_id).filter_by(cycle_id=cycle_id).delete()
         db.session.commit()
         return redirect(url_for('show_cycles'))
     else:
-        return render_template('error.html', error_message="You are not allowed to perform that operation.")
+        return render_template('error.html', error_message=ERR_NOT_EXIST)
 
 
-# Displays all my Records
+# Displays all my records
 @app.route(APP_PREFIX + '/web/records', methods=['GET'])
 @login_required
 def show_records():
-    record_form = RecordForm()
     records = Record.query.filter_by(student_id=current_user.student_id).order_by(Record.record_id.asc())
 
-    return render_template('record.html', records=records, page_mode="init", record_form=record_form)
-
-
-# Post a new Record - if it doesn't already exist
-@app.route(APP_PREFIX + '/web/records', methods=['POST'])
-@login_required
-def show_records_p():
-    record_form = RecordForm()
-    records = Record.query.filter_by(student_id=current_user.student_id).order_by(Record.record_id.asc())
-
-    if current_user.student_role in ["admin", "student"] and record_form.validate_on_submit():
-        record_name = escape(record_form.name.data)
-        activity_end = escape(record_form.activity_end.data)
-        record = Record.query.filter_by(student_id=current_user.student_id).filter_by(record_name=record_name).\
-            filter_by(activity_end=activity_end).first()
-
-        if not record:
-            record = Record()
-            record.student_id = current_user.student_id
-            record.record_name = escape(record_form.name.data)
-            record.sponsor = escape(record_form.sponsor.data)
-            record.activity_start = escape(record_form.activity_start.data)
-            record.activity_end = escape(record_form.activity_end.data)
-            record.credits = float(escape(record_form.credits.data))
-            db.session.add(record)
-            db.session.commit()
-        return redirect(url_for('show_records'))
-    else:
-        record_form.name.default = record_form.name.data
-        record_form.sponsor.default = record_form.sponsor.data
-        record_form.activity_start.default = record_form.activity_start.data
-        record_form.activity_end.default = record_form.activity_end.data
-        record_form.credits.default = record_form.credits.data
-        record_form.process()
-
-        return render_template('record.html', records=records, page_mode="modal", record_form=record_form)
+    return render_template('record.html', records=records)
 
 
 # Shows information about a specific record
 @app.route(APP_PREFIX + '/web/record/<int:record_id>', methods=['GET'])
 @login_required
 def show_record(record_id):
-    record_form = RecordForm()
     record = Record.query.filter_by(student_id=current_user.student_id).filter_by(record_id=record_id).first()
 
     if record:
         student = Student.query.filter_by(student_id=record.student_id).first()
-
-        record_form.name.default = record.record_name
-        record_form.sponsor.default = record.sponsor
-        record_form.activity_start.default = record.activity_start
-        record_form.activity_end.default = record.activity_end
-        record_form.credits.default = record.credits
-        record_form.process()
-        return render_template('record_detail.html', record=record, student=student, page_mode="init",
-                               record_form=record_form)
+        return render_template('record_detail.html', record=record, student=student)
     else:
-        return render_template('error.html', error_message="That record does not exist.")
+        return render_template('error.html', error_message=ERR_NOT_EXIST)
 
 
 # Post a change in a record's data
-@app.route(APP_PREFIX + '/web/record/<int:record_id>', methods=['POST'])
+@app.route(APP_PREFIX + '/web/edit_record/<int:record_id>', methods=['GET', 'POST'])
 @login_required
-def show_record_p(record_id):
+def edit_record(record_id):
     record_form = RecordForm()
-    record = Record.query.filter_by(student_id=current_user.student_id).filter_by(record_id=record_id).first()
-    student = Student.query.filter_by(student_id=record.student_id).first() if record else None
 
-    if current_user.student_role in ["admin", "student"] and record_form.validate_on_submit():
+    if request.method == 'GET' and record_id == 0:
+        return render_template('record_edit.html', record_id=record_id, record_form=record_form)
+    elif request.method == 'GET' and record_id > 0:
+        record = Record.query.filter_by(student_id=current_user.student_id).filter_by(record_id=record_id).first()
+
         if record:
-            record.record_name = escape(record_form.name.data)
-            record.sponsor = escape(record_form.sponsor.data)
-            record.activity_start = escape(record_form.activity_start.data)
-            record.activity_end = escape(record_form.activity_end.data)
-            record.credits = float(escape(record_form.credits.data))
-            db.session.commit()
-            return redirect(url_for('show_record', record_id=record.record_id))
+            map_record_to_form(record, record_form)
+            record_form.process()
+            return render_template('record_edit.html', record_id=record_id, record_form=record_form)
         else:
-            return render_template('error.html', error_message="That record does not exist.")
+            return render_template('error.html', error_message=ERR_NOT_EXIST)
+    elif request.method == 'POST':
+        if record_form.validate_on_submit() and current_user.student_role in [ROLE_USER, ROLE_USER] and record_id == 0:
+            record_name = escape(record_form.name.data)
+            activity_end = escape(record_form.activity_end.data)
+            record = Record.query.filter_by(student_id=current_user.student_id).filter_by(record_name=record_name). \
+                filter_by(activity_end=activity_end).first()
+
+            if not record:
+                record = Record()
+                record.student_id = current_user.student_id
+                map_form_to_record(record, record_form)
+                db.session.add(record)
+                db.session.commit()
+                return redirect(url_for('show_records'))
+            else:
+                return render_template('error.html', error_message=ERR_ALREADY_EXIST)
+        elif record_form.validate_on_submit() and current_user.student_role in [ROLE_USER, ROLE_USER] and record_id > 0:
+            record = Record.query.filter_by(student_id=current_user.student_id).filter_by(record_id=record_id).first()
+
+            if record:
+                map_form_to_record(record, record_form)
+                db.session.commit()
+                return redirect(url_for('show_record', record_id=record.record_id))
+            else:
+                return render_template('error.html', error_message=ERR_NOT_EXIST)
+        else:
+            map_record_defaults(record_form)
+            record_form.process()
+            return render_template('record_edit.html', record_id=record_id, record_form=record_form)
     else:
-        record_form.name.default = record_form.name.data
-        record_form.sponsor.default = record_form.sponsor.data
-        record_form.activity_start.default = record_form.activity_start.data
-        record_form.activity_end.default = record_form.activity_end.data
-        record_form.credits.default = record_form.credits.data
-        record_form.process()
-        return render_template('record_detail.html', record=record, student=student, page_mode="modal",
-                               record_form=record_form)
+        return render_template('error.html')
 
 
 # Delete a specific record
-@app.route(APP_PREFIX + '/web/deleted_record/<int:record_id>', methods=['GET'])
+@app.route(APP_PREFIX + '/web/delete_record/<int:record_id>', methods=['GET'])
 @login_required
-def show_deleted_record(record_id):
-    if current_user.student_role in ["admin", "student"]:
+def delete_record(record_id):
+    record = Record.query.filter_by(student_id=current_user.student_id).filter_by(record_id=record_id).first()
+
+    if record:
         Record.query.filter_by(student_id=current_user.student_id).filter_by(record_id=record_id).delete()
         db.session.commit()
         return redirect(url_for('show_records'))
     else:
-        return render_template('error.html', error_message="You are not allowed to perform that operation.")
+        return render_template('error.html', error_message=ERR_NOT_EXIST)

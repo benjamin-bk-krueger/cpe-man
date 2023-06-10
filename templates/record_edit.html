@@ -1,0 +1,52 @@
+    {% extends 'base.html' %}
+
+{% block content %}
+    {#  Page header #}
+    <div class="container-fluid pb-2 mt-4 mb-2">
+        <h2>{% block title %} CPE Record {{ "(NEW)" if record_id == 0 else record_id }} {% endblock %}</h2>
+    </div>
+
+    {#  Page content #}
+    <div class="container-fluid pb-3 mt-2 mb-2">
+        <form action="{{ url_for('edit_record', record_id=record_id)}}" method="POST" id="form_edit">
+            {{ record_form.csrf_token }}
+            <div class="form-group mt-2 mb-2">
+                <label for="{{ record_form.name.name }}">{{ record_form.name.label }}</label>
+                {{ record_form.name(size=20, class="form-control") }}
+            </div>
+            {% for error in record_form.name.errors %}
+                <div class="alert alert-warning"><strong>Warning!</strong> {{ error }}</div>
+            {% endfor %}
+            <div class="form-group mt-2 mb-2">
+                <label for="{{ record_form.sponsor.name }}">{{ record_form.sponsor.label }}</label>
+                {{ record_form.sponsor(size=20, class="form-control") }}
+            </div>
+            {% for error in record_form.sponsor.errors %}
+                <div class="alert alert-warning"><strong>Warning!</strong> {{ error }}</div>
+            {% endfor %}
+            <div class="form-group mt-2 mb-2">
+                <label for="{{ record_form.activity_start.name }}">{{ record_form.activity_start.label }}</label>
+                {{ record_form.activity_start(class="form-control") }}
+            </div>
+            {% for error in record_form.activity_start.errors %}
+                <div class="alert alert-warning"><strong>Warning!</strong> {{ error }}</div>
+            {% endfor %}
+            <div class="form-group mt-2 mb-2">
+                <label for="{{ record_form.activity_end.name }}">{{ record_form.activity_end.label }}</label>
+                {{ record_form.activity_end(class="form-control") }}
+            </div>
+            {% for error in record_form.activity_end.errors %}
+                <div class="alert alert-warning"><strong>Warning!</strong> {{ error }}</div>
+            {% endfor %}
+            <div class="form-group mt-2 mb-2">
+                <label for="{{ record_form.credits.name }}">{{ record_form.credits.label }}</label>: <label id="cpe_number">x</label> CPE
+                {{ record_form.credits(class="form-control", step="0.25", oninput="document.getElementById('cpe_number').innerHTML  = document.getElementById('credits').value ") }}
+            </div>
+            {% for error in record_form.credits.errors %}
+                <div class="alert alert-warning"><strong>Warning!</strong> {{ error }}</div>
+            {% endfor %}
+
+            <button type="submit" class="btn btn-primary mt-4 mb-4 btn-space" form="form_edit">{{ "Create" if record_id == 0 else "Update" }}</button>
+        </form>
+    </div>
+{% endblock %}

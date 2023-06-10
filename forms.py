@@ -4,7 +4,7 @@ from flask_wtf import FlaskForm  # integration with WTForms, data validation and
 from flask_wtf.file import FileRequired, FileAllowed
 from wtforms import StringField, PasswordField, BooleanField, HiddenField, FileField, TextAreaField, SelectField, \
     IntegerRangeField, DateField, DecimalRangeField
-from wtforms.validators import ValidationError, InputRequired, NoneOf, EqualTo, Email, Length, NumberRange
+from wtforms.validators import ValidationError, InputRequired, NoneOf, EqualTo, Email, Length, NumberRange, URL
 
 
 # Custom validator for standard ASCII characters
@@ -21,11 +21,6 @@ def space_ascii_validator(form, field):
 def full_ascii_validator(form, field):
     if not re.search(r"^[\S\n\r\t\v ]*$", field.data):
         raise ValidationError('Please use only ASCII letters and numbers.')
-
-
-def url_ascii_validator(form, field):
-    if not re.search(r"^[0-9A-Za-z-\\\/.@:%_\+~#=]*$", field.data):
-        raise ValidationError('Please use only valid URLs.')
 
 
 # Every form used both in the Flask/Jinja templates as well the main Python app is defined here.
@@ -95,16 +90,17 @@ class ContactForm(FlaskForm):
     captcha = StringField('Captcha', validators=[InputRequired(), EqualTo('check_captcha', message='Captcha does not '
                                                                                                    'match')])
 
+
 class OrganizationForm(FlaskForm):
     name = StringField('Name', validators=[InputRequired(), ascii_validator])
-    url = StringField('URL', validators=[url_ascii_validator])
+    url = StringField('URL', validators=[URL()])
     description = TextAreaField('Description', validators=[Length(max=1024), full_ascii_validator])
     image = SelectField('Image', choices=["none"], validate_choice=False)
 
 
 class CertificationForm(FlaskForm):
     name = StringField('Name', validators=[InputRequired(), ascii_validator])
-    url = StringField('URL', validators=[url_ascii_validator])
+    url = StringField('URL', validators=[URL()])
     description = TextAreaField('Description', validators=[Length(max=1024), full_ascii_validator])
     image = SelectField('Image', choices=["none"], validate_choice=False)
     organization = SelectField('Select Organization', choices=["none"], validate_choice=False)

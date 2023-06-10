@@ -6,17 +6,6 @@
         <h2>{% block title %} CPE Record {{ record.record_id }} {% endblock %}</h2>
     </div>
 
-    <script src="https://code.jquery.com/jquery-3.6.0.slim.min.js" integrity="sha256-u7e5khyithlIdTpu22PHhENmPcRdFiHRjhAuHcs05RI=" crossorigin="anonymous"></script>
-
-    {#  Enable modal window error handling #}
-    <script>
-        $(document).ready(function(){
-            {%  if page_mode == "modal"  %}
-                $('#myModal').modal('show');
-            {%  endif %}
-        });
-    </script>
-
     {#  Page content #}
     <div class="container-fluid pb-3 mt-2 mb-2">
 
@@ -51,68 +40,12 @@
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div class="modal-body">
-                            <form action="{{ url_for('show_deleted_record', record_id=record.record_id) }}" id="form_deletion">
+                            <form action="{{ url_for('delete_record', record_id=record.record_id) }}" id="form_deletion">
                                 Are you sure?
                             </form>
                         </div>
                         <div class="modal-footer">
                             <button type="submit" class="btn btn-danger mt-4 mb-4 btn-space" form="form_deletion">Confirm</button>
-                            <button type="button" class="btn btn-secondary mt-4 mb-4" data-bs-dismiss="modal">Cancel</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {# Modal dialog window - edit currently selected record #}
-            <div id="myModal" class="modal fade" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-                <div class="modal-dialog">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h4 class="modal-title">Edit Record</h4>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body">
-                            <form action="{{ url_for('show_record_p', record_id=record.record_id) }}" method="POST" id="form_edit">
-                                {{ record_form.csrf_token }}
-                                <div class="form-group mt-2 mb-2">
-                                    <label for="{{ record_form.name.name }}">{{ record_form.name.label }}</label>
-                                    {{ record_form.name(size=20, class="form-control") }}
-                                </div>
-                                {% for error in record_form.name.errors %}
-                                    <div class="alert alert-warning"><strong>Warning!</strong> {{ error }}</div>
-                                {% endfor %}
-                                <div class="form-group mt-2 mb-2">
-                                    <label for="{{ record_form.sponsor.name }}">{{ record_form.sponsor.label }}</label>
-                                    {{ record_form.sponsor(size=20, class="form-control") }}
-                                </div>
-                                {% for error in record_form.sponsor.errors %}
-                                    <div class="alert alert-warning"><strong>Warning!</strong> {{ error }}</div>
-                                {% endfor %}
-                                <div class="form-group mt-2 mb-2">
-                                    <label for="{{ record_form.activity_start.name }}">{{ record_form.activity_start.label }}</label>
-                                    {{ record_form.activity_start(class="form-control") }}
-                                </div>
-                                {% for error in record_form.activity_start.errors %}
-                                    <div class="alert alert-warning"><strong>Warning!</strong> {{ error }}</div>
-                                {% endfor %}
-                                <div class="form-group mt-2 mb-2">
-                                    <label for="{{ record_form.activity_end.name }}">{{ record_form.activity_end.label }}</label>
-                                    {{ record_form.activity_end(class="form-control") }}
-                                </div>
-                                {% for error in record_form.activity_end.errors %}
-                                    <div class="alert alert-warning"><strong>Warning!</strong> {{ error }}</div>
-                                {% endfor %}
-                                <div class="form-group mt-2 mb-2">
-                                    <label for="{{ record_form.credits.name }}">{{ record_form.credits.label }}</label>: <label id="cpe_number">x</label> CPE
-                                    {{ record_form.credits(class="form-control", step="0.25", oninput="document.getElementById('cpe_number').innerHTML  = document.getElementById('credits').value ") }}
-                                </div>
-                                {% for error in record_form.credits.errors %}
-                                    <div class="alert alert-warning"><strong>Warning!</strong> {{ error }}</div>
-                                {% endfor %}
-                            </form>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="submit" class="btn btn-primary mt-4 mb-4 btn-space" form="form_edit">Update</button>
                             <button type="button" class="btn btn-secondary mt-4 mb-4" data-bs-dismiss="modal">Cancel</button>
                         </div>
                     </div>
@@ -131,7 +64,7 @@
                     </button>
                     <ul class="dropdown-menu" aria-labelledby="btnGroupDrop1">
                         <li><a class="dropdown-item" href="{{ url_for('show_records') }}">All Records</a></li>
-                        <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#myModal">Edit Record</a></li>
+                        <li><a class="dropdown-item" href="{{ url_for('edit_record', record_id=record.record_id)}}">Edit Record</a></li>
                         <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#myModal_del">Delete Record</a></li>
                     </ul>
                 </div>
@@ -142,7 +75,7 @@
                 <a href="{{ url_for('show_records') }}" data-toggle="tooltip" title="All Records" class="btn btn-primary mt-4 mb-4"><i class="bi bi-list-ul"></i></a>
             </div>
             <div class="btn-group me-2" role="group" aria-label="Third group">
-                <a href="#" class="btn btn-primary mt-4 mb-4" data-toggle="tooltip" title="Edit Record" data-bs-toggle="modal" data-bs-target="#myModal"><i class="bi bi-pencil"></i></a>
+                <a href="{{ url_for('edit_record', record_id=record.record_id)}}" class="btn btn-primary mt-4 mb-4" data-toggle="tooltip" title="Edit Record"><i class="bi bi-pencil"></i></a>
             </div>
             <div class="btn-group me-2" role="group" aria-label="Fourth group">
                 <a href="#" class="btn btn-danger mt-4 mb-4" data-toggle="tooltip" title="Delete Record" data-bs-toggle="modal" data-bs-target="#myModal_del"><i class="bi bi-trash"></i></a>

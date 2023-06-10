@@ -6,17 +6,6 @@
         <h2>{% block title %} My CPE Records {% endblock %}</h2>
     </div>
 
-    <script src="https://code.jquery.com/jquery-3.6.0.slim.min.js" integrity="sha256-u7e5khyithlIdTpu22PHhENmPcRdFiHRjhAuHcs05RI=" crossorigin="anonymous"></script>
-
-    {#  Enable modal window error handling #}
-    <script>
-        $(document).ready(function(){
-            {%  if page_mode == "modal"  %}
-                $('#myModal').modal('show');
-            {%  endif %}
-        });
-    </script>
-
     {#  Page content #}
     <div class="container-fluid pb-3 mt-2 mb-2">
 
@@ -32,62 +21,6 @@
         {% endif %}
 
         {% if current_user.student_role in ["admin","student"] %}
-            {# Modal dialog window - create a new record #}
-            <div id="myModal" class="modal fade" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-                <div class="modal-dialog">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h4 class="modal-title">Create CPE Record</h4>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body">
-                            <form action="{{ url_for('show_records_p') }}" method="POST" id="form_new">
-                                {{ record_form.csrf_token }}
-                                <div class="form-group mt-2 mb-2">
-                                    <label for="{{ record_form.name.name }}">{{ record_form.name.label }}</label>
-                                    {{ record_form.name(size=20, class="form-control") }}
-                                </div>
-                                {% for error in record_form.name.errors %}
-                                    <div class="alert alert-warning"><strong>Warning!</strong> {{ error }}</div>
-                                {% endfor %}
-                                <div class="form-group mt-2 mb-2">
-                                    <label for="{{ record_form.sponsor.name }}">{{ record_form.sponsor.label }}</label>
-                                    {{ record_form.sponsor(size=20, class="form-control") }}
-                                </div>
-                                {% for error in record_form.sponsor.errors %}
-                                    <div class="alert alert-warning"><strong>Warning!</strong> {{ error }}</div>
-                                {% endfor %}
-                                <div class="form-group mt-2 mb-2">
-                                    <label for="{{ record_form.activity_start.name }}">{{ record_form.activity_start.label }}</label>
-                                    {{ record_form.activity_start(class="form-control") }}
-                                </div>
-                                {% for error in record_form.activity_start.errors %}
-                                    <div class="alert alert-warning"><strong>Warning!</strong> {{ error }}</div>
-                                {% endfor %}
-                                <div class="form-group mt-2 mb-2">
-                                    <label for="{{ record_form.activity_end.name }}">{{ record_form.activity_end.label }}</label>
-                                    {{ record_form.activity_end(class="form-control") }}
-                                </div>
-                                {% for error in record_form.activity_end.errors %}
-                                    <div class="alert alert-warning"><strong>Warning!</strong> {{ error }}</div>
-                                {% endfor %}
-                                <div class="form-group mt-2 mb-2">
-                                    <label for="{{ record_form.credits.name }}">{{ record_form.credits.label }}</label>: <label id="cpe_number">x</label> CPE
-                                    {{ record_form.credits(class="form-control", step="0.25", oninput="document.getElementById('cpe_number').innerHTML  = document.getElementById('credits').value ") }}
-                                </div>
-                                {% for error in record_form.credits.errors %}
-                                    <div class="alert alert-warning"><strong>Warning!</strong> {{ error }}</div>
-                                {% endfor %}
-                            </form>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="submit" class="btn btn-primary mt-4 mb-4 btn-space" form="form_new">Create</button>
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
             {#  Display action buttons regarding the selected item #}
             <div class="btn-toolbar" role="toolbar" aria-label="Toolbar with button groups">
 
@@ -98,14 +31,14 @@
                             <i class="bi bi-activity"></i> Actions
                         </button>
                         <ul class="dropdown-menu" aria-labelledby="btnGroupDrop1">
-                            <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#myModal">Create CPE Record</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('edit_record', record_id=0)}}">Create CPE Record</a></li>
                         </ul>
                     </div>
                 </div>
 
                 {#  Same links implemented using small buttons #}
                 <div class="btn-group me-2" role="group" aria-label="Second group">
-                    <a href="#" class="btn btn-primary mt-4 mb-4" data-toggle="tooltip" title="Create CPE Record" data-bs-toggle="modal" data-bs-target="#myModal"><i class="bi bi-plus-square"></i></a>
+                    <a href="{{ url_for('edit_record', record_id=0)}}" class="btn btn-primary mt-4 mb-4" data-toggle="tooltip" title="Create CPE Record"><i class="bi bi-plus-square"></i></a>
                 </div>
             </div>
         {% endif %}
