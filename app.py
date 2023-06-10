@@ -1755,7 +1755,19 @@ def show_record(record_id):
 
     if record:
         student = Student.query.filter_by(student_id=record.student_id).first()
-        return render_template('record_detail.html', record=record, student=student)
+
+        certification_names = list()
+        record_links = RecordLink.query.filter_by(student_id=current_user.student_id).filter_by(
+            record_id=record_id).order_by(RecordLink.record_id.asc())
+        for record_link in record_links:
+            cycle = Cycle.query.filter_by(student_id=current_user.student_id).filter_by(
+                cycle_id=record_link.cycle_id).first()
+            certification = Certification.query.filter_by(student_id=current_user.student_id).filter_by(
+                certification_id=cycle.certification_id).first()
+            certification_names.append(certification.certification_name)
+
+        return render_template('record_detail.html', record=record, certification_names=certification_names,
+                               student=student)
     else:
         return render_template('error.html', error_message=ERR_NOT_EXIST)
 

@@ -24,6 +24,12 @@
                             <div class="mt-4 mb-4">
                                 Participating from <i>{{ record.activity_start.strftime('%Y-%m-%d') }}</i> to <i>{{ record.activity_end.strftime('%Y-%m-%d') }}</i>
                             </div>
+                            <div class="mt-4 mb-4">
+                                Applied to<br>
+                                {% for certification_name in certification_names %}
+                                    ☑ {{ certification_name }}<br>
+                                {% endfor %}
+                            </div>
                         </p>
                     </div>
                 </div>
