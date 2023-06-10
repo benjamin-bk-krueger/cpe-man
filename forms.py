@@ -3,7 +3,7 @@ import re
 from flask_wtf import FlaskForm  # integration with WTForms, data validation and CSRF protection
 from flask_wtf.file import FileRequired, FileAllowed
 from wtforms import StringField, PasswordField, BooleanField, HiddenField, FileField, TextAreaField, SelectField, \
-    IntegerRangeField, DateField, DecimalRangeField
+    IntegerRangeField, DateField, DecimalRangeField, SelectMultipleField
 from wtforms.validators import ValidationError, InputRequired, NoneOf, EqualTo, Email, Length, NumberRange, URL
 
 
@@ -121,3 +121,4 @@ class RecordForm(FlaskForm):
     activity_start = DateField('Activity Start', validators=[InputRequired()])
     activity_end = DateField('Activity End', validators=[InputRequired()])
     credits = DecimalRangeField('Credits', validators=[NumberRange(min=0.25, max=20)])
+    cycles = SelectMultipleField('Assigned Cycles', choices=["none"], validate_choice=False)

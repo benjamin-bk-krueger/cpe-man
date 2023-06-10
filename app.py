@@ -862,6 +862,15 @@ def get_certification_choices(certifications):
     return certifications_choices
 
 
+def get_cycle_choices(cycles):
+    cycles_choices = list()
+    for cycle in cycles:
+        certification = Certification.query.filter_by(student_id=current_user.student_id).filter_by(
+            certification_id=cycle.certification_id).first()
+        cycles_choices.append((cycle.cycle_id, certification.certification_name))
+    return cycles_choices
+
+
 def get_certification_dict(certifications):
     certifications_dict = dict()
     for certification in certifications:
@@ -1757,20 +1766,33 @@ def show_record(record_id):
 @login_required
 def edit_record(record_id):
     record_form = RecordForm()
+    cycles = Cycle.query.filter_by(student_id=current_user.student_id).order_by(Cycle.cycle_id.asc())
 
     if request.method == 'GET' and record_id == 0:
+        record_form.cycles.choices = get_cycle_choices(cycles)
+        record_form.process()
+
         return render_template('record_edit.html', record_id=record_id, record_form=record_form)
     elif request.method == 'GET' and record_id > 0:
         record = Record.query.filter_by(student_id=current_user.student_id).filter_by(record_id=record_id).first()
 
         if record:
+            record_form.cycles.choices = get_cycle_choices(cycles)
+            record_links = RecordLink.query.filter_by(student_id=current_user.student_id).filter_by(
+                record_id=record_id).order_by(RecordLink.record_id.asc())
+            record_links_list = list()
+            for record_link in record_links:
+                record_links_list.append(record_link.cycle_id)
+            record_form.cycles.default = record_links_list
+
             map_record_to_form(record, record_form)
             record_form.process()
+
             return render_template('record_edit.html', record_id=record_id, record_form=record_form)
         else:
             return render_template('error.html', error_message=ERR_NOT_EXIST)
     elif request.method == 'POST':
-        if record_form.validate_on_submit() and current_user.student_role in [ROLE_USER, ROLE_USER] and record_id == 0:
+        if record_form.validate_on_submit() and current_user.student_role in [ROLE_ADMIN, ROLE_USER] and record_id == 0:
             record_name = escape(record_form.name.data)
             activity_end = escape(record_form.activity_end.data)
             record = Record.query.filter_by(student_id=current_user.student_id).filter_by(record_name=record_name). \
@@ -1782,21 +1804,45 @@ def edit_record(record_id):
                 map_form_to_record(record, record_form)
                 db.session.add(record)
                 db.session.commit()
+
+                for cycle in record_form.cycles.data:
+                    record_link = RecordLink()
+                    record_link.student_id = current_user.student_id
+                    record_link.record_id = record.record_id
+                    record_link.cycle_id = cycle
+
+                    db.session.add(record_link)
+                    db.session.commit()
+
                 return redirect(url_for('show_records'))
             else:
                 return render_template('error.html', error_message=ERR_ALREADY_EXIST)
-        elif record_form.validate_on_submit() and current_user.student_role in [ROLE_USER, ROLE_USER] and record_id > 0:
+        elif record_form.validate_on_submit() and current_user.student_role in [ROLE_ADMIN, ROLE_USER] and record_id > 0:
             record = Record.query.filter_by(student_id=current_user.student_id).filter_by(record_id=record_id).first()
 
             if record:
                 map_form_to_record(record, record_form)
                 db.session.commit()
+
+                RecordLink.query.filter_by(student_id=current_user.student_id).filter_by(record_id=record_id).delete()
+                db.session.commit()
+
+                for cycle in record_form.cycles.data:
+                    record_link = RecordLink()
+                    record_link.student_id = current_user.student_id
+                    record_link.record_id = record.record_id
+                    record_link.cycle_id = cycle
+
+                    db.session.add(record_link)
+                    db.session.commit()
+
                 return redirect(url_for('show_record', record_id=record.record_id))
             else:
                 return render_template('error.html', error_message=ERR_NOT_EXIST)
         else:
             map_record_defaults(record_form)
             record_form.process()
+
             return render_template('record_edit.html', record_id=record_id, record_form=record_form)
     else:
         return render_template('error.html')

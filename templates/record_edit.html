@@ -45,6 +45,13 @@
             {% for error in record_form.credits.errors %}
                 <div class="alert alert-warning"><strong>Warning!</strong> {{ error }}</div>
             {% endfor %}
+            <div class="form-group mt-2 mb-2">
+                <label for="{{ record_form.cycles.name }}">{{ record_form.cycles.label }}</label>
+                {{ record_form.cycles(class="form-select") }}
+            </div>
+            {% for error in record_form.cycles.errors %}
+                <div class="alert alert-warning"><strong>Warning!</strong> {{ error }}</div>
+            {% endfor %}
 
             <button type="submit" class="btn btn-primary mt-4 mb-4 btn-space" form="form_edit">{{ "Create" if record_id == 0 else "Update" }}</button>
         </form>
