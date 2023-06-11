@@ -31,12 +31,18 @@
                                 {% endfor %}
                             </div>
                             {% if record.attachment %}
-                                <div class="mt-4 mb-4">
-                                    <img src="{{ url_for('do_display', username=username, filename=record.attachment) }}" class="img-fluid rounded-start" alt="Uploaded Image">
-                                </div>
-                                <div class="mt-4 mb-4">
-                                        <a href="{{ url_for('do_download', filename=record.attachment) }}" title="Download image">Click here to download evidence</a>
-                                </div>
+                                {% if record.attachment == "No Image" %}
+                                    <div class="mt-4 mb-4">
+                                        No Evidence added.
+                                    </div>
+                                {% else %}
+                                    <div class="mt-4 mb-4">
+                                        <img src="{{ url_for('do_display', username=username, filename=record.attachment) }}" class="img-fluid rounded-start" alt="Uploaded Image">
+                                    </div>
+                                    <div class="mt-4 mb-4">
+                                            <a href="{{ url_for('do_download', filename=record.attachment) }}" title="Download image">Click here to download evidence</a>
+                                    </div>
+                                {% endif %}
                             {% endif %}
                         </p>
                     </div>
