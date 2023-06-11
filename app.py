@@ -1189,7 +1189,7 @@ def do_display(username, filename):
         # for page in doc:
         #    pix = page.get_pixmap(matrix=magnify)  # render page to an image
         #    pix.save(f"{output}-{page.number}.png")
-        pix = doc[1].get_pixmap(matrix=magnify)  # render page to an image
+        pix = doc[0].get_pixmap(matrix=magnify)  # render page to an image
         pix.save(f"{output}.png")
         return send_file(f"{output}.png", as_attachment=False)
     else:
