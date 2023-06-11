@@ -3,6 +3,7 @@ import re  # for regular expressions
 import random  # for captcha random numbers
 import string  # for string operations
 import logging  # enable logging
+import fitz  # for PDF to image conversion
 
 import boto3  # for S3 storage
 from flask import Flask, request, render_template, jsonify, send_file, escape, redirect, url_for, \
@@ -41,7 +42,7 @@ S3_BUCKET = os.environ['S3_BUCKET']
 S3_GLOBAL = os.environ['S3_GLOBAL']
 UPLOAD_FOLDER = os.environ['HOME'] + "/uploads"  # directory for program data
 DOWNLOAD_FOLDER = os.environ['HOME'] + "/downloads"
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'pdf'}
 APP_VERSION = os.environ['APP_VERSION']
 APP_PREFIX = os.environ['APP_PREFIX']
 LOG_ENABLE = int(os.environ['LOG_ENABLE'])
@@ -1179,8 +1180,21 @@ def do_display(username, filename):
     if not os.path.exists(local_folder_name):
         os.makedirs(local_folder_name)
     output = download_file(S3_BUCKET, remote_file, local_filename)
-    # return send_from_directory(app.config["UPLOAD_FOLDER"], name)
-    return send_file(output, as_attachment=False)
+
+    if filename.rsplit('.', 1)[1].lower() == "pdf":
+        dpi = 300  # choose desired dpi here
+        zoom = dpi / 72  # zoom factor, standard: 72 dpi
+        magnify = fitz.Matrix(zoom, zoom)  # magnifies in x, resp. y direction
+        doc = fitz.open(output)  # open document
+        # for page in doc:
+        #    pix = page.get_pixmap(matrix=magnify)  # render page to an image
+        #    pix.save(f"{output}-{page.number}.png")
+        pix = doc[1].get_pixmap(matrix=magnify)  # render page to an image
+        pix.save(f"{output}.png")
+        return send_file(f"{output}.png", as_attachment=False)
+    else:
+        # return send_from_directory(app.config["UPLOAD_FOLDER"], name)
+        return send_file(output, as_attachment=False)
 
 
 # Remove a specific file from S3 storage
@@ -1762,6 +1776,7 @@ def show_records():
 @login_required
 def show_record(record_id):
     record = Record.query.filter_by(student_id=current_user.student_id).filter_by(record_id=record_id).first()
+    s3_folder = S3_GLOBAL if current_user.student_role == ROLE_ADMIN else current_user.student_name
 
     if record:
         student = Student.query.filter_by(student_id=record.student_id).first()
@@ -1776,7 +1791,7 @@ def show_record(record_id):
             certification_names.append(certification.certification_name)
 
         return render_template('record_detail.html', record=record, certification_names=certification_names,
-                               student=student)
+                               username=s3_folder, student=student)
     else:
         return render_template('error.html', error_message=ERR_NOT_EXIST)
 

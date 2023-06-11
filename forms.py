@@ -72,7 +72,8 @@ class StudentDeletionForm(FlaskForm):
 
 
 class FileUploadForm(FlaskForm):
-    file = FileField(validators=[FileRequired(), FileAllowed(['jpg', 'png', 'gif'], 'Images only!')])
+    file = FileField(validators=[FileRequired(), FileAllowed(['png', 'jpg', 'jpeg', 'gif', 'pdf'],
+                                                             'Images and Documents only!')])
     page_mode = HiddenField(default='init')
 
 
@@ -123,4 +124,4 @@ class RecordForm(FlaskForm):
     credits = DecimalRangeField('Credits', validators=[NumberRange(min=0.25, max=20)])
     cycles = SelectMultipleField('Assigned Cycles', choices=["none"], validate_choice=False)
     attachment = SelectField('Image', choices=["none"], validate_choice=False)
-    file = FileField(validators=[FileAllowed(['jpg', 'png', 'gif'], 'Images only!')])
+    file = FileField(validators=[FileAllowed(['png', 'jpg', 'jpeg', 'gif', 'pdf'], 'Images and Documents only!')])
