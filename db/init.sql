@@ -25,7 +25,7 @@ CREATE TABLE invitation (
 
 CREATE TABLE organization (
     organization_id SERIAL PRIMARY KEY,
-    student_id INT REFERENCES student ( student_id ),
+    student_id INT REFERENCES student ( student_id ) ON DELETE SET NULL,
     organization_name VARCHAR ( 100 ) UNIQUE NOT NULL,
     organization_desc VARCHAR ( 1024 ),
     organization_url VARCHAR ( 256 ),
@@ -36,8 +36,8 @@ CREATE TABLE organization (
 
 CREATE TABLE certification (
     certification_id SERIAL PRIMARY KEY,
-    student_id INT REFERENCES  student ( student_id ),
-    organization_id INT REFERENCES organization ( organization_id ),
+    student_id INT REFERENCES  student ( student_id ) ON DELETE SET NULL,
+    organization_id INT REFERENCES organization ( organization_id ) ON DELETE CASCADE,
     certification_name VARCHAR ( 100 ) NOT NULL,
     certification_desc VARCHAR ( 1024 ),
     certification_url VARCHAR ( 256 ),
@@ -54,7 +54,7 @@ ON certification ( certification_name, organization_id );
 
 CREATE TABLE cycle (
     cycle_id SERIAL PRIMARY KEY,
-    student_id INT REFERENCES  student ( student_id ),
+    student_id INT REFERENCES  student ( student_id ) ON DELETE CASCADE,
     certification_id INT REFERENCES certification ( certification_id ),
     certification_date TIMESTAMP,
     cycle_start TIMESTAMP NOT NULL,
@@ -67,7 +67,7 @@ ON cycle ( certification_id, student_id );
 
 CREATE TABLE record (
     record_id SERIAL PRIMARY KEY,
-    student_id INT REFERENCES  student ( student_id ),
+    student_id INT REFERENCES  student ( student_id ) ON DELETE CASCADE,
     record_name VARCHAR ( 100 ) NOT NULL,
     sponsor VARCHAR ( 100 ),
     activity_start TIMESTAMP NOT NULL,
@@ -83,9 +83,9 @@ ON record ( record_name, activity_end );
 
 CREATE TABLE record_link (
     record_link_id SERIAL PRIMARY KEY,
-    student_id INT REFERENCES  student ( student_id ),
-    record_id INT REFERENCES  record ( record_id ),
-    cycle_id INT REFERENCES  cycle ( cycle_id ),
+    student_id INT REFERENCES  student ( student_id ) ON DELETE CASCADE,
+    record_id INT REFERENCES  record ( record_id ) ON DELETE CASCADE,
+    cycle_id INT REFERENCES  cycle ( cycle_id ) ON DELETE CASCADE,
     created timestamp default current_timestamp,
     modified timestamp default current_timestamp
 );

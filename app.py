@@ -1823,7 +1823,7 @@ def edit_record(record_id):
                 record_links_list.append(record_link.cycle_id)
             record_form.cycles.default = record_links_list
 
-            record_form.attachment.choices = get_file_choices(S3_GLOBAL)
+            record_form.attachment.choices = get_file_choices(s3_folder)
 
             map_record_to_form(record, record_form)
             record_form.process()
