@@ -168,7 +168,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"organization_id\": \"1\",\n    \"certification_desc\": \"Description\",\n    \"certification_img\": \"\",\n    \"certification_name\": \"Name\",\n    \"certification_url\": \"\",\n    \"certification_date\": \"2020-01-20\",\n    \"cycle_length\": \"3\",\n    \"cycle_start\": \"2020-01-20\",\n    \"requirement_year\": \"20\",\n    \"requirement_full\": \"90\"\n}"
+							"raw": "{\n    \"organization_id\": \"1\",\n    \"certification_desc\": \"Description\",\n    \"certification_img\": \"\",\n    \"certification_name\": \"Name\",\n    \"certification_url\": \"\",\n    \"certification_date\": \"2020-01-20\",\n    \"cycle_length\": \"3\",\n    \"cycle_start\": \"2020-01-20\",\n    \"requirement_year\": \"20\",\n    \"suggested_year\": \"20\",\n    \"requirement_full\": \"90\"\n}"
 						},
 						"url": {
 							"raw": "{{baseurl}}/api/certifications",
@@ -215,7 +215,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"organization_id\": \"1\",\n    \"certification_desc\": \"Description\",\n    \"certification_img\": \"\",\n    \"certification_name\": \"Name\",\n    \"certification_url\": \"\",\n    \"certification_date\": \"2020-01-20\",\n    \"cycle_length\": \"3\",\n    \"cycle_start\": \"2020-01-20\",\n    \"requirement_year\": \"20\",\n    \"requirement_full\": \"90\"\n}"
+							"raw": "{\n    \"organization_id\": \"1\",\n    \"certification_desc\": \"Description\",\n    \"certification_img\": \"\",\n    \"certification_name\": \"Name\",\n    \"certification_url\": \"\",\n    \"certification_date\": \"2020-01-20\",\n    \"cycle_length\": \"3\",\n    \"cycle_start\": \"2020-01-20\",\n    \"requirement_year\": \"20\",\n    \"suggested_year\": \"20\",\n    \"requirement_full\": \"90\"\n}"
 						},
 						"url": {
 							"raw": "{{baseurl}}/api/certifications/{{name}}",
