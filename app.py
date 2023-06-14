@@ -293,6 +293,7 @@ class Certification(db.Model):
     certification_img = db.Column(db.VARCHAR(384))
     cycle_length = db.Column(db.INTEGER, default=3)
     requirement_year = db.Column(db.INTEGER, default=20)
+    suggested_year = db.Column(db.INTEGER, default=20)
     requirement_full = db.Column(db.INTEGER, default=90)
 
     def __repr__(self):
@@ -302,7 +303,8 @@ class Certification(db.Model):
 class CertificationSchema(marsh.Schema):
     class Meta:
         fields = ("certification_id", "student_id", "organization_id", "certification_name", "certification_desc",
-                  "certification_url", "certification_img", "cycle_length", "requirement_year", "requirement_full")
+                  "certification_url", "certification_img", "cycle_length", "requirement_year", "suggested_year",
+                  "requirement_full")
         model = Certification
 
 
@@ -322,7 +324,7 @@ class CertificationListResource(Resource):
             student = Student.query.filter_by(student_name=request.authorization['username']).first()
             if all(s in request.json for s in ('organization_id', 'certification_name', 'certification_desc',
                                                'certification_url', 'certification_img', 'cycle_length',
-                                               'requirement_year', 'requirement_full')):
+                                               'requirement_year', 'suggested_year', 'requirement_full')):
                 new_certification = Certification(
                     student_id=student.student_id,
                     organization_id=int(escape(request.json['organization_id'])),
@@ -332,6 +334,7 @@ class CertificationListResource(Resource):
                     certification_img=clean_url(request.json['certification_img']),
                     cycle_length=int(escape(request.json['cycle_length'])),
                     requirement_year=int(escape(request.json['requirement_year'])),
+                    suggested_year=int(escape(request.json['suggested_year'])),
                     requirement_full=int(escape(request.json['requirement_full']))
                 )
                 db.session.add(new_certification)
@@ -358,7 +361,8 @@ class CertificationResource(Resource):
             if certification and all(s in request.json for s in ('organization_id', 'certification_name',
                                                                  'certification_desc', 'certification_url',
                                                                  'certification_img', 'cycle_length',
-                                                                 'requirement_year', 'requirement_full')):
+                                                                 'requirement_year', 'suggested_year',
+                                                                 'requirement_full')):
                 certification.organization_id = int(escape(request.json['organization_id'])),
                 certification.certification_name = escape(request.json['certification_name']),
                 certification.certification_desc = request.json['certification_desc'],
@@ -366,6 +370,7 @@ class CertificationResource(Resource):
                 certification.certification_img = clean_url(request.json['certification_img']),
                 certification.cycle_length = int(escape(request.json['cycle_length'])),
                 certification.requirement_year = int(escape(request.json['requirement_year'])),
+                certification.suggested_year = int(escape(request.json['suggested_year'])),
                 certification.requirement_full = int(escape(request.json['requirement_full']))
                 db.session.commit()
                 return certification_schema.dump(certification)
@@ -949,6 +954,7 @@ def map_form_to_certification(certification, certification_form):
     certification.organization_id = int(escape(certification_form.organization.data))
     certification.cycle_length = int(escape(certification_form.cycle_length.data))
     certification.requirement_year = int(escape(certification_form.requirement_year.data))
+    certification.suggested_year = int(escape(certification_form.suggested_year.data))
     certification.requirement_full = int(escape(certification_form.requirement_full.data))
 
 
@@ -960,6 +966,7 @@ def map_certification_to_form(certification, certification_form):
     certification_form.organization.default = certification.organization_id
     certification_form.cycle_length.default = int(certification.cycle_length)
     certification_form.requirement_year.default = int(certification.requirement_year)
+    certification_form.suggested_year.default = int(certification.suggested_year)
     certification_form.requirement_full.default = int(certification.requirement_full)
 
 
@@ -971,6 +978,7 @@ def map_certification_defaults(certification_form):
     certification_form.organization.default = certification_form.organization.data
     certification_form.cycle_length.default = certification_form.cycle_length.data
     certification_form.requirement_year.default = certification_form.requirement_year.data
+    certification_form.suggested_year.default = certification_form.suggested_year.data
     certification_form.requirement_full.default = certification_form.requirement_full.data
 
 

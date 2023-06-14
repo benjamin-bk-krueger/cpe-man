@@ -44,6 +44,7 @@ CREATE TABLE certification (
     certification_img VARCHAR ( 384),
     cycle_length INT default 3,
     requirement_year INT default 20 NOT NULL,
+    suggested_year INT default 20 NOT NULL,
     requirement_full INT default 90 NOT NULL,
     created timestamp default current_timestamp,
     modified timestamp default current_timestamp

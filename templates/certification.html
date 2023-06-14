@@ -13,6 +13,7 @@
         $(document).ready(function(){
             document.getElementById('cycle_number').innerHTML  = document.getElementById('cycle_length').value;
             document.getElementById('year_number').innerHTML  = document.getElementById('requirement_year').value;
+            document.getElementById('year_suggested').innerHTML  = document.getElementById('suggested_year').value;
             document.getElementById('full_number').innerHTML  = document.getElementById('requirement_full').value;
 
             {%  if page_mode == "modal"  %}
@@ -91,6 +92,13 @@
                                     {{ certification_form.requirement_year(class="form-control", step="10", oninput="document.getElementById('year_number').innerHTML  = document.getElementById('requirement_year').value ") }}
                                 </div>
                                 {% for error in certification_form.requirement_year.errors %}
+                                    <div class="alert alert-warning"><strong>Warning!</strong> {{ error }}</div>
+                               {% endfor %}
+                               <div class="form-group mt-2 mb-2">
+                                    <label for="{{ certification_form.suggested_year.name }}">{{ certification_form.suggested_year.label }}</label>: <label id="year_suggested">x</label> CPE
+                                    {{ certification_form.suggested_year(class="form-control", step="10", oninput="document.getElementById('year_suggested').innerHTML  = document.getElementById('suggested_year').value ") }}
+                                </div>
+                                {% for error in certification_form.suggested_year.errors %}
                                     <div class="alert alert-warning"><strong>Warning!</strong> {{ error }}</div>
                                {% endfor %}
                                <div class="form-group mt-2 mb-2">
