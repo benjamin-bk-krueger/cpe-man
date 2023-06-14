@@ -89,21 +89,21 @@
                                 {% endfor %}
                                <div class="form-group mt-2 mb-2">
                                     <label for="{{ certification_form.requirement_year.name }}">{{ certification_form.requirement_year.label }}</label>: <label id="year_number">x</label> CPE
-                                    {{ certification_form.requirement_year(class="form-control", step="10", oninput="document.getElementById('year_number').innerHTML  = document.getElementById('requirement_year').value ") }}
+                                    {{ certification_form.requirement_year(class="form-control", step="5", oninput="document.getElementById('year_number').innerHTML  = document.getElementById('requirement_year').value ") }}
                                 </div>
                                 {% for error in certification_form.requirement_year.errors %}
                                     <div class="alert alert-warning"><strong>Warning!</strong> {{ error }}</div>
                                {% endfor %}
                                <div class="form-group mt-2 mb-2">
                                     <label for="{{ certification_form.suggested_year.name }}">{{ certification_form.suggested_year.label }}</label>: <label id="year_suggested">x</label> CPE
-                                    {{ certification_form.suggested_year(class="form-control", step="10", oninput="document.getElementById('year_suggested').innerHTML  = document.getElementById('suggested_year').value ") }}
+                                    {{ certification_form.suggested_year(class="form-control", step="5", oninput="document.getElementById('year_suggested').innerHTML  = document.getElementById('suggested_year').value ") }}
                                 </div>
                                 {% for error in certification_form.suggested_year.errors %}
                                     <div class="alert alert-warning"><strong>Warning!</strong> {{ error }}</div>
                                {% endfor %}
                                <div class="form-group mt-2 mb-2">
                                     <label for="{{ certification_form.requirement_full.name }}">{{ certification_form.requirement_full.label }}</label>: <label id="full_number">x</label> CPE
-                                    {{ certification_form.requirement_full(class="form-control", step="10", oninput="document.getElementById('full_number').innerHTML  = document.getElementById('requirement_full').value ") }}
+                                    {{ certification_form.requirement_full(class="form-control", step="5", oninput="document.getElementById('full_number').innerHTML  = document.getElementById('requirement_full').value ") }}
                                 </div>
                                 {% for error in certification_form.requirement_full.errors %}
                                     <div class="alert alert-warning"><strong>Warning!</strong> {{ error }}</div>
