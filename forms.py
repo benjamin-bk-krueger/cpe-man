@@ -9,12 +9,12 @@ from wtforms.validators import ValidationError, InputRequired, NoneOf, EqualTo, 
 
 # Custom validator for standard ASCII characters
 def ascii_validator(form, field):
-    if not re.search(r"^[A-Za-z0-9_.-]+$", field.data):
+    if not re.search(r"^[A-Za-z0-9_.+-]+$", field.data):
         raise ValidationError('Please use only letters, numbers or the characters -_.')
 
 
 def space_ascii_validator(form, field):
-    if not re.search(r"^[A-Za-z0-9_. -]*$", field.data):
+    if not re.search(r"^[A-Za-z0-9_.+ -]*$", field.data):
         raise ValidationError('Please use only letters, numbers or the characters -_.')
 
 
